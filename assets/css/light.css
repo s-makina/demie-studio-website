@@ -2,8 +2,8 @@
     --fw-light:           400;
 
     /* Primary Color */
-    --color-one:                        #B90808;
-    --color-one-rgb:                    185, 8, 8;
+    --color-one:                        #B45309;
+    --color-one-rgb:                    180, 83, 9;
     
 
     /* Text Color */
@@ -83,7 +83,7 @@
 
 
     /* --link-color:                      #000000;
-    --link-color-hover:                #B90808; */
+    --link-color-hover:                #B45309; */
 
     --gradient-two: linear-gradient(90deg, var(--color-dark-thirteen) 0%, var(--color-dark-one) 100%);
     --gradient-two-alt: linear-gradient(90deg, var(--color-dark-one) 0%, var(--color-dark-thirteen) 100%);
@@ -92,32 +92,32 @@
 }
 
 :root .theme-style--light.theme-style--orange {
-    --color-one:                     #F85623;
-    --color-one-rgb:                    248, 86, 35;
+    --color-one:                     #B45309;
+    --color-one-rgb:                    180, 83, 9;
     
     --link-color-hover:                var(--color-one);
 
 }
 
 :root .theme-style--light.theme-style--gradient {
-    --color-one:                       #57E2D0;
-    --color-one-rgb:                    87, 226, 208;
+    --color-one:                       #B45309;
+    --color-one-rgb:                    180, 83, 9;
     
     --link-color-hover:                var(--color-one);
 
 }
 
 :root .theme-style--light.theme-style--olive {
-    --color-one:                       #A6A182;
-    --color-one-rgb:                     166, 161, 130;
+    --color-one:                       #B45309;
+    --color-one-rgb:                     180, 83, 9;
     
     --link-color-hover:                var(--color-one);
 
 }
 
 :root .theme-style--light.theme-style--brown {
-    --color-one:                       #BB4B36;
-    --color-one-rgb:                     187, 75, 54;
+    --color-one:                       #B45309;
+    --color-one-rgb:                     180, 83, 9;
     
     --color-two:                       #BB4B36;
     --color-two-rgb:                     187, 75, 54;
@@ -135,8 +135,8 @@
 }
 
 :root .theme-style--light.theme-style--nion {
-    --color-one:                       #C9F31D;
-    --color-one-rgb:                     201, 243, 29;
+    --color-one:                       #B45309;
+    --color-one-rgb:                     180, 83, 9;
 
     --color-two:                       #151515;
     --color-two-rgb:                     21, 21, 21;
@@ -148,8 +148,8 @@
 }
 
 :root .theme-style--light.theme-style--green {
-    --color-one:                       #00D66F;
-    --color-one-rgb:                     0, 214, 111;
+    --color-one:                       #B45309;
+    --color-one-rgb:                     180, 83, 9;
 
     --color-two:                      #DDDDDD; /*#585858*/
     --color-two-rgb:                   221, 221, 221;

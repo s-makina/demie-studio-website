@@ -159,8 +159,8 @@
 
     /* Theme Colors */
     /* Primary Color */
-    --color-one:                        #B90808;
-    --color-one-rgb:                    185, 8, 8;    
+    --color-one:                        #B45309;
+    --color-one-rgb:                    180, 83, 9;    
 
     /* Text Color */
     --color-two:                      #DDDDDD; /*#585858*/
@@ -318,22 +318,22 @@
 }
 
 :root .theme-style--orange {
-    --color-one:                     #F85623;
-    --color-one-rgb:                    248, 86, 35;
+    --color-one:                     #B45309;
+    --color-one-rgb:                    180, 83, 9;
 
     --link-color-hover:                var(--color-one);
 }
 
 :root .theme-style--gradient {
-    --color-one:                       #43FFEC;
-    --color-one-rgb:                     67, 255, 236;
+    --color-one:                       #B45309;
+    --color-one-rgb:                     180, 83, 9;
     
     --link-color-hover:                var(--color-one);
 }
 
 :root .theme-style--olive {
-    --color-one:                       #A6A182;
-    --color-one-rgb:                     166, 161, 130;
+    --color-one:                       #B45309;
+    --color-one-rgb:                     180, 83, 9;
     
     --link-color-hover:                var(--color-one);
 }
@@ -341,22 +341,22 @@
 :root .theme-style--brown {
     --font-family-base: "DM Sans", sans-serif;
 
-    --color-one:                       #BB4B36;
-    --color-one-rgb:                     187, 75, 54;
+    --color-one:                       #B45309;
+    --color-one-rgb:                     180, 83, 9;
     
     --link-color-hover:                var(--color-one);
 }
 
 :root .theme-style--nion {
-    --color-one:                       #C9F31D;
-    --color-one-rgb:                     201, 243, 29;
+    --color-one:                       #B45309;
+    --color-one-rgb:                     180, 83, 9;
     
     --link-color-hover:                var(--color-one);
 }
 
 :root .theme-style--green {
-    --color-one:                       #00D66F;
-    --color-one-rgb:                     0, 214, 111;
+    --color-one:                       #B45309;
+    --color-one-rgb:                     180, 83, 9;
     
     --link-color-hover:                var(--color-one);
 }
