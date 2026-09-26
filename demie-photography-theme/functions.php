@@ -7,6 +7,9 @@ define('DEMIE_DIR', get_template_directory());
 define('DEMIE_URI', get_template_directory_uri());
 
 require_once DEMIE_DIR . '/inc/contact.php';
+require_once DEMIE_DIR . '/inc/settings.php';
+require_once DEMIE_DIR . '/inc/cpts.php';
+require_once DEMIE_DIR . '/inc/metaboxes.php';
 
 function demie_setup() {
     load_theme_textdomain('demie-photography', DEMIE_DIR . '/languages');
@@ -186,12 +189,12 @@ function demie_render_footer_menu($location) {
     }
 }
 
-/* ---------- Brand constants used across templates ---------- */
+/* ---------- Brand helpers (Studio Details from Demie Settings) ---------- */
 
-function demie_phone()        { return '+265 884 44 48 02'; }
-function demie_phone_url()    { return 'tel:+265884444802'; }
-function demie_whatsapp_url() { return 'https://wa.me/265884444802'; }
-function demie_email()        { return 'demiestudios@gmail.com'; }
+/* demie_phone(), demie_email(), demie_phone_url(), demie_whatsapp_url(),
+ * demie_location(), demie_maps_url() and demie_social_url() now live in
+ * inc/settings.php and read from the Demie Settings page with the CONTEXT.md
+ * brand facts as seed defaults. */
 
 function demie_logo_wordmark($class = '') {
     $extra = $class ? ' ' . $class : '';

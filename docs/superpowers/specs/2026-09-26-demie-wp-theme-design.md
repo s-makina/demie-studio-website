@@ -21,6 +21,7 @@ project root.
 | Gallery | `project-masonry-1.html` (masonry layout) |
 | Shop | **Dropped** — no WooCommerce, no shop pages |
 | Enquiry form | AJAX form like 99carex (`inc/contact.php`), mail to demiestudios@gmail.com |
+| Editable content | **Changed 2026-09-26** — full content takeover via CPTs + metaboxes (see `docs/adr/0001-cpts-and-metaboxes-for-editable-content.md`); supersedes the "static sections for brochure pages" mechanic below. CPTs: Service (short+full desc), Testimonial, FAQ, Slide, Portfolio (non-public, lightbox). Studio Details metabox on a Demie Settings page. Home Sections metabox on the seeded Home page. Version-guarded auto-seed; empty sections hide. |
 
 ## Brand facts (from CONTEXT.md — authoritative)
 

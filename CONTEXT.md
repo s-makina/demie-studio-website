@@ -20,3 +20,14 @@ _Avoid_: Any other address
 
 **Studio location**:
 Chilomoni, Blantyre, Malawi.
+
+**Studio Details**:
+The set of business contact facts — Phone, Email, Studio location and social media links — shown site-wide (header, footer, slider panes, contact page). Editable by the site owner; the values above are the initial content, not permanent truths.
+_Avoid_: treating Phone/Email/Location as hard-coded constants
+
+**Service**:
+An offering card shown on the homepage (first four, short blurb) and the Services page (all, full description). One entry, two description fields — not two lists.
+
+**Portfolio Item**:
+A photograph or project entry with a featured image, shown on the Gallery page and the homepage portfolio section. Replaces the earlier scheme of using blog posts from a `gallery` category.
+_Avoid_: "gallery post", fake blog posts for gallery content
