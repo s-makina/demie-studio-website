@@ -1,0 +1,73 @@
+/* Demie Photography brand overrides (identity swap pass) */
+
+.logo-wordmark {
+    font-family: var(--font-family-base, "Sora", sans-serif);
+    font-weight: 800;
+    font-size: 22px;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    white-space: nowrap;
+    line-height: 1;
+}
+a.light_logo.logo-wordmark { color: #ffffff; }
+a.dark_logo.logo-wordmark { color: #151515; }
+
+.logo a.logo-wordmark {
+    max-width: none;
+}
+@media (max-width: 991.98px) {
+    .logo-wordmark {
+        font-size: 18px;
+    }
+}
+@media (max-width: 575.98px) {
+    .logo-wordmark {
+        font-size: 15px;
+        letter-spacing: 0;
+    }
+    .preloader-wordmark {
+        font-size: 16px;
+        letter-spacing: 1px;
+    }
+}
+@media (max-width: 399.98px) {
+    /* Tiniest screens: keep "Demie", drop " Photography" to protect the action buttons */
+    .logo-wordmark .logo-sub,
+    .preloader-wordmark .logo-sub {
+        display: none;
+    }
+}
+
+.preloader-wordmark {
+    font-family: var(--font-family-base, "Sora", sans-serif);
+    font-weight: 800;
+    font-size: 22px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: #ffffff;
+    white-space: nowrap;
+}
+
+/* Floating WhatsApp chat button */
+.wa-float {
+    position: fixed;
+    right: 24px;
+    bottom: 24px;
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    background-color: #25d366;
+    color: #ffffff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 28px;
+    line-height: 1;
+    z-index: 9999;
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35);
+    transition: transform 0.2s ease;
+}
+.wa-float:hover {
+    color: #ffffff;
+    transform: scale(1.08);
+}
