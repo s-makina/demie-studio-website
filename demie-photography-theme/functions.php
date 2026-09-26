@@ -63,6 +63,7 @@ function demie_enqueue_assets() {
     wp_enqueue_script('demie-cursor-effect', DEMIE_URI . '/assets/vendor/cursor-effect/cursor-effect.js', ['demie-jquery'], null, true);
 
     wp_enqueue_script('demie-theme', DEMIE_URI . '/assets/js/theme.js', ['demie-jquery', 'demie-bootstrap'], DEMIE_VERSION, true);
+    wp_enqueue_script('demie-forms', DEMIE_URI . '/assets/js/demie-forms.js', ['demie-jquery'], DEMIE_VERSION, true);
 
     wp_localize_script('demie-theme', 'demieCtx', [
         'ajaxUrl'   => admin_url('admin-ajax.php'),
