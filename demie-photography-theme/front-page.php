@@ -133,7 +133,7 @@ $demie_testimonials = demie_get_testimonials();
                 <div class="wptb-image-single wow fadeInUp">
                     <div class="wptb-item--inner">
                         <div class="wptb-item--image position-relative">
-                            <img src="<?php echo esc_url(DEMIE_URI . '/assets/img/more/7.png'); ?>" alt="img">
+                            <img src="<?php echo esc_url(demie_image_url('_demie_img_about', 'more/7.png')); ?>" alt="img">
 
                             <div class="wptb-item--button round-button">
                                 <a class="btn btn-two" href="<?php echo esc_url($about_url); ?>">
@@ -227,7 +227,7 @@ $demie_testimonials = demie_get_testimonials();
 </section>
 
 <!-- Agency Experience -->
-<section class="wptb-agency-experience bg-image pb-xl-0" style="background-image: url('<?php echo esc_url(DEMIE_URI . '/assets/img/background/bg-13.jpg'); ?>');">
+<section class="wptb-agency-experience bg-image pb-xl-0" style="background-image: url('<?php echo esc_url(demie_image_url('_demie_img_exp_bg', 'background/bg-13.jpg')); ?>');">
     <div class="container">
 
         <div class="row">
@@ -245,7 +245,7 @@ $demie_testimonials = demie_get_testimonials();
                     <div class="wptb-image-single d-none d-xl-block wow fadeInUp">
                         <div class="wptb-item--inner">
                             <div class="wptb-item--image">
-                                <img src="<?php echo esc_url(DEMIE_URI . '/assets/img/more/3.png'); ?>" alt="img">
+                                <img src="<?php echo esc_url(demie_image_url('_demie_img_exp', 'more/3.png')); ?>" alt="img">
                             </div>
                         </div>
                     </div>
@@ -276,7 +276,7 @@ $demie_testimonials = demie_get_testimonials();
 </section>
 
 <!-- Testimonial -->
-<section class="wptb-testimonial-one testimonial-colored bg-image" style="background-image: url('<?php echo esc_url(DEMIE_URI . '/assets/img/background/bg-16.jpg'); ?>');">
+<section class="wptb-testimonial-one testimonial-colored bg-image" style="background-image: url('<?php echo esc_url(demie_image_url('_demie_img_testi_bg', 'background/bg-16.jpg')); ?>');">
     <div class="container">
         <div class="row">
             <div class="col-lg-7">
@@ -504,7 +504,7 @@ $demie_testimonials = demie_get_testimonials();
         <?php for ($i = 1; $i <= 5; $i++) : ?>
             <div class="wptb-item">
                 <div class="wptb-item--image">
-                    <img src="<?php echo esc_url(DEMIE_URI . '/assets/img/instagram/' . $i . '.jpg'); ?>" alt="img">
+                    <img src="<?php echo esc_url(demie_image_url('_demie_img_insta_' . $i, 'instagram/' . $i . '.jpg')); ?>" alt="img">
                 </div>
             </div>
         <?php endfor; ?>

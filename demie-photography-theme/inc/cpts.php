@@ -20,6 +20,48 @@ function demie_is_admin_screen() {
     return is_admin() && !wp_doing_ajax();
 }
 
+/**
+ * Allow SVG uploads for administrators — the service icons are SVGs.
+ */
+add_filter('upload_mimes', function ($mimes) {
+    if (current_user_can('manage_options')) {
+        $mimes['svg']  = 'image/svg+xml';
+        $mimes['svgz'] = 'image/svg+xml';
+    }
+    return $mimes;
+});
+
+/**
+ * WordPress's real-MIME check trips on SVGs; trust admins here.
+ */
+add_filter('wp_check_filetype_and_ext', function ($data, $file, $filename, $mimes) {
+    if (current_user_can('manage_options') && is_string($filename) && preg_match('/\.svgz?$/i', $filename)) {
+        $data['ext']  = pathinfo($filename, PATHINFO_EXTENSION);
+        $data['type'] = 'image/svg+xml';
+    }
+    return $data;
+}, 10, 4);
+
+/**
+ * Shared admin list columns: show the featured image (icon/photo/slide art)
+ * and the manual order, for every Demie CPT.
+ */
+add_filter('manage_posts_columns', function ($columns, $post_type) {
+    if (in_array($post_type, ['demie_service', 'demie_testimonial', 'demie_faq', 'demie_slide', 'demie_portfolio'], true)) {
+        $columns['demie_thumb'] = __('Image / Icon', 'demie-photography');
+        $columns['demie_order'] = __('Order', 'demie-photography');
+    }
+    return $columns;
+}, 10, 2);
+
+add_action('manage_posts_custom_column', function ($column, $post_id) {
+    if ('demie_thumb' === $column) {
+        echo get_the_post_thumbnail($post_id, [50, 50], ['style' => 'width:50px;height:50px;object-fit:contain;']);
+    } elseif ('demie_order' === $column) {
+        echo esc_html((string) get_post_field('menu_order', $post_id));
+    }
+}, 10, 2);
+
 add_action('init', function () {
     // Service
     register_post_type('demie_service', [

@@ -74,6 +74,23 @@ function demie_heading_h1($l1_key, $l2_key, $l3_key = null, $l1_fb = '', $l2_fb 
     }
 }
 
+/* ---------- Images ---------- */
+
+/**
+ * Resolve an image meta field (attachment ID) to a URL. Falls back to a
+ * bundled theme image when the field is empty.
+ */
+function demie_image_url($key, $fallback = '', $size = 'full') {
+    $id = (int) demie_current_meta($key);
+    if ($id) {
+        $url = wp_get_attachment_image_url($id, $size);
+        if ($url) {
+            return $url;
+        }
+    }
+    return $fallback ? DEMIE_URI . '/assets/img/' . ltrim($fallback, '/') : '';
+}
+
 /* ---------- Slider ---------- */
 
 /**

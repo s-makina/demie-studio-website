@@ -100,9 +100,11 @@ function demie_seed_page($slug, $title, $template = '') {
 
 /**
  * Create a CPT entry if a post of that type with the same slug exists;
- * otherwise insert it (idempotent). Returns the post ID or 0.
+ * otherwise insert it (idempotent) and attach a bundled image as its
+ * featured image. The thumbnail is only set on creation — re-seeds never
+ * overwrite the owner's chosen images. Returns the post ID or 0.
  */
-function demie_seed_post($type, $slug, $title, $content = '', $meta = [], $menu_order = 0) {
+function demie_seed_post($type, $slug, $title, $content = '', $meta = [], $menu_order = 0, $thumb_path = '') {
     $existing = get_posts([
         'post_type'      => $type,
         'name'           => $slug,
@@ -111,7 +113,16 @@ function demie_seed_post($type, $slug, $title, $content = '', $meta = [], $menu_
         'fields'         => 'ids',
     ]);
     if (!empty($existing)) {
-        return (int) $existing[0];
+        $existing_id = (int) $existing[0];
+        // Backfill: attach the bundled image only when the entry has no
+        // thumbnail of its own — never overwrite the owner's choice.
+        if ($thumb_path && !has_post_thumbnail($existing_id)) {
+            $attachment_id = demie_seed_attachment($thumb_path, $title);
+            if ($attachment_id) {
+                set_post_thumbnail($existing_id, $attachment_id);
+            }
+        }
+        return $existing_id;
     }
 
     $id = wp_insert_post([
@@ -128,7 +139,81 @@ function demie_seed_post($type, $slug, $title, $content = '', $meta = [], $menu_
     foreach ($meta as $key => $value) {
         update_post_meta($id, $key, $value);
     }
+    if ($thumb_path) {
+        $attachment_id = demie_seed_attachment($thumb_path, $title);
+        if ($attachment_id) {
+            set_post_thumbnail($id, $attachment_id);
+        }
+    }
     return (int) $id;
+}
+
+/**
+ * Copy a bundled theme image into the media library (idempotently) and
+ * return the attachment ID, or 0 on failure. Deduped by the source file's
+ * md5 stored on the attachment, so re-seeds never duplicate entries.
+ */
+function demie_seed_attachment($source_path, $title = '') {
+    $source_path = DEMIE_DIR . '/' . ltrim($source_path, '/');
+    if (!file_exists($source_path)) {
+        return 0;
+    }
+
+    $hash = md5_file($source_path);
+    $existing = get_posts([
+        'post_type'      => 'attachment',
+        'posts_per_page' => 1,
+        'fields'         => 'ids',
+        'meta_key'       => '_demie_seed_md5',
+        'meta_value'     => $hash,
+    ]);
+    if (!empty($existing)) {
+        return (int) $existing[0];
+    }
+
+    if (!function_exists('wp_generate_attachment_metadata')) {
+        require_once ABSPATH . 'wp-admin/includes/file.php';
+        require_once ABSPATH . 'wp-admin/includes/media.php';
+        require_once ABSPATH . 'wp-admin/includes/image.php';
+    }
+
+    // Copy the trusted theme file into the uploads dir directly (bypassing
+    // upload_mimes — seeding must not depend on who is logged in, and SVGs
+    // are blocked for anonymous contexts).
+    $uploads  = wp_upload_dir();
+    if (!empty($uploads['error'])) {
+        return 0;
+    }
+    $filename = wp_unique_filename($uploads['path'], basename($source_path));
+    $dest     = trailingslashit($uploads['path']) . $filename;
+    if (!copy($source_path, $dest)) {
+        return 0;
+    }
+
+    $mimes = [
+        'svg'  => 'image/svg+xml',
+        'svgz' => 'image/svg+xml',
+        'jpg'  => 'image/jpeg',
+        'jpeg' => 'image/jpeg',
+        'png'  => 'image/png',
+        'webp' => 'image/webp',
+        'gif'  => 'image/gif',
+    ];
+    $ext  = strtolower(pathinfo($dest, PATHINFO_EXTENSION));
+    $mime = isset($mimes[$ext]) ? $mimes[$ext] : 'application/octet-stream';
+
+    $attachment_id = wp_insert_attachment([
+        'post_mime_type' => $mime,
+        'post_title'     => $title !== '' ? $title : sanitize_file_name(pathinfo($dest, PATHINFO_FILENAME)),
+        'post_status'    => 'inherit',
+    ], $dest);
+    if (is_wp_error($attachment_id) || !$attachment_id) {
+        return 0;
+    }
+
+    wp_update_attachment_metadata($attachment_id, wp_generate_attachment_metadata($attachment_id, $dest));
+    update_post_meta($attachment_id, '_demie_seed_md5', $hash);
+    return (int) $attachment_id;
 }
 
 /* ---------- Pages ---------- */
@@ -195,7 +280,7 @@ function demie_seed_services() {
     foreach ($services as $i => $s) {
         demie_seed_post('demie_service', $s[0], $s[1], $s[3], [
             '_demie_short_desc' => $s[2],
-        ], $i);
+        ], $i, 'assets/img/services/' . $s[4]);
     }
 }
 
@@ -218,7 +303,7 @@ function demie_seed_testimonials() {
             '_demie_quote'    => $t[2],
             '_demie_location' => $t[3],
             '_demie_rating'   => (string) $t[4],
-        ], $i);
+        ], $i, 'assets/img/testimonial/' . $t[5]);
     }
 }
 
@@ -251,23 +336,23 @@ function demie_seed_slides() {
     foreach ($slides as $i => $s) {
         demie_seed_post('demie_slide', $s[0], $s[1], '', [
             '_demie_subtitle' => $s[2],
-        ], $i);
+        ], $i, 'assets/img/slider/' . $s[3]);
     }
 }
 
 function demie_seed_portfolio() {
-    // [slug, title]
+    // [slug, title, project image]
     $projects = [
-        ['bright-boho-sunshine', 'Bright Boho Sunshine'],
-        ['golden-hour-sessions', 'Golden Hour Sessions'],
-        ['studio-portraits', 'Studio Portraits'],
-        ['weddings-celebrations', 'Weddings & Celebrations'],
-        ['events-gatherings', 'Events & Gatherings'],
-        ['faces-of-blantyre', 'Faces of Blantyre'],
+        ['bright-boho-sunshine', 'Bright Boho Sunshine', '1.jpg'],
+        ['golden-hour-sessions', 'Golden Hour Sessions', '2.jpg'],
+        ['studio-portraits', 'Studio Portraits', '3.jpg'],
+        ['weddings-celebrations', 'Weddings & Celebrations', '4.jpg'],
+        ['events-gatherings', 'Events & Gatherings', '5.jpg'],
+        ['faces-of-blantyre', 'Faces of Blantyre', '6.jpg'],
     ];
 
     foreach ($projects as $i => $p) {
-        demie_seed_post('demie_portfolio', $p[0], $p[1], '', [], $i);
+        demie_seed_post('demie_portfolio', $p[0], $p[1], '', [], $i, 'assets/img/projects/4/' . $p[2]);
     }
 }
 
@@ -296,15 +381,15 @@ function demie_seed_home_meta() {
         '_demie_counter3_number'  => '300',
         '_demie_counter3_suffix'  => '',
         '_demie_counter3_label'   => 'Events Covered',
-        '_demie_h_about_sub'      => '02 // About Agency',
+        '_demie_h_about_sub'      => 'About Agency',
         '_demie_h_about_l1'       => 'Demie Photography captures',
         '_demie_h_about_l2'       => 'All of Your',
         '_demie_h_about_l3'       => 'beautiful memories',
-        '_demie_h_portfolio_sub'  => '03// Our Portfolio',
+        '_demie_h_portfolio_sub'  => 'Our Portfolio',
         '_demie_h_portfolio_l1'   => 'Demie Photography captures',
         '_demie_h_portfolio_l2'   => 'All of Your',
         '_demie_h_portfolio_l3'   => 'beautiful memories',
-        '_demie_h_blog_sub'       => '04 // Latest News',
+        '_demie_h_blog_sub'       => 'Latest News',
         '_demie_h_blog_l1'        => 'Our Photography',
         '_demie_h_blog_l2'        => 'Related Blog',
         '_demie_h_blog_desc'      => 'We are deeply passionate about catching your lovely memories on camera and conveying your love for every moment of life as a whole.',
@@ -312,9 +397,30 @@ function demie_seed_home_meta() {
         '_demie_h_contact_desc'   => 'Contact us for a great photography session & beautiful captured moments',
     ];
 
+    // Bundled homepage images: field => theme-relative path.
+    $images = [
+        '_demie_img_about'    => 'assets/img/more/7.png',
+        '_demie_img_exp'      => 'assets/img/more/3.png',
+        '_demie_img_exp_bg'   => 'assets/img/background/bg-13.jpg',
+        '_demie_img_testi_bg' => 'assets/img/background/bg-16.jpg',
+        '_demie_img_insta_1'  => 'assets/img/instagram/1.jpg',
+        '_demie_img_insta_2'  => 'assets/img/instagram/2.jpg',
+        '_demie_img_insta_3'  => 'assets/img/instagram/3.jpg',
+        '_demie_img_insta_4'  => 'assets/img/instagram/4.jpg',
+        '_demie_img_insta_5'  => 'assets/img/instagram/5.jpg',
+    ];
+
     foreach ($meta as $key => $value) {
         if (metadata_exists('post', $front_id, $key) === false) {
             update_post_meta($front_id, $key, $value);
+        }
+    }
+    foreach ($images as $key => $path) {
+        if ((int) get_post_meta($front_id, $key, true) === 0) {
+            $attachment_id = demie_seed_attachment($path, ucfirst(pathinfo($path, PATHINFO_FILENAME)));
+            if ($attachment_id) {
+                update_post_meta($front_id, $key, (string) $attachment_id);
+            }
         }
     }
 }

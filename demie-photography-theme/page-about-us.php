@@ -52,7 +52,7 @@ $demie_faqs = demie_get_faqs();
             <div class="col-lg-5">
                 <div class="wptb-heading">
                     <div class="wptb-item--inner">
-                        <h6 class="wptb-item--subtitle"><span>02 //</span> <?php esc_html_e('F.A.Q', 'demie-photography'); ?></h6>
+                        <h6 class="wptb-item--subtitle"><span></span> <?php esc_html_e('F.A.Q', 'demie-photography'); ?></h6>
                         <h1 class="wptb-item--title"><?php esc_html_e('Frequently', 'demie-photography'); ?> <br> <span><?php esc_html_e('Ask Questions', 'demie-photography'); ?></span></h1>
                     </div>
                 </div>

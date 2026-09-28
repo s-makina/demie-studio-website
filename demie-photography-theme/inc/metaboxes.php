@@ -19,6 +19,48 @@ if (!defined('ABSPATH')) exit;
 function demie_render_fields($post, array $fields) {
     wp_nonce_field('demie_meta_save', 'demie_meta_nonce');
 
+    // Media picker for 'image' fields.
+    wp_enqueue_media();
+    ?>
+    <script>
+    (function () {
+        var bind = function () {
+            document.querySelectorAll('.demie-img-field').forEach(function (wrap) {
+                if (wrap.dataset.bound) { return; }
+                wrap.dataset.bound = '1';
+                var input = wrap.querySelector('input[type=hidden]'),
+                    prev  = wrap.querySelector('img'),
+                    pick  = wrap.querySelector('.demie-img-pick'),
+                    clear = wrap.querySelector('.demie-img-clear');
+                pick.addEventListener('click', function (e) {
+                    e.preventDefault();
+                    var frame = wp.media({ title: 'Choose image', multiple: false, library: { type: 'image' } });
+                    frame.on('select', function () {
+                        var att = frame.state().get('selection').first().toJSON();
+                        input.value = att.id;
+                        prev.src = (att.sizes && att.sizes.thumbnail) ? att.sizes.thumbnail.url : att.url;
+                        prev.style.display = '';
+                        clear.style.display = '';
+                    });
+                    frame.open();
+                });
+                clear.addEventListener('click', function (e) {
+                    e.preventDefault();
+                    input.value = '';
+                    prev.style.display = 'none';
+                    clear.style.display = 'none';
+                });
+            });
+        };
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', bind);
+        } else {
+            bind();
+        }
+    })();
+    </script>
+    <?php
+
     foreach ($fields as $field) {
         list($key, $label, $type) = $field;
         $args    = isset($field[3]) ? (array) $field[3] : [];
@@ -26,6 +68,19 @@ function demie_render_fields($post, array $fields) {
         $id      = esc_attr(ltrim($key, '_'));
         $name    = esc_attr($key);
         $desc    = isset($args['desc']) ? '<p class="description">' . esc_html($args['desc']) . '</p>' : '';
+
+        if ('image' === $type) {
+            $img_id  = (int) $value;
+            $img_url = $img_id ? wp_get_attachment_image_url($img_id, 'thumbnail') : '';
+            echo '<p style="margin:1em 0;"><label class="demie-img-field" style="display:block;">';
+            echo '<strong>' . esc_html($label) . '</strong><br>';
+            echo '<img src="' . esc_url($img_url) . '" alt="" style="' . ($img_url ? '' : 'display:none;') . 'max-width:120px;height:80px;object-fit:cover;margin:6px 0;border:1px solid #dcdcde;border-radius:4px;">';
+            echo '<input type="hidden" name="' . $name . '" value="' . esc_attr($value) . '">';
+            echo '<button type="button" class="button demie-img-pick">' . esc_html($img_id ? 'Replace image' : 'Choose image') . '</button> ';
+            echo '<button type="button" class="button-link demie-img-clear" style="' . ($img_id ? '' : 'display:none;') . 'color:#b32d2e;">Remove</button>';
+            echo $desc . '</p>';
+            continue;
+        }
 
         echo '<p style="margin:1em 0;"><label for="' . $id . '"><strong>' . esc_html($label) . '</strong></label><br>';
 
@@ -95,6 +150,9 @@ function demie_save_fields($post_id, array $fields) {
         switch ($type) {
             case 'number':
                 $value = (string) intval($raw);
+                break;
+            case 'image':
+                $value = (string) absint($raw);
                 break;
             case 'textarea':
                 $value = sanitize_textarea_field($raw);
@@ -169,6 +227,17 @@ function demie_home_fields() {
         ['_demie_h_blog_desc', __('Blog section description', 'demie-photography'), 'textarea', ['rows' => 2]],
         ['_demie_h_contact_l1', __('Contact section H1', 'demie-photography'), 'text'],
         ['_demie_h_contact_desc', __('Contact section description', 'demie-photography'), 'textarea', ['rows' => 2]],
+
+        // Images
+        ['_demie_img_about', __('About section photo', 'demie-photography'), 'image', ['desc' => __('The photo with the "Explore Us" button (default: bundled about image).', 'demie-photography')]],
+        ['_demie_img_exp', __('Experience section photo', 'demie-photography'), 'image', ['desc' => __('Small team photo in the experience section (desktop only).', 'demie-photography')]],
+        ['_demie_img_exp_bg', __('Experience section background', 'demie-photography'), 'image'],
+        ['_demie_img_testi_bg', __('Testimonial section background', 'demie-photography'), 'image'],
+        ['_demie_img_insta_1', __('Instagram strip image 1', 'demie-photography'), 'image'],
+        ['_demie_img_insta_2', __('Instagram strip image 2', 'demie-photography'), 'image'],
+        ['_demie_img_insta_3', __('Instagram strip image 3', 'demie-photography'), 'image'],
+        ['_demie_img_insta_4', __('Instagram strip image 4', 'demie-photography'), 'image'],
+        ['_demie_img_insta_5', __('Instagram strip image 5', 'demie-photography'), 'image'],
     ];
 }
 
