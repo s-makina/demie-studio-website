@@ -84,13 +84,16 @@ a.dark_logo.logo-wordmark { color: #151515; }
     min-width: 0;
     margin-bottom: 0; /* template's 10px margin fights flex stretch */
 }
+/* Pull the photo box up through the section's 115px top padding so the
+   photo starts flush with the section's top edge (text keeps its own
+   spacing). On the box — not the img — so the expanded area is visible. */
 .wptb-agency-experience .wptb-heading .wptb-image-single .wptb-item--inner {
     display: flex;
     flex: 1 1 auto;
     width: 100%;
 }
 .wptb-agency-experience .wptb-heading .wptb-image-single .wptb-item--image {
-    margin: 0;
+    margin: -115px 0 0;
     padding: 0;
     flex: 1 1 auto;
     align-self: stretch;
