@@ -7,73 +7,47 @@ $gallery_url  = demie_page_url('gallery');
 $about_url    = demie_page_url('about-us');
 $contact_url  = demie_page_url('contact');
 $blog_url     = demie_page_url('blog');
+
+$demie_slides       = demie_get_slides();
+$demie_services_all = demie_get_services();
+$demie_projects     = demie_get_portfolio(6);
+$demie_testimonials = demie_get_testimonials();
 ?>
 
 <!-- Slider Section -->
 <section class="wptb-slider style2">
     <div class="swiper-container wptb-swiper-slider-two">
+        <?php if ($demie_slides) : ?>
         <!-- swiper slides -->
         <div class="swiper-wrapper">
-            <!-- Slide Item -->
-            <div class="swiper-slide">
-                <div class="wptb-slider--item">
-                    <div class="wptb-slider--image" style="background-image: url('<?php echo esc_url(DEMIE_URI . '/assets/img/slider/4.jpg'); ?>');"></div>
-                    <div class="wptb-slider--inner">
-                        <!-- Layer Image -->
-                        <div class="wptb-item-layer wptb-item-layer-one">
-                            <img src="<?php echo esc_url(DEMIE_URI . '/assets/img/slider/layer-3.png'); ?>" alt="img">
-                        </div>
-                        <div class="wptb-heading">
-                            <div class="wptb-item--inner">
-                                <h1 class="wptb-item--title"><?php esc_html_e('Demie Photography', 'demie-photography'); ?></h1>
-                                <h6 class="wptb-item--subtitle"><?php esc_html_e('Weddings', 'demie-photography'); ?></h6>
+            <?php foreach ($demie_slides as $demie_i => $demie_slide) :
+                $demie_img      = get_the_post_thumbnail_url($demie_slide, 'full');
+                $demie_bg       = $demie_img ? $demie_img : DEMIE_URI . '/assets/img/slider/' . ($demie_i + 4) . '.jpg';
+                $demie_subtitle = get_post_meta($demie_slide->ID, '_demie_subtitle', true);
+                ?>
+                <!-- Slide Item -->
+                <div class="swiper-slide">
+                    <div class="wptb-slider--item">
+                        <div class="wptb-slider--image" style="background-image: url('<?php echo esc_url($demie_bg); ?>');"></div>
+                        <div class="wptb-slider--inner">
+                            <!-- Layer Image -->
+                            <div class="wptb-item-layer wptb-item-layer-one">
+                                <img src="<?php echo esc_url(DEMIE_URI . '/assets/img/slider/layer-3.png'); ?>" alt="img">
+                            </div>
+                            <div class="wptb-heading">
+                                <div class="wptb-item--inner">
+                                    <h1 class="wptb-item--title"><?php echo esc_html(get_the_title($demie_slide) ?: __('Demie Photography', 'demie-photography')); ?></h1>
+                                    <h6 class="wptb-item--subtitle"><?php echo esc_html($demie_subtitle); ?></h6>
+                                </div>
                             </div>
                         </div>
                     </div>
                 </div>
-            </div>
-            <!-- End Slide Item -->
-
-            <!-- Slide Item -->
-            <div class="swiper-slide">
-                <div class="wptb-slider--item">
-                    <div class="wptb-slider--image" style="background-image: url('<?php echo esc_url(DEMIE_URI . '/assets/img/slider/5.jpg'); ?>');"></div>
-                    <div class="wptb-slider--inner">
-                        <!-- Layer Image -->
-                        <div class="wptb-item-layer wptb-item-layer-one">
-                            <img src="<?php echo esc_url(DEMIE_URI . '/assets/img/slider/layer-3.png'); ?>" alt="img">
-                        </div>
-                        <div class="wptb-heading">
-                            <div class="wptb-item--inner">
-                                <h1 class="wptb-item--title"><?php esc_html_e('Demie Photography', 'demie-photography'); ?></h1>
-                                <h6 class="wptb-item--subtitle"><?php esc_html_e('Portraits', 'demie-photography'); ?></h6>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <!-- End Slide Item -->
-
-            <!-- Slide Item -->
-            <div class="swiper-slide">
-                <div class="wptb-slider--item">
-                    <div class="wptb-slider--image" style="background-image: url('<?php echo esc_url(DEMIE_URI . '/assets/img/slider/6.jpg'); ?>');"></div>
-                    <div class="wptb-slider--inner">
-                        <!-- Layer Image -->
-                        <div class="wptb-item-layer wptb-item-layer-one">
-                            <img src="<?php echo esc_url(DEMIE_URI . '/assets/img/slider/layer-3.png'); ?>" alt="img">
-                        </div>
-                        <div class="wptb-heading">
-                            <div class="wptb-item--inner">
-                                <h1 class="wptb-item--title"><?php esc_html_e('Demie Photography', 'demie-photography'); ?></h1>
-                                <h6 class="wptb-item--subtitle"><?php esc_html_e('Events', 'demie-photography'); ?></h6>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <!-- End Slide Item -->
+                <!-- End Slide Item -->
+            <?php endforeach; ?>
         </div>
+        <?php endif; ?>
+
     </div>
 
     <!-- Left Pane -->
@@ -86,12 +60,7 @@ $blog_url     = demie_page_url('blog');
     <!-- Right Pane -->
     <div class="wptb-right-pane">
         <div class="social-box style-oval">
-            <ul>
-                <li><a href="https://www.facebook.com/people/Demie-photography/100063646432000/"><?php esc_html_e('FB', 'demie-photography'); ?></a></li>
-                <li><a href="https://www.instagram.com/"><?php esc_html_e('IG', 'demie-photography'); ?></a></li>
-                <li><a href="https://www.youtube.com/"><?php esc_html_e('YT', 'demie-photography'); ?></a></li>
-                <li><a href="https://www.dribbble.com/"><?php esc_html_e('DR', 'demie-photography'); ?></a></li>
-            </ul>
+            <?php demie_render_social_box('labels'); ?>
         </div>
     </div>
 
@@ -117,23 +86,19 @@ $blog_url     = demie_page_url('blog');
         <div class="pd-bottom-100">
             <div class="row">
                 <?php
-                $demie_home_services = [
-                    ['icon-1.svg', __('Wedding Photography', 'demie-photography'), __('Timeless wedding photography that tells the story of your day, from preparations to the last dance.', 'demie-photography'), true],
-                    ['icon-2.svg', __('Drone Cinematography', 'demie-photography'), __('Stunning aerial views of venues, ceremonies and landscapes across Malawi.', 'demie-photography'), false],
-                    ['icon-3.svg', __('Wedding Cinematography', 'demie-photography'), __('Cinematic films that let you relive every vow, speech and celebration.', 'demie-photography'), false],
-                    ['icon-4.svg', __('Personal Portfolio Shoot', 'demie-photography'), __('Studio and on-location portraits, editorial looks and personal branding sessions.', 'demie-photography'), false],
-                ];
-                foreach ($demie_home_services as $demie_service) :
+                $demie_home_services = array_slice($demie_services_all, 0, 4);
+                foreach ($demie_home_services as $demie_i => $demie_service) :
+                    $demie_icon = get_the_post_thumbnail_url($demie_service, 'full');
                     ?>
                     <div class="col-md-3 wow fadeInLeft">
-                        <div class="wptb-icon-box6 mb-md-0<?php echo !empty($demie_service[3]) ? ' active highlight' : ''; ?>">
+                        <div class="wptb-icon-box6 mb-md-0<?php echo 0 === $demie_i ? ' active highlight' : ''; ?>">
                             <div class="wptb-item--inner">
                                 <div class="wptb-item--icon">
-                                    <img src="<?php echo esc_url(DEMIE_URI . '/assets/img/services/' . $demie_service[0]); ?>" alt="img">
+                                    <img src="<?php echo esc_url($demie_icon ? $demie_icon : DEMIE_URI . '/assets/img/services/icon-' . ($demie_i + 1) . '.svg'); ?>" alt="img">
                                 </div>
                                 <div class="wptb-item--holder">
-                                    <h4 class="wptb-item--title"><a href="<?php echo esc_url($services_url); ?>"><?php echo esc_html($demie_service[1]); ?></a></h4>
-                                    <p class="wptb-item--description"><?php echo esc_html($demie_service[2]); ?></p>
+                                    <h4 class="wptb-item--title"><a href="<?php echo esc_url($services_url); ?>"><?php echo esc_html(get_the_title($demie_service)); ?></a></h4>
+                                    <p class="wptb-item--description"><?php echo esc_html(demie_service_short($demie_service)); ?></p>
                                 </div>
                             </div>
                         </div>
@@ -146,8 +111,8 @@ $blog_url     = demie_page_url('blog');
             <div class="wptb-item--inner">
                 <div class="row align-items-center">
                     <div class="col-lg-7">
-                        <h6 class="wptb-item--subtitle"><span>02 //</span> <?php esc_html_e('About Agency', 'demie-photography'); ?></h6>
-                        <h1 class="wptb-item--title"><?php esc_html_e('Demie Photography captures', 'demie-photography'); ?> <span><?php esc_html_e('All of Your', 'demie-photography'); ?></span> <br> <?php esc_html_e('beautiful memories', 'demie-photography'); ?></h1>
+                        <h6 class="wptb-item--subtitle"><?php demie_heading_sub('_demie_h_about_sub', '02 // About Agency'); ?></h6>
+                        <h1 class="wptb-item--title"><?php demie_heading_h1('_demie_h_about_l1', '_demie_h_about_l2', '_demie_h_about_l3', __('Demie Photography captures', 'demie-photography'), __('All of Your', 'demie-photography'), __('beautiful memories', 'demie-photography')); ?></h1>
                     </div>
                     <div class="col-lg-5 text-lg-end">
                         <div class="wptb-item--button">
@@ -190,9 +155,9 @@ $blog_url     = demie_page_url('blog');
 
             <div class="col-md-6 ps-md-5 mt-4 mt-md-0">
                 <div class="wptb-about--text ps-md-5">
-                    <h3><?php esc_html_e('About Demie Photography', 'demie-photography'); ?></h3>
-                    <p class="wptb-about--text-one"><?php esc_html_e('Demie Photography is a photography studio based in Chilomoni, Blantyre, serving couples, families and brands across Malawi.', 'demie-photography'); ?></p>
-                    <p><?php esc_html_e('From weddings and portraits to events and drone cinematography, our team captures the moments that matter with care, creativity and a personal touch. Hire Demie Photography for your next event.', 'demie-photography'); ?></p>
+                    <h3><?php echo esc_html(demie_current_meta('_demie_about_heading', __('About Demie Photography', 'demie-photography'))); ?></h3>
+                    <p class="wptb-about--text-one"><?php echo esc_html(demie_current_meta('_demie_about_p1', __('Demie Photography is a photography studio based in Chilomoni, Blantyre, serving couples, families and brands across Malawi.', 'demie-photography'))); ?></p>
+                    <p><?php echo esc_html(demie_current_meta('_demie_about_p2', __('From weddings and portraits to events and drone cinematography, our team captures the moments that matter with care, creativity and a personal touch. Hire Demie Photography for your next event.', 'demie-photography'))); ?></p>
                 </div>
             </div>
         </div>
@@ -211,37 +176,34 @@ $blog_url     = demie_page_url('blog');
     <div class="container">
         <div class="wptb-heading">
             <div class="wptb-item--inner text-center">
-                <h6 class="wptb-item--subtitle"><span>03//</span> <?php esc_html_e('Our Portfolio', 'demie-photography'); ?></h6>
-                <h1 class="wptb-item--title"> <?php esc_html_e('Demie Photography captures', 'demie-photography'); ?> <span><?php esc_html_e('All of Your', 'demie-photography'); ?></span> <br>
-                    <?php esc_html_e('beautiful memories', 'demie-photography'); ?></h1>
+                <h6 class="wptb-item--subtitle"><?php demie_heading_sub('_demie_h_portfolio_sub', '03// Our Portfolio'); ?></h6>
+                <h1 class="wptb-item--title"><?php demie_heading_h1('_demie_h_portfolio_l1', '_demie_h_portfolio_l2', '_demie_h_portfolio_l3', __('Demie Photography captures', 'demie-photography'), __('All of Your', 'demie-photography'), __('beautiful memories', 'demie-photography')); ?></h1>
             </div>
         </div>
 
+        <?php if ($demie_projects) : ?>
         <div class="effect-gradient has-radius">
             <div class="grid gutter-10 clearfix">
                 <div class="grid-sizer"></div>
                 <div class="row">
                     <?php
-                    $demie_projects = [
-                        [1, 'col-md-4', __('Bright Boho Sunshine', 'demie-photography')],
-                        [2, 'col-md-4', __('Golden Hour Sessions', 'demie-photography')],
-                        [3, 'col-md-4', __('Studio Portraits', 'demie-photography')],
-                        [4, 'col-md-8', __('Weddings & Celebrations', 'demie-photography')],
-                        [5, 'col-md-8', __('Events & Gatherings', 'demie-photography')],
-                        [6, 'col-md-4', __('Faces of Blantyre', 'demie-photography')],
-                    ];
-                    foreach ($demie_projects as $demie_project) :
+                    $demie_spans = ['col-md-4', 'col-md-4', 'col-md-4', 'col-md-8', 'col-md-8', 'col-md-4'];
+                    foreach ($demie_projects as $demie_i => $demie_project) :
+                        $demie_span   = isset($demie_spans[$demie_i]) ? $demie_spans[$demie_i] : 'col-md-4';
+                        $demie_img    = demie_portfolio_img($demie_project, 'full');
+                        $demie_src    = $demie_img ? $demie_img : DEMIE_URI . '/assets/img/projects/4/' . (($demie_i % 6) + 1) . '.jpg';
+                        $demie_title  = get_the_title($demie_project);
                         ?>
-                        <div class="grid-item <?php echo esc_attr($demie_project[1]); ?>">
+                        <div class="grid-item <?php echo esc_attr($demie_span); ?>">
                             <div class="wptb-item--inner">
                                 <div class="wptb-item--image">
-                                    <img src="<?php echo esc_url(DEMIE_URI . '/assets/img/projects/4/' . $demie_project[0] . '.jpg'); ?>" alt="img">
-                                    <a class="wptb-item--link" href="<?php echo esc_url($gallery_url); ?>"><i class="bi bi-chevron-right"></i></a>
+                                    <img src="<?php echo esc_url($demie_src); ?>" alt="<?php echo esc_attr($demie_title); ?>">
+                                    <a class="wptb-item--link" href="<?php echo esc_url($demie_src); ?>" data-fancybox="portfolio" data-caption="<?php echo esc_attr($demie_title); ?>"><i class="bi bi-chevron-right"></i></a>
                                 </div>
 
                                 <div class="wptb-item--holder">
                                     <div class="wptb-item--meta">
-                                        <h4><a href="<?php echo esc_url($gallery_url); ?>"><?php echo esc_html($demie_project[2]); ?></a></h4>
+                                        <h4><a href="<?php echo esc_url($demie_src); ?>" data-fancybox="portfolio" data-caption="<?php echo esc_attr($demie_title); ?>"><?php echo esc_html($demie_title); ?></a></h4>
                                         <p><?php esc_html_e('By Demie Photography', 'demie-photography'); ?></p>
                                     </div>
                                 </div>
@@ -251,6 +213,7 @@ $blog_url     = demie_page_url('blog');
                 </div>
             </div>
         </div>
+        <?php endif; ?>
 
         <div class="wptb-item--button text-center mt-5">
             <a class="btn btn-two text-uppercase" href="<?php echo esc_url($gallery_url); ?>">
@@ -271,11 +234,11 @@ $blog_url     = demie_page_url('blog');
             <div class="col-lg-8 mb-5 mb-lg-0">
                 <div class="wptb-heading">
                     <div class="wptb-item--inner">
-                        <h1 class="wptb-item--title lg mb-5"><?php esc_html_e('20 Amazing', 'demie-photography'); ?> <br> <span class="text-outline"><?php esc_html_e('Photographers', 'demie-photography'); ?></span></h1>
-                        <p class="wptb-item--description"><?php esc_html_e('The talent at Demie Photography runs wide and deep. From weddings to events and drone work, our team members are some of the finest photographers in the industry, capturing beautiful memories across Malawi.', 'demie-photography'); ?></p>
+                        <h1 class="wptb-item--title lg mb-5"><?php echo esc_html(demie_current_meta('_demie_exp_l1', __('20 Amazing', 'demie-photography'))); ?> <br> <span class="text-outline"><?php echo esc_html(demie_current_meta('_demie_exp_l2', __('Photographers', 'demie-photography'))); ?></span></h1>
+                        <p class="wptb-item--description"><?php echo esc_html(demie_current_meta('_demie_exp_text', __('The talent at Demie Photography runs wide and deep. From weddings to events and drone work, our team members are some of the finest photographers in the industry, capturing beautiful memories across Malawi.', 'demie-photography'))); ?></p>
 
                         <div class="wptb-agency-experience--item">
-                            <span>15+</span> <?php esc_html_e('Years Experience', 'demie-photography'); ?>
+                            <span><?php echo esc_html(demie_current_meta('_demie_exp_years', '15')); ?>+</span> <?php esc_html_e('Years Experience', 'demie-photography'); ?>
                         </div>
                     </div>
 
@@ -290,32 +253,23 @@ $blog_url     = demie_page_url('blog');
             </div>
 
             <div class="col-lg-4 ps-lg-5 mt-5">
-                <div class="wptb-counter1 style1 mr-bottom-100 wow skewIn">
-                    <div class="wptb-item--inner">
-                        <div class="wptb-item--holder d-flex align-items-center">
-                            <div class="wptb-item--value"><span class="odometer" data-count="50"></span><span class="suffix">+</span></div>
-                            <div class="wptb-item--text"><?php esc_html_e('Professional Cameras', 'demie-photography'); ?></div>
+                <?php for ($demie_c = 1; $demie_c <= 3; $demie_c++) :
+                    $demie_number = demie_current_meta("_demie_counter{$demie_c}_number");
+                    $demie_suffix = demie_current_meta("_demie_counter{$demie_c}_suffix");
+                    $demie_label  = demie_current_meta("_demie_counter{$demie_c}_label");
+                    if ($demie_number === '') {
+                        continue;
+                    }
+                    ?>
+                    <div class="wptb-counter1 style1<?php echo 1 === $demie_c ? ' mr-bottom-100' : ''; ?> wow skewIn">
+                        <div class="wptb-item--inner">
+                            <div class="wptb-item--holder d-flex align-items-center">
+                                <div class="wptb-item--value"><span class="odometer" data-count="<?php echo esc_attr($demie_number); ?>"></span><span class="suffix"><?php echo esc_html($demie_suffix); ?></span></div>
+                                <div class="wptb-item--text"><?php echo esc_html($demie_label); ?></div>
+                            </div>
                         </div>
                     </div>
-                </div>
-
-                <div class="wptb-counter1 style1 mr-bottom-100 wow skewIn">
-                    <div class="wptb-item--inner">
-                        <div class="wptb-item--holder d-flex align-items-center">
-                            <div class="wptb-item--value"><span class="odometer" data-count="90"></span><span class="suffix">+</span></div>
-                            <div class="wptb-item--text"><?php esc_html_e('Photography Props', 'demie-photography'); ?></div>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="wptb-counter1 style1 wow skewIn">
-                    <div class="wptb-item--inner">
-                        <div class="wptb-item--holder d-flex align-items-center">
-                            <div class="wptb-item--value"><span class="odometer" data-count="300"></span><span class="suffix"></span></div>
-                            <div class="wptb-item--text"><?php esc_html_e('Events Covered', 'demie-photography'); ?></div>
-                        </div>
-                    </div>
-                </div>
+                <?php endfor; ?>
             </div>
         </div>
     </div>
@@ -326,16 +280,15 @@ $blog_url     = demie_page_url('blog');
     <div class="container">
         <div class="row">
             <div class="col-lg-7">
+                <?php if ($demie_testimonials) : ?>
                 <div class="swiper-container swiper-testimonial">
                     <!-- swiper slides -->
                     <div class="swiper-wrapper">
-                        <?php
-                        $demie_testimonials = [
-                            [__('I had an amazing photography session with team Demie Photography, highly recommended. They have an amazing atmosphere in their studio. I would love to visit again.', 'demie-photography'), 'Rachel Jackson', __('Blantyre', 'demie-photography'), '4.jpg'],
-                            [__('Demie captured our wedding beautifully. Every special moment of the day is there in the photos — we could not be happier with the results.', 'demie-photography'), 'Helen Jordan', __('Lilongwe', 'demie-photography'), '5.jpg'],
-                            [__('Professional, friendly and creative. Our family portraits came out stunning and the whole session was so much fun. Thank you Demie Photography!', 'demie-photography'), 'Chikondi Banda', __('Chilomoni', 'demie-photography'), '6.jpg'],
-                        ];
-                        foreach ($demie_testimonials as $demie_testimonial) :
+                        <?php foreach ($demie_testimonials as $demie_i => $demie_testimonial) :
+                            $demie_quote    = get_post_meta($demie_testimonial->ID, '_demie_quote', true);
+                            $demie_location = get_post_meta($demie_testimonial->ID, '_demie_location', true);
+                            $demie_rating   = get_post_meta($demie_testimonial->ID, '_demie_rating', true);
+                            $demie_photo    = get_the_post_thumbnail_url($demie_testimonial, 'thumbnail');
                             ?>
                             <div class="swiper-slide">
                                 <div class="wptb-testimonial1">
@@ -343,11 +296,7 @@ $blog_url     = demie_page_url('blog');
                                         <div class="wptb-item--holder">
                                             <div class="d-flex align-items-center justify-content-between mr-bottom-25">
                                                 <div class="wptb-item--meta-rating">
-                                                    <i class="bi bi-star-fill"></i>
-                                                    <i class="bi bi-star-fill"></i>
-                                                    <i class="bi bi-star-fill"></i>
-                                                    <i class="bi bi-star-fill"></i>
-                                                    <i class="bi bi-star-fill"></i>
+                                                    <?php demie_stars($demie_rating !== '' ? $demie_rating : 5); ?>
                                                 </div>
 
                                                 <div class="wptb-item--icon">
@@ -357,14 +306,18 @@ $blog_url     = demie_page_url('blog');
                                                 </div>
                                             </div>
 
-                                            <p class="wptb-item--description"> &ldquo;<?php echo esc_html($demie_testimonial[0]); ?>&rdquo;</p>
+                                            <p class="wptb-item--description"> &ldquo;<?php echo esc_html($demie_quote !== '' ? $demie_quote : get_the_title($demie_testimonial)); ?>&rdquo;</p>
                                             <div class="wptb-item--meta">
                                                 <div class="wptb-item--image">
-                                                    <img src="<?php echo esc_url(DEMIE_URI . '/assets/img/testimonial/' . $demie_testimonial[3]); ?>" alt="img">
+                                                    <?php if ($demie_photo) : ?>
+                                                        <img src="<?php echo esc_url($demie_photo); ?>" alt="<?php echo esc_attr(get_the_title($demie_testimonial)); ?>">
+                                                    <?php else : ?>
+                                                        <img src="<?php echo esc_url(DEMIE_URI . '/assets/img/testimonial/' . ($demie_i + 4) . '.jpg'); ?>" alt="<?php echo esc_attr(get_the_title($demie_testimonial)); ?>">
+                                                    <?php endif; ?>
                                                 </div>
                                                 <div class="wptb-item--meta-left">
-                                                    <h4 class="wptb-item--title"><?php echo esc_html($demie_testimonial[1]); ?></h4>
-                                                    <h6 class="wptb-item--designation"><?php echo esc_html($demie_testimonial[2]); ?></h6>
+                                                    <h4 class="wptb-item--title"><?php echo esc_html(get_the_title($demie_testimonial)); ?></h4>
+                                                    <h6 class="wptb-item--designation"><?php echo esc_html($demie_location); ?></h6>
                                                 </div>
                                             </div>
                                         </div>
@@ -380,6 +333,7 @@ $blog_url     = demie_page_url('blog');
                         <div class="wptb-swiper-arrow swiper-button-next"></div>
                     </div>
                 </div>
+                <?php endif; ?>
             </div>
         </div>
     </div>
@@ -392,14 +346,12 @@ $blog_url     = demie_page_url('blog');
             <div class="wptb-item--inner">
                 <div class="row align-items-center">
                     <div class="col-lg-6">
-                        <h6 class="wptb-item--subtitle"><span>04 //</span> <?php esc_html_e('Latest News', 'demie-photography'); ?></h6>
-                        <h1 class="wptb-item--title mb-0"><?php esc_html_e('Our Photography', 'demie-photography'); ?><br>
-                            <span><?php esc_html_e('Related Blog', 'demie-photography'); ?></span></h1>
+                        <h6 class="wptb-item--subtitle"><?php demie_heading_sub('_demie_h_blog_sub', '04 // Latest News'); ?></h6>
+                        <h1 class="wptb-item--title mb-0"><?php demie_heading_h1('_demie_h_blog_l1', '_demie_h_blog_l2', null, __('Our Photography', 'demie-photography'), __('Related Blog', 'demie-photography')); ?></h1>
                     </div>
 
                     <div class="col-lg-6">
-                        <p class="wptb-item--description"><?php esc_html_e('We are deeply passionate about', 'demie-photography'); ?> <span><?php esc_html_e('catching your lovely memories on camera', 'demie-photography'); ?></span>
-                            <?php esc_html_e('and conveying your love for every moment of life as a whole.', 'demie-photography'); ?></p>
+                        <p class="wptb-item--description"><?php echo esc_html(demie_current_meta('_demie_h_blog_desc', __('We are deeply passionate about catching your lovely memories on camera and conveying your love for every moment of life as a whole.', 'demie-photography'))); ?></p>
                     </div>
                 </div>
             </div>
@@ -442,6 +394,7 @@ $blog_url     = demie_page_url('blog');
                                 </div>
                             </div>
                         </div>
+
                         <?php
                     endwhile;
                     wp_reset_postdata();
@@ -488,8 +441,8 @@ $blog_url     = demie_page_url('blog');
         <div class="wptb-form--wrapper">
             <div class="wptb-heading">
                 <div class="wptb-item--inner text-center">
-                    <h1 class="wptb-item--title"> <?php esc_html_e('Get In Touch', 'demie-photography'); ?></h1>
-                    <div class="wptb-item--description"> <?php esc_html_e('Contact us for a great photography session & beautiful captured moments', 'demie-photography'); ?> </div>
+                    <h1 class="wptb-item--title"><?php echo esc_html(demie_current_meta('_demie_h_contact_l1', __('Get In Touch', 'demie-photography'))); ?></h1>
+                    <div class="wptb-item--description"><?php echo esc_html(demie_current_meta('_demie_h_contact_desc', __('Contact us for a great photography session & beautiful captured moments', 'demie-photography'))); ?></div>
                 </div>
             </div>
 
@@ -508,8 +461,8 @@ $blog_url     = demie_page_url('blog');
                             <div class="wptb-item--icon"><i class="bi bi-globe"></i></div>
                             <div class="wptb-item--holder">
                                 <h3 class="wptb-item--title"><?php esc_html_e('Our Website', 'demie-photography'); ?></h3>
-                                <p class="wptb-item--description">facebook.com/Demie-photography</p>
-                                <a href="https://www.facebook.com/people/Demie-photography/100063646432000/" class="wptb-item--link"><?php esc_html_e('Visit Now', 'demie-photography'); ?></a>
+                                <p class="wptb-item--description"><?php echo esc_html(parse_url(demie_get('facebook'), PHP_URL_HOST) ?: demie_get('facebook')); ?></p>
+                                <a href="<?php echo esc_url(demie_get('facebook')); ?>" target="_blank" rel="noopener" class="wptb-item--link"><?php esc_html_e('Visit Now', 'demie-photography'); ?></a>
                             </div>
                         </div>
                     </div>
@@ -534,8 +487,8 @@ $blog_url     = demie_page_url('blog');
                             <div class="wptb-item--icon"><i class="bi bi-geo-alt"></i></div>
                             <div class="wptb-item--holder">
                                 <h3 class="wptb-item--title"><?php esc_html_e('Studio Address', 'demie-photography'); ?></h3>
-                                <p class="wptb-item--description"><?php esc_html_e('Chilomoni, Blantyre, Malawi', 'demie-photography'); ?></p>
-                                <a href="https://www.google.com/maps/search/?api=1&query=Chilomoni%2C%20Blantyre%2C%20Malawi" target="_blank" rel="noopener" class="wptb-item--link"><?php esc_html_e('View Map', 'demie-photography'); ?></a>
+                                <p class="wptb-item--description"><?php echo esc_html(demie_location()); ?></p>
+                                <a href="<?php echo esc_url(demie_maps_url()); ?>" target="_blank" rel="noopener" class="wptb-item--link"><?php esc_html_e('View Map', 'demie-photography'); ?></a>
                             </div>
                         </div>
                     </div>
@@ -557,7 +510,7 @@ $blog_url     = demie_page_url('blog');
         <?php endfor; ?>
     </div>
     <div class="wptb-item--button">
-        <a class="btn btn-two" href="https://www.instagram.com/" target="_blank" rel="noopener">
+        <a class="btn btn-two" href="<?php echo esc_url(demie_get('instagram') ?: 'https://www.instagram.com/'); ?>" target="_blank" rel="noopener">
             <span class="btn-wrap">
                 <span class="text-first"><?php esc_html_e('Follow Us on Instagram', 'demie-photography'); ?></span>
                 <span class="text-second"> <i class="bi bi-instagram"></i> <i class="bi bi-instagram"></i> </span>

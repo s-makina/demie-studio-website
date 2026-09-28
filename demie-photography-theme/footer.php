@@ -45,12 +45,7 @@
                             <p><?php esc_html_e('Demie Photography, All Rights Reserved', 'demie-photography'); ?> &copy; <?php echo esc_html(date('Y')); ?></p>
                         </div>
                         <div class="social-box style-oval">
-                            <ul>
-                                <li><a href="https://www.facebook.com/people/Demie-photography/100063646432000/" class="bi bi-facebook"></a></li>
-                                <li><a href="https://www.instagram.com/" class="bi bi-instagram"></a></li>
-                                <li><a href="https://www.linkedin.com/" class="bi bi-linkedin"></a></li>
-                                <li><a href="https://www.behance.com/" class="bi bi-behance"></a></li>
-                            </ul>
+                            <?php demie_render_social_box('icons'); ?>
                         </div>
                     </div>
                 </div>

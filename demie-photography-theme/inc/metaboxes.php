@@ -137,7 +137,8 @@ function demie_home_fields() {
         ['_demie_about_p2', __('About paragraph 2', 'demie-photography'), 'textarea', ['rows' => 3]],
 
         // Experience / stats section
-        ['_demie_exp_heading', __('Experience heading', 'demie-photography'), 'text', ['desc' => __('e.g. "20 Amazing Photographers"', 'demie-photography')]],
+        ['_demie_exp_l1', __('Experience heading, part 1 (e.g. "20 Amazing")', 'demie-photography'), 'text'],
+        ['_demie_exp_l2', __('Experience heading, outlined part (e.g. "Photographers")', 'demie-photography'), 'text'],
         ['_demie_exp_text', __('Experience paragraph', 'demie-photography'), 'textarea', ['rows' => 3]],
         ['_demie_exp_years', __('Years experience (number)', 'demie-photography'), 'number', ['min' => 0, 'max' => 99]],
 
@@ -152,14 +153,17 @@ function demie_home_fields() {
         ['_demie_counter3_suffix', __('Counter 3 — suffix', 'demie-photography'), 'text'],
         ['_demie_counter3_label', __('Counter 3 — label', 'demie-photography'), 'text'],
 
-        // Section headings
-        ['_demie_h_about_sub', __('Section label 02 (e.g. "About Agency")', 'demie-photography'), 'text'],
+        // Section headings — sub labels carry the full "NN // Label" text;
+        // the numeric prefix is auto-highlighted by demie_heading_sub().
+        ['_demie_h_about_sub', __('Section 02 label (e.g. "02 // About Agency")', 'demie-photography'), 'text'],
         ['_demie_h_about_l1', __('About section H1, part 1', 'demie-photography'), 'text'],
         ['_demie_h_about_l2', __('About section H1, highlighted part', 'demie-photography'), 'text'],
-        ['_demie_h_portfolio_sub', __('Section label 03 (e.g. "Our Portfolio")', 'demie-photography'), 'text'],
+        ['_demie_h_about_l3', __('About section H1, part 3 (after the line break)', 'demie-photography'), 'text'],
+        ['_demie_h_portfolio_sub', __('Section 03 label (e.g. "03// Our Portfolio")', 'demie-photography'), 'text'],
         ['_demie_h_portfolio_l1', __('Portfolio H1, part 1', 'demie-photography'), 'text'],
         ['_demie_h_portfolio_l2', __('Portfolio H1, highlighted part', 'demie-photography'), 'text'],
-        ['_demie_h_blog_sub', __('Section label 04 (e.g. "Latest News")', 'demie-photography'), 'text'],
+        ['_demie_h_portfolio_l3', __('Portfolio H1, part 3 (after the line break)', 'demie-photography'), 'text'],
+        ['_demie_h_blog_sub', __('Section 04 label (e.g. "04 // Latest News")', 'demie-photography'), 'text'],
         ['_demie_h_blog_l1', __('Blog section H1, part 1', 'demie-photography'), 'text'],
         ['_demie_h_blog_l2', __('Blog section H1, highlighted part', 'demie-photography'), 'text'],
         ['_demie_h_blog_desc', __('Blog section description', 'demie-photography'), 'textarea', ['rows' => 2]],
@@ -170,9 +174,11 @@ function demie_home_fields() {
 
 function demie_page_heading_fields() {
     return [
-        ['_demie_h_sub', __('Section label (e.g. "01 // About Us")', 'demie-photography'), 'text'],
+        ['_demie_h_sub', __('Section label (e.g. "01// Our Services")', 'demie-photography'), 'text', ['desc' => __('A leading "NN //" prefix is automatically highlighted in the accent color.', 'demie-photography')]],
         ['_demie_h_l1', __('Page H1, part 1', 'demie-photography'), 'text'],
         ['_demie_h_l2', __('Page H1, highlighted part', 'demie-photography'), 'text'],
+        ['_demie_h_l3', __('Page H1, part 3 (after the line break)', 'demie-photography'), 'text'],
+        ['_demie_h_desc', __('Section description (Contact page)', 'demie-photography'), 'textarea', ['rows' => 2]],
     ];
 }
 
@@ -196,10 +202,11 @@ add_action('add_meta_boxes', function () {
         demie_render_fields($post, demie_home_fields());
     }, 'page', 'normal', 'high', ['__back_compat_meta_box' => false, 'demie_only_front' => true]);
 
-    // Page Headings: on the brochure pages.
+    // Page Headings: on all pages and posts (brochure pages are seeded; generic
+    // pages/posts start empty and hide the heading block until filled).
     add_meta_box('demie-page-headings', __('Demie Page Headings', 'demie-photography'), function ($post) {
         demie_render_fields($post, demie_page_heading_fields());
-    }, 'page', 'side', 'default', ['demie_only_brochure' => true]);
+    }, ['page', 'post'], 'side', 'default');
 }, 10, 0);
 
 /**
@@ -213,21 +220,9 @@ add_filter('postbox_classes_page_demie-home', function ($classes) {
     return $classes;
 });
 
-add_filter('postbox_classes_page_demie-page-headings', function ($classes) {
-    $post = get_post();
-    $brochure = ['home', 'about-us', 'services', 'gallery', 'blog', 'contact'];
-    if (!$post || !in_array($post->post_name, $brochure, true)) {
-        $classes[] = 'hidden';
-    }
-    return $classes;
-});
-
 /* ---------- Saving ---------- */
 
 add_action('save_post', function ($post_id, $post, $update) {
-    if (demie_is_admin_screen() === false && !wp_is_post_revision($post_id)) {
-        // still allow saves triggered programmatically
-    }
     if (!$post || wp_is_post_revision($post_id) || wp_is_post_autosave($post_id)) {
         return;
     }
@@ -245,6 +240,9 @@ add_action('save_post', function ($post_id, $post, $update) {
         case 'page':
             // Both page metaboxes share the nonce; saving both is harmless.
             demie_save_fields($post_id, demie_home_fields());
+            demie_save_fields($post_id, demie_page_heading_fields());
+            break;
+        case 'post':
             demie_save_fields($post_id, demie_page_heading_fields());
             break;
     }

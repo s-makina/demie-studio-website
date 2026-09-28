@@ -48,6 +48,53 @@ function demie_whatsapp_url() { return 'https://wa.me/' . preg_replace('/[^0-9]/
 function demie_maps_url()     { return 'https://www.google.com/maps/search/?api=1&query=' . rawurlencode(demie_get('location')); }
 function demie_social_url($network) { return demie_get($network); }
 
+/**
+ * Social networks configured in Demie Settings, in display order.
+ * Format: [network => [short label, bootstrap-icon class]].
+ * Networks with an empty URL are hidden.
+ */
+function demie_social_networks() {
+    $all = [
+        'facebook'  => ['FB', 'bi-facebook'],
+        'instagram' => ['IG', 'bi-instagram'],
+        'linkedin'  => ['LI', 'bi-linkedin'],
+        'youtube'   => ['YT', 'bi-youtube'],
+        'behance'   => ['BE', 'bi-behance'],
+    ];
+    $out = [];
+    foreach ($all as $network => $meta) {
+        $url = demie_get($network);
+        if ($url !== '') {
+            $out[$network] = [
+                'label' => $meta[0],
+                'icon'  => $meta[1],
+                'url'   => $url,
+            ];
+        }
+    }
+    return $out;
+}
+
+/**
+ * Render a social-box <ul> (short labels) or icon list.
+ * $style: 'labels' (FB / IG / …) or 'icons' (bootstrap icons).
+ */
+function demie_render_social_box($style = 'labels') {
+    $networks = demie_social_networks();
+    if (!$networks) {
+        return;
+    }
+    echo '<ul>';
+    foreach ($networks as $network) {
+        if ('icons' === $style) {
+            echo '<li><a href="' . esc_url($network['url']) . '" target="_blank" rel="noopener" class="' . esc_attr($network['icon']) . '"></a></li>';
+        } else {
+            echo '<li><a href="' . esc_url($network['url']) . '" target="_blank" rel="noopener">' . esc_html($network['label']) . '</a></li>';
+        }
+    }
+    echo '</ul>';
+}
+
 /* ---------- Admin page ---------- */
 
 add_action('admin_menu', function () {

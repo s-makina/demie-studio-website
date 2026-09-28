@@ -5,6 +5,9 @@
  */
 
 get_header();
+
+$demie_h_l1 = demie_current_meta('_demie_h_l1', __('Get In Touch', 'demie-photography'));
+$demie_h_desc = demie_current_meta('_demie_h_desc', __('Contact us for a great photography session & beautiful captured moments', 'demie-photography'));
 ?>
 
 <!-- Contact -->
@@ -17,8 +20,8 @@ get_header();
         <div class="wptb-form--wrapper">
             <div class="wptb-heading">
                 <div class="wptb-item--inner text-center">
-                    <h1 class="wptb-item--title"> <?php esc_html_e('Get In Touch', 'demie-photography'); ?></h1>
-                    <div class="wptb-item--description"> <?php esc_html_e('Contact us for a great photography session & beautiful captured moments', 'demie-photography'); ?> </div>
+                    <h1 class="wptb-item--title"><?php echo esc_html($demie_h_l1); ?></h1>
+                    <div class="wptb-item--description"><?php echo esc_html($demie_h_desc); ?></div>
                 </div>
             </div>
 
@@ -63,8 +66,8 @@ get_header();
                             <div class="wptb-item--icon"><i class="bi bi-geo-alt"></i></div>
                             <div class="wptb-item--holder">
                                 <h3 class="wptb-item--title"><?php esc_html_e('Studio Address', 'demie-photography'); ?></h3>
-                                <p class="wptb-item--description"><?php esc_html_e('Chilomoni, Blantyre, Malawi', 'demie-photography'); ?></p>
-                                <a href="https://www.google.com/maps/search/?api=1&query=Chilomoni%2C%20Blantyre%2C%20Malawi" target="_blank" rel="noopener" class="wptb-item--link"><?php esc_html_e('View Map', 'demie-photography'); ?></a>
+                                <p class="wptb-item--description"><?php echo esc_html(demie_location()); ?></p>
+                                <a href="<?php echo esc_url(demie_maps_url()); ?>" target="_blank" rel="noopener" class="wptb-item--link"><?php esc_html_e('View Map', 'demie-photography'); ?></a>
                             </div>
                         </div>
                     </div>

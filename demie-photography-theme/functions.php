@@ -10,6 +10,8 @@ require_once DEMIE_DIR . '/inc/contact.php';
 require_once DEMIE_DIR . '/inc/settings.php';
 require_once DEMIE_DIR . '/inc/cpts.php';
 require_once DEMIE_DIR . '/inc/metaboxes.php';
+require_once DEMIE_DIR . '/inc/template-tags.php';
+require_once DEMIE_DIR . '/inc/seed.php';
 
 function demie_setup() {
     load_theme_textdomain('demie-photography', DEMIE_DIR . '/languages');
