@@ -57,7 +57,7 @@ For the sharpest results, aim close to how each slot displays:
 | Portfolio grid | Wide tiles ~2:1, small tiles ~1:1 | 900×450 or 600×600 |
 | Blog cards | Uniform 260px-tall crop | 700×500 (landscape) |
 | Instagram strip | Square tiles | 600×600 |
-| About "Explore Us" photo | Capped at 640px tall | 700×600 |
+| About "Explore Us" photo | Capped at 480px tall | 640×480 |
 | Service icons | Max 70×50 | Square ~106×106 |
 
 You can upload larger images — WordPress will resize them — just avoid extreme aspect ratios (e.g. a 4000×12000 panorama in the portfolio grid simply shows its middle).

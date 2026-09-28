@@ -84,17 +84,17 @@ a.dark_logo.logo-wordmark { color: #151515; }
     width: auto;
     max-width: 100%;
     height: auto;
-    max-height: 430px;
+    max-height: 320px;
     object-fit: contain;
 }
 @media (min-width: 1400px) {
     .wptb-agency-experience .wptb-heading .wptb-image-single .wptb-item--image img {
-        max-height: 480px;
+        max-height: 360px;
     }
 }
 @media (min-width: 1200px) and (max-width: 1399.98px) {
     .wptb-agency-experience .wptb-image-single .wptb-item--image img {
-        max-height: 360px;
+        max-height: 280px;
     }
 }
 
@@ -108,15 +108,20 @@ a.dark_logo.logo-wordmark { color: #151515; }
    images render exactly as designed.
    ------------------------------------------------------------------ */
 
-/* About section main photo ("Explore Us") */
+/* About section main photo ("Explore Us") — always fills its column
+   width; tall uploads crop at the cap instead of stretching the section */
 .wptb-about-two .wptb-image-single .wptb-item--image > img {
     display: block;
-    width: auto;
-    max-width: 100%;
+    width: 100%;
     height: auto;
-    max-height: 640px;
-    object-fit: contain;
-    margin-inline: auto;
+    max-height: 400px;
+    object-fit: cover;
+    object-position: center;
+}
+@media (max-width: 767.98px) {
+    .wptb-about-two .wptb-image-single .wptb-item--image > img {
+        max-height: 320px;
+    }
 }
 
 /* Portfolio grid (also used by the Gallery page) — crop inside the
