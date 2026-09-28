@@ -1,6 +1,6 @@
 # Demie Photography — WordPress Theme Usage
 
-Theme folder: `demie-photography-theme/` · Deliverable: `demie-photography-theme.zip` · Version 1.3.2
+Theme folder: `demie-photography-theme/` · Deliverable: `demie-photography-theme.zip` · Version 1.3.3
 
 ## Install on the live site
 
@@ -70,10 +70,26 @@ The form mails via `wp_mail` to the **Email** in **Settings → Demie Settings**
 
 A copy is already installed in the local WP at `C:\xampp\htdocs\other\demie-studio-wp` and activated (pages, content, icons and settings seeded): <http://localhost/other/demie-studio-wp/>
 
+## Deploying to the live site (automatic)
+
+`deploy_theme.py` (project root, Python 3) pushes the dev theme to the live install and proves it landed:
+
+```
+python deploy_theme.py              # copy changed files + bump version + verify live
+python deploy_theme.py --zip        # also rebuild demie-photography-theme.zip
+python deploy_theme.py --dry-run    # preview what would change
+python deploy_theme.py --watch      # auto-deploy on every file save
+```
+
+Every deploy bumps `DEMIE_VERSION`, so browsers automatically drop cached CSS/JS — edits show up with a normal refresh. The script ends by fetching the live homepage and `brand.css` and printing `LIVE SITE IS UP TO DATE` only if the new version is genuinely being served.
+
+After editing anything in `demie-photography-theme/`, just run `python deploy_theme.py --zip` — the live site updates and the WP-admin upload zip stays current.
+
 ## Files of interest (for developers)
 
 ```
 functions.php              setup, menus, enqueues, version (DEMIE_VERSION)
+deploy_theme.py            sync dev theme -> live site, bump version, verify (see "Deploying")
 inc/settings.php           Demie Settings page (Studio Details) + social helpers
 inc/cpts.php               5 custom post types + SVG upload allowance + admin columns
 inc/metaboxes.php          metabox field framework + Home Sections / Page Headings / Service / Testimonial / Slide fields
