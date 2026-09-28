@@ -71,3 +71,29 @@ a.dark_logo.logo-wordmark { color: #151515; }
     color: #ffffff;
     transform: scale(1.08);
 }
+
+/* Agency Experience section photo ("20 Amazing Photographers")
+   Constrain any uploaded image so it can never blow out the heading layout.
+   The theme gives the slot flex: 0 0 58% but no max on the <img> itself, so a
+   wide/large upload stretches the flex item (min-width: auto). */
+.wptb-agency-experience .wptb-heading .wptb-image-single {
+    min-width: 0;
+}
+.wptb-agency-experience .wptb-heading .wptb-image-single .wptb-item--image img {
+    display: block;
+    width: auto;
+    max-width: 100%;
+    height: auto;
+    max-height: 430px;
+    object-fit: contain;
+}
+@media (min-width: 1400px) {
+    .wptb-agency-experience .wptb-heading .wptb-image-single .wptb-item--image img {
+        max-height: 480px;
+    }
+}
+@media (min-width: 1200px) and (max-width: 1399.98px) {
+    .wptb-agency-experience .wptb-image-single .wptb-item--image img {
+        max-height: 360px;
+    }
+}

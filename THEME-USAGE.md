@@ -1,6 +1,6 @@
 # Demie Photography — WordPress Theme Usage
 
-Theme folder: `demie-photography-theme/` · Deliverable: `demie-photography-theme.zip` (44.8 MB) · Version 1.1.0
+Theme folder: `demie-photography-theme/` · Deliverable: `demie-photography-theme.zip` · Version 1.3.1
 
 ## Install on the live site
 
