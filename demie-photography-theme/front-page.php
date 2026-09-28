@@ -232,7 +232,7 @@ $demie_testimonials = demie_get_testimonials();
             <div class="col-lg-8 mb-5 mb-lg-0">
                 <div class="wptb-heading">
                     <div class="wptb-item--inner">
-                        <h1 class="wptb-item--title lg mb-5"><?php echo esc_html(demie_current_meta('_demie_exp_l1', __('From First Hello', 'demie-photography'))); ?> <br> <span class="text-outline"><?php echo esc_html(demie_current_meta('_demie_exp_l2', __('to Final Gallery', 'demie-photography'))); ?></span></h1>
+                        <h1 class="wptb-item--title lg"><?php echo esc_html(demie_current_meta('_demie_exp_l1', __('From First Hello', 'demie-photography'))); ?> <br> <span class="text-outline"><?php echo esc_html(demie_current_meta('_demie_exp_l2', __('to Final Gallery', 'demie-photography'))); ?></span></h1>
                         <p class="wptb-item--description"><?php echo esc_html(demie_current_meta('_demie_exp_text', __('No confusing packages or endless back-and-forth. Tell us about your wedding, portrait session or event, and we handle the rest — planning, shooting and editing — so all you have to do is show up and enjoy your moment.', 'demie-photography'))); ?></p>
 
                         <div class="wptb-agency-experience--item">
@@ -258,7 +258,7 @@ $demie_testimonials = demie_get_testimonials();
                         continue;
                     }
                     ?>
-                    <div class="wptb-counter1 style1<?php echo 1 === $demie_s ? ' mr-bottom-100' : ''; ?> wow skewIn">
+                    <div class="wptb-counter1 style1 wow skewIn">
                         <div class="wptb-item--inner">
                             <div class="wptb-item--holder d-flex align-items-start">
                                 <span class="demie-step--number"><?php echo esc_html($demie_s); ?></span>

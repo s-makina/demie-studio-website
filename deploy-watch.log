@@ -712,3 +712,71 @@ Verifying live site ...
   + Homepage links brand.css?ver=1.3.54  (cache-bust live)
   + Live brand.css is the deployed version (guards present, md5 match)
   + LIVE SITE IS UP TO DATE
+
+[17:54:18] 1 file(s) changed
+
+==============================================================
+Deploy: dev theme -> live site
+  dev : C:\xampp\htdocs\other\demie-studio-website\demie-photography-theme
+  live: C:\xampp\htdocs\other\demie-studio-wp\wp-content\themes\demie-photography-theme
+==============================================================
+  + copied front-page.php
+  + 1 copied, 0 deleted, 399 already identical
+  ~ Version bumped: 1.3.54 -> 1.3.55
+  + copied functions.php (version 1.3.55)
+
+Verifying live site ...
+  + Homepage links brand.css?ver=1.3.55  (cache-bust live)
+  + Live brand.css is the deployed version (guards present, md5 match)
+  + LIVE SITE IS UP TO DATE
+
+[17:55:20] 1 file(s) changed
+
+==============================================================
+Deploy: dev theme -> live site
+  dev : C:\xampp\htdocs\other\demie-studio-website\demie-photography-theme
+  live: C:\xampp\htdocs\other\demie-studio-wp\wp-content\themes\demie-photography-theme
+==============================================================
+  + copied assets/css/brand.css
+  + 1 copied, 0 deleted, 399 already identical
+  ~ Version bumped: 1.3.55 -> 1.3.56
+  + copied functions.php (version 1.3.56)
+
+Verifying live site ...
+  + Homepage links brand.css?ver=1.3.56  (cache-bust live)
+  + Live brand.css is the deployed version (guards present, md5 match)
+  + LIVE SITE IS UP TO DATE
+
+[17:59:13] 1 file(s) changed
+
+==============================================================
+Deploy: dev theme -> live site
+  dev : C:\xampp\htdocs\other\demie-studio-website\demie-photography-theme
+  live: C:\xampp\htdocs\other\demie-studio-wp\wp-content\themes\demie-photography-theme
+==============================================================
+  + copied inc/seed.php
+  + 1 copied, 0 deleted, 399 already identical
+  ~ Version bumped: 1.3.56 -> 1.3.57
+  + copied functions.php (version 1.3.57)
+
+Verifying live site ...
+  + Homepage links brand.css?ver=1.3.57  (cache-bust live)
+  + Live brand.css is the deployed version (guards present, md5 match)
+  + LIVE SITE IS UP TO DATE
+
+[17:59:39] 1 file(s) changed
+
+==============================================================
+Deploy: dev theme -> live site
+  dev : C:\xampp\htdocs\other\demie-studio-website\demie-photography-theme
+  live: C:\xampp\htdocs\other\demie-studio-wp\wp-content\themes\demie-photography-theme
+==============================================================
+  + copied functions.php
+  + 1 copied, 0 deleted, 399 already identical
+  ~ Version bumped: 1.3.58 -> 1.3.59
+  + copied functions.php (version 1.3.59)
+
+Verifying live site ...
+  + Homepage links brand.css?ver=1.3.59  (cache-bust live)
+  + Live brand.css is the deployed version (guards present, md5 match)
+  + LIVE SITE IS UP TO DATE

@@ -73,16 +73,28 @@ a.dark_logo.logo-wordmark { color: #151515; }
 }
 
 /* How It Works section ("From First Hello to Final Gallery")
-   Magazine-style: the photo stretches to exactly match the height of the
-   text column beside it (cover-cropped), never stretching the section
-   itself — the text always drives the height. The template's -60px bleed
-   is removed so a real photo never slides under the heading. */
+   Magazine-style: the photo stretches to match the height of the row
+   (cover-cropped), never stretching the section itself — the tallest
+   column (usually the steps) drives the height. The template's -60px
+   bleed is removed so a real photo never slides under the heading. */
 .wptb-agency-experience .wptb-heading .wptb-image-single {
     /* !important beats Bootstrap's d-xl-block (display:block !important)
        which would otherwise block the stretch layout at desktop widths */
     display: flex !important;
     min-width: 0;
     margin-bottom: 0; /* template's 10px margin fights flex stretch */
+}
+/* The steps column is usually taller than the text, so the text column
+   itself must stretch with the row — otherwise the photo stops at the
+   text's own height and never reaches the section bottom. */
+@media (min-width: 992px) {
+    .wptb-agency-experience .col-lg-8 {
+        display: flex;
+        flex-direction: column;
+    }
+    .wptb-agency-experience .col-lg-8 > .wptb-heading {
+        flex: 1 1 auto;
+    }
 }
 /* Pull the photo box up through the section's 115px top padding so the
    photo starts flush with the section's top edge (text keeps its own
@@ -110,27 +122,40 @@ a.dark_logo.logo-wordmark { color: #151515; }
 /* How-It-Works step blocks (replace the template counters on the right).
    Number chip + title + short description; the template's counter row
    (divider, big value, uppercase label) is reset inside .demie-step--body
-   so the steps read as a simple numbered list. */
+   so the steps read as a simple numbered list. The right column is a flex
+   stack with even spacing, replacing the template's one-off 100px gap
+   under the first block. */
+.wptb-agency-experience .col-lg-4 {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 34px;
+    margin-top: 0;
+}
+.wptb-agency-experience .col-lg-4 > .wptb-counter1 {
+    margin: 0;
+}
 .wptb-agency-experience .wptb-counter1 .wptb-item--holder {
     align-items: flex-start;
-    gap: 18px;
+    gap: 16px;
 }
 .demie-step--number {
     flex-shrink: 0;
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 46px;
-    height: 46px;
+    width: 40px;
+    height: 40px;
     border: 1px solid rgba(var(--color-white-rgb), 0.35);
     color: var(--color-one);
-    font-size: 20px;
+    font-size: 17px;
     font-weight: var(--fw-medium);
     line-height: 1;
+    margin-top: 2px;
 }
 .demie-step--title {
-    margin: 4px 0 6px;
-    font-size: 20px;
+    margin: 2px 0 6px;
+    font-size: 16px;
     line-height: 1.3;
     font-weight: var(--fw-medium);
     text-transform: uppercase;
@@ -139,18 +164,56 @@ a.dark_logo.logo-wordmark { color: #151515; }
 }
 .demie-step--text {
     margin: 0;
-    font-size: 15px;
+    font-size: 14px;
     line-height: 1.55;
     color: rgba(var(--color-white-rgb), 0.75);
 }
+/* Section typography — the template's counter-era sizes (60px heading,
+   74px badge) overpower the lighter step content, so the section gets
+   its own scale. */
+.wptb-agency-experience .wptb-heading .wptb-item--title.lg {
+    font-size: 44px;
+    line-height: 1.15;
+}
+.wptb-agency-experience .wptb-heading .wptb-item--description {
+    padding-right: 40px;
+    margin-top: 18px;
+}
+.wptb-agency-experience--item {
+    font-size: 17px;
+    margin-top: 30px;
+}
+.wptb-agency-experience--item span {
+    width: 54px;
+    height: 54px;
+    font-size: 20px;
+    line-height: 1;
+}
+@media (max-width: 1199.98px) {
+    .wptb-agency-experience .wptb-heading .wptb-item--title.lg {
+        font-size: 38px;
+    }
+}
 @media (max-width: 767.98px) {
+    .wptb-agency-experience .wptb-heading .wptb-item--title.lg {
+        font-size: 32px;
+    }
+    .wptb-agency-experience .wptb-heading .wptb-item--description {
+        padding-right: 0;
+    }
+    .wptb-agency-experience .col-lg-4 {
+        gap: 26px;
+    }
     .demie-step--number {
-        width: 38px;
-        height: 38px;
-        font-size: 17px;
+        width: 34px;
+        height: 34px;
+        font-size: 15px;
     }
     .demie-step--title {
-        font-size: 17px;
+        font-size: 15px;
+    }
+    .demie-step--text {
+        font-size: 13px;
     }
 }
 
