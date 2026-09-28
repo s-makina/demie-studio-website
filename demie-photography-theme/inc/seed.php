@@ -368,19 +368,17 @@ function demie_seed_home_meta() {
         '_demie_about_heading'    => 'About Demie Photography',
         '_demie_about_p1'         => 'Demie Photography is a photography studio based in Chilomoni, Blantyre, serving couples, families and brands across Malawi.',
         '_demie_about_p2'         => 'From weddings and portraits to events and drone cinematography, our team captures the moments that matter with care, creativity and a personal touch. Hire Demie Photography for your next event.',
-        '_demie_exp_l1'           => '20 Amazing',
-        '_demie_exp_l2'           => 'Photographers',
-        '_demie_exp_text'         => 'The talent at Demie Photography runs wide and deep. From weddings to events and drone work, our team members are some of the finest photographers in the industry, capturing beautiful memories across Malawi.',
-        '_demie_exp_years'        => '15',
-        '_demie_counter1_number'  => '50',
-        '_demie_counter1_suffix'  => '+',
-        '_demie_counter1_label'   => 'Professional Cameras',
-        '_demie_counter2_number'  => '90',
-        '_demie_counter2_suffix'  => '+',
-        '_demie_counter2_label'   => 'Photography Props',
-        '_demie_counter3_number'  => '300',
-        '_demie_counter3_suffix'  => '',
-        '_demie_counter3_label'   => 'Events Covered',
+        '_demie_exp_l1'           => 'From First Hello',
+        '_demie_exp_l2'           => 'to Final Gallery',
+        '_demie_exp_text'         => 'No confusing packages or endless back-and-forth. Tell us about your wedding, portrait session or event, and we handle the rest — planning, shooting and editing — so all you have to do is show up and enjoy your moment.',
+        '_demie_exp_badge_number' => '3',
+        '_demie_exp_badge_label'  => 'Simple Steps',
+        '_demie_step1_title'      => 'Tell Us Your Date',
+        '_demie_step1_text'       => 'Send a WhatsApp message or fill in the contact form with your event details.',
+        '_demie_step2_title'      => 'We Plan Your Shoot',
+        '_demie_step2_text'       => 'We agree on the venue, timing and style, and handle everything on the day.',
+        '_demie_step3_title'      => 'Receive Your Gallery',
+        '_demie_step3_text'       => 'Carefully edited photos delivered online, ready to share with family and friends.',
         '_demie_h_about_l1'       => 'Demie Photography captures',
         '_demie_h_about_l2'       => 'All of Your',
         '_demie_h_about_l3'       => 'beautiful memories',
@@ -407,16 +405,39 @@ function demie_seed_home_meta() {
         '_demie_img_insta_5'  => 'assets/img/instagram/5.jpg',
     ];
 
-    foreach ($meta as $key => $value) {
-        if (metadata_exists('post', $front_id, $key) === false) {
-            update_post_meta($front_id, $key, $value);
-        }
-    }
-
     // Legacy cleanup: earlier seeds created homepage label fields ("02 //" etc.)
     // that have been removed from the metabox — delete any leftovers.
     foreach (['_demie_h_about_sub', '_demie_h_portfolio_sub', '_demie_h_blog_sub'] as $legacy_key) {
         delete_post_meta($front_id, $legacy_key);
+    }
+
+    // One-time migration to the How-It-Works section: the "20 Amazing
+    // Photographers" copy and the fake counter stats ("50+ Cameras" etc.)
+    // are retired. Seeded defaults are deleted so the new copy below takes
+    // their place; anything the owner customized is left untouched. The
+    // retired counter/badge meta is always deleted.
+    foreach ([
+        '_demie_exp_l1'   => '20 Amazing',
+        '_demie_exp_l2'   => 'Photographers',
+        '_demie_exp_text' => 'The talent at Demie Photography runs wide and deep. From weddings to events and drone work, our team members are some of the finest photographers in the industry, capturing beautiful memories across Malawi.',
+    ] as $legacy_key => $legacy_value) {
+        if (get_post_meta($front_id, $legacy_key, true) === $legacy_value) {
+            delete_post_meta($front_id, $legacy_key);
+        }
+    }
+    foreach ([
+        '_demie_counter1_number', '_demie_counter1_suffix', '_demie_counter1_label',
+        '_demie_counter2_number', '_demie_counter2_suffix', '_demie_counter2_label',
+        '_demie_counter3_number', '_demie_counter3_suffix', '_demie_counter3_label',
+        '_demie_exp_years',
+    ] as $legacy_key) {
+        delete_post_meta($front_id, $legacy_key);
+    }
+
+    foreach ($meta as $key => $value) {
+        if (metadata_exists('post', $front_id, $key) === false) {
+            update_post_meta($front_id, $key, $value);
+        }
     }
 
     foreach ($images as $key => $path) {

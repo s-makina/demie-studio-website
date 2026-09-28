@@ -72,7 +72,7 @@ a.dark_logo.logo-wordmark { color: #151515; }
     transform: scale(1.08);
 }
 
-/* Agency Experience section photo ("20 Amazing Photographers")
+/* How It Works section ("From First Hello to Final Gallery")
    Magazine-style: the photo stretches to exactly match the height of the
    text column beside it (cover-cropped), never stretching the section
    itself — the text always drives the height. The template's -60px bleed
@@ -107,6 +107,53 @@ a.dark_logo.logo-wordmark { color: #151515; }
     object-fit: cover;
     object-position: center;
 }
+/* How-It-Works step blocks (replace the template counters on the right).
+   Number chip + title + short description; the template's counter row
+   (divider, big value, uppercase label) is reset inside .demie-step--body
+   so the steps read as a simple numbered list. */
+.wptb-agency-experience .wptb-counter1 .wptb-item--holder {
+    align-items: flex-start;
+    gap: 18px;
+}
+.demie-step--number {
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 46px;
+    height: 46px;
+    border: 1px solid rgba(var(--color-white-rgb), 0.35);
+    color: var(--color-one);
+    font-size: 20px;
+    font-weight: var(--fw-medium);
+    line-height: 1;
+}
+.demie-step--title {
+    margin: 4px 0 6px;
+    font-size: 20px;
+    line-height: 1.3;
+    font-weight: var(--fw-medium);
+    text-transform: uppercase;
+    letter-spacing: 0.02em;
+    color: var(--color-white);
+}
+.demie-step--text {
+    margin: 0;
+    font-size: 15px;
+    line-height: 1.55;
+    color: rgba(var(--color-white-rgb), 0.75);
+}
+@media (max-width: 767.98px) {
+    .demie-step--number {
+        width: 38px;
+        height: 38px;
+        font-size: 17px;
+    }
+    .demie-step--title {
+        font-size: 17px;
+    }
+}
+
 /* ------------------------------------------------------------------
    Image height guards
    The theme sizes most image slots from the image itself, so a very

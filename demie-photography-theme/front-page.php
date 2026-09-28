@@ -224,7 +224,7 @@ $demie_testimonials = demie_get_testimonials();
     </div>
 </section>
 
-<!-- Agency Experience -->
+<!-- How It Works (booking process) -->
 <section class="wptb-agency-experience bg-image pb-xl-0" style="background-image: url('<?php echo esc_url(demie_image_url('_demie_img_exp_bg', 'background/bg-13.jpg')); ?>');">
     <div class="container">
 
@@ -232,11 +232,11 @@ $demie_testimonials = demie_get_testimonials();
             <div class="col-lg-8 mb-5 mb-lg-0">
                 <div class="wptb-heading">
                     <div class="wptb-item--inner">
-                        <h1 class="wptb-item--title lg mb-5"><?php echo esc_html(demie_current_meta('_demie_exp_l1', __('20 Amazing', 'demie-photography'))); ?> <br> <span class="text-outline"><?php echo esc_html(demie_current_meta('_demie_exp_l2', __('Photographers', 'demie-photography'))); ?></span></h1>
-                        <p class="wptb-item--description"><?php echo esc_html(demie_current_meta('_demie_exp_text', __('The talent at Demie Photography runs wide and deep. From weddings to events and drone work, our team members are some of the finest photographers in the industry, capturing beautiful memories across Malawi.', 'demie-photography'))); ?></p>
+                        <h1 class="wptb-item--title lg mb-5"><?php echo esc_html(demie_current_meta('_demie_exp_l1', __('From First Hello', 'demie-photography'))); ?> <br> <span class="text-outline"><?php echo esc_html(demie_current_meta('_demie_exp_l2', __('to Final Gallery', 'demie-photography'))); ?></span></h1>
+                        <p class="wptb-item--description"><?php echo esc_html(demie_current_meta('_demie_exp_text', __('No confusing packages or endless back-and-forth. Tell us about your wedding, portrait session or event, and we handle the rest — planning, shooting and editing — so all you have to do is show up and enjoy your moment.', 'demie-photography'))); ?></p>
 
                         <div class="wptb-agency-experience--item">
-                            <span><?php echo esc_html(demie_current_meta('_demie_exp_years', '15')); ?>+</span> <?php esc_html_e('Years Experience', 'demie-photography'); ?>
+                            <span><?php echo esc_html(demie_current_meta('_demie_exp_badge_number', '3')); ?></span> <?php echo esc_html(demie_current_meta('_demie_exp_badge_label', __('Simple Steps', 'demie-photography'))); ?>
                         </div>
                     </div>
 
@@ -251,19 +251,23 @@ $demie_testimonials = demie_get_testimonials();
             </div>
 
             <div class="col-lg-4 ps-lg-5 mt-5">
-                <?php for ($demie_c = 1; $demie_c <= 3; $demie_c++) :
-                    $demie_number = demie_current_meta("_demie_counter{$demie_c}_number");
-                    $demie_suffix = demie_current_meta("_demie_counter{$demie_c}_suffix");
-                    $demie_label  = demie_current_meta("_demie_counter{$demie_c}_label");
-                    if ($demie_number === '') {
+                <?php for ($demie_s = 1; $demie_s <= 3; $demie_s++) :
+                    $demie_step_title = demie_current_meta("_demie_step{$demie_s}_title");
+                    $demie_step_text  = demie_current_meta("_demie_step{$demie_s}_text");
+                    if ($demie_step_title === '' && $demie_step_text === '') {
                         continue;
                     }
                     ?>
-                    <div class="wptb-counter1 style1<?php echo 1 === $demie_c ? ' mr-bottom-100' : ''; ?> wow skewIn">
+                    <div class="wptb-counter1 style1<?php echo 1 === $demie_s ? ' mr-bottom-100' : ''; ?> wow skewIn">
                         <div class="wptb-item--inner">
-                            <div class="wptb-item--holder d-flex align-items-center">
-                                <div class="wptb-item--value"><span class="odometer" data-count="<?php echo esc_attr($demie_number); ?>"></span><span class="suffix"><?php echo esc_html($demie_suffix); ?></span></div>
-                                <div class="wptb-item--text"><?php echo esc_html($demie_label); ?></div>
+                            <div class="wptb-item--holder d-flex align-items-start">
+                                <span class="demie-step--number"><?php echo esc_html($demie_s); ?></span>
+                                <div class="demie-step--body">
+                                    <h4 class="demie-step--title"><?php echo esc_html($demie_step_title); ?></h4>
+                                    <?php if ($demie_step_text !== '') : ?>
+                                        <p class="demie-step--text"><?php echo esc_html($demie_step_text); ?></p>
+                                    <?php endif; ?>
+                                </div>
                             </div>
                         </div>
                     </div>

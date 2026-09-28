@@ -194,22 +194,20 @@ function demie_home_fields() {
         ['_demie_about_p1', __('About paragraph 1', 'demie-photography'), 'textarea', ['rows' => 3]],
         ['_demie_about_p2', __('About paragraph 2', 'demie-photography'), 'textarea', ['rows' => 3]],
 
-        // Experience / stats section
-        ['_demie_exp_l1', __('Experience heading, part 1 (e.g. "20 Amazing")', 'demie-photography'), 'text'],
-        ['_demie_exp_l2', __('Experience heading, outlined part (e.g. "Photographers")', 'demie-photography'), 'text'],
-        ['_demie_exp_text', __('Experience paragraph', 'demie-photography'), 'textarea', ['rows' => 3]],
-        ['_demie_exp_years', __('Years experience (number)', 'demie-photography'), 'number', ['min' => 0, 'max' => 99]],
+        // How It Works section (formerly Experience / stats)
+        ['_demie_exp_l1', __('How It Works heading, part 1 (e.g. "From First Hello")', 'demie-photography'), 'text'],
+        ['_demie_exp_l2', __('How It Works heading, outlined part (e.g. "to Final Gallery")', 'demie-photography'), 'text'],
+        ['_demie_exp_text', __('How It Works paragraph', 'demie-photography'), 'textarea', ['rows' => 3]],
+        ['_demie_exp_badge_number', __('Steps badge — number', 'demie-photography'), 'text'],
+        ['_demie_exp_badge_label', __('Steps badge — label (e.g. "Simple Steps")', 'demie-photography'), 'text'],
 
-        // Counters
-        ['_demie_counter1_number', __('Counter 1 — number', 'demie-photography'), 'number', ['min' => 0, 'max' => 99999]],
-        ['_demie_counter1_suffix', __('Counter 1 — suffix (e.g. +)', 'demie-photography'), 'text'],
-        ['_demie_counter1_label', __('Counter 1 — label', 'demie-photography'), 'text'],
-        ['_demie_counter2_number', __('Counter 2 — number', 'demie-photography'), 'number', ['min' => 0, 'max' => 99999]],
-        ['_demie_counter2_suffix', __('Counter 2 — suffix', 'demie-photography'), 'text'],
-        ['_demie_counter2_label', __('Counter 2 — label', 'demie-photography'), 'text'],
-        ['_demie_counter3_number', __('Counter 3 — number', 'demie-photography'), 'number', ['min' => 0, 'max' => 99999]],
-        ['_demie_counter3_suffix', __('Counter 3 — suffix', 'demie-photography'), 'text'],
-        ['_demie_counter3_label', __('Counter 3 — label', 'demie-photography'), 'text'],
+        // Steps (replaces counters)
+        ['_demie_step1_title', __('Step 1 — title', 'demie-photography'), 'text'],
+        ['_demie_step1_text', __('Step 1 — description', 'demie-photography'), 'textarea', ['rows' => 2]],
+        ['_demie_step2_title', __('Step 2 — title', 'demie-photography'), 'text'],
+        ['_demie_step2_text', __('Step 2 — description', 'demie-photography'), 'textarea', ['rows' => 2]],
+        ['_demie_step3_title', __('Step 3 — title', 'demie-photography'), 'text'],
+        ['_demie_step3_text', __('Step 3 — description', 'demie-photography'), 'textarea', ['rows' => 2]],
 
         // Section headings
         ['_demie_h_about_l1', __('About section H1, part 1', 'demie-photography'), 'text'],
