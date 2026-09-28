@@ -19,7 +19,7 @@ $demie_services_all = demie_get_services();
     <div class="container">
         <div class="wptb-heading">
             <div class="wptb-item--inner text-center">
-                <h6 class="wptb-item--subtitle"><?php demie_heading_sub('_demie_h_sub', '01// Our Services'); ?></h6>
+                <h6 class="wptb-item--subtitle"><?php demie_heading_sub('_demie_h_sub', 'Our Services'); ?></h6>
                 <h1 class="wptb-item--title"><?php demie_heading_h1('_demie_h_l1', '_demie_h_l2', '_demie_h_l3', __('Demie Photography offers', 'demie-photography'), __('All of the', 'demie-photography'), __('services you need', 'demie-photography')); ?></h1>
             </div>
         </div>

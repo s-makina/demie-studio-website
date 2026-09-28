@@ -381,15 +381,12 @@ function demie_seed_home_meta() {
         '_demie_counter3_number'  => '300',
         '_demie_counter3_suffix'  => '',
         '_demie_counter3_label'   => 'Events Covered',
-        '_demie_h_about_sub'      => 'About Agency',
         '_demie_h_about_l1'       => 'Demie Photography captures',
         '_demie_h_about_l2'       => 'All of Your',
         '_demie_h_about_l3'       => 'beautiful memories',
-        '_demie_h_portfolio_sub'  => 'Our Portfolio',
         '_demie_h_portfolio_l1'   => 'Demie Photography captures',
         '_demie_h_portfolio_l2'   => 'All of Your',
         '_demie_h_portfolio_l3'   => 'beautiful memories',
-        '_demie_h_blog_sub'       => 'Latest News',
         '_demie_h_blog_l1'        => 'Our Photography',
         '_demie_h_blog_l2'        => 'Related Blog',
         '_demie_h_blog_desc'      => 'We are deeply passionate about catching your lovely memories on camera and conveying your love for every moment of life as a whole.',
@@ -415,6 +412,13 @@ function demie_seed_home_meta() {
             update_post_meta($front_id, $key, $value);
         }
     }
+
+    // Legacy cleanup: earlier seeds created homepage label fields ("02 //" etc.)
+    // that have been removed from the metabox — delete any leftovers.
+    foreach (['_demie_h_about_sub', '_demie_h_portfolio_sub', '_demie_h_blog_sub'] as $legacy_key) {
+        delete_post_meta($front_id, $legacy_key);
+    }
+
     foreach ($images as $key => $path) {
         if ((int) get_post_meta($front_id, $key, true) === 0) {
             $attachment_id = demie_seed_attachment($path, ucfirst(pathinfo($path, PATHINFO_FILENAME)));
@@ -428,19 +432,19 @@ function demie_seed_home_meta() {
 function demie_seed_page_meta() {
     $pages = [
         'about-us' => [
-            '_demie_h_sub' => '01 // About Us',
+            '_demie_h_sub' => 'About Us',
             '_demie_h_l1'  => 'About',
             '_demie_h_l2'  => 'Demie Photography',
             '_demie_h_l3'  => '',
         ],
         'services' => [
-            '_demie_h_sub' => '01//',
+            '_demie_h_sub' => 'Our Services',
             '_demie_h_l1'  => 'Demie Photography offers',
             '_demie_h_l2'  => 'All of the',
             '_demie_h_l3'  => 'services you need',
         ],
         'gallery'  => [
-            '_demie_h_sub' => '01// Our Portfolio',
+            '_demie_h_sub' => 'Our Portfolio',
             '_demie_h_l1'  => 'Demie Photography captures',
             '_demie_h_l2'  => 'All of Your',
             '_demie_h_l3'  => 'beautiful memories',
@@ -463,6 +467,18 @@ function demie_seed_page_meta() {
             if (metadata_exists('post', $page_id, $key) === false) {
                 update_post_meta($page_id, $key, $value);
             }
+        }
+
+        // Legacy cleanup: replace seeded labels that still carry a numeric
+        // "NN //" prefix, unless the owner already changed the label.
+        $legacy = [
+            '01 // About Us'    => 'About Us',
+            '01//'              => 'Our Services',
+            '01// Our Portfolio' => 'Our Portfolio',
+        ];
+        $current = get_post_meta($page_id, '_demie_h_sub', true);
+        if (isset($legacy[$current])) {
+            update_post_meta($page_id, '_demie_h_sub', $legacy[$current]);
         }
     }
 }

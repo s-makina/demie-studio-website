@@ -20,7 +20,7 @@ $demie_spans = ['col-md-4', 'col-md-4', 'col-md-4', 'col-md-8', 'col-md-8', 'col
         <div class="wptb-project--inner">
             <div class="wptb-heading">
                 <div class="wptb-item--inner text-center">
-                    <h6 class="wptb-item--subtitle"><?php demie_heading_sub('_demie_h_sub', '01// Our Portfolio'); ?></h6>
+                    <h6 class="wptb-item--subtitle"><?php demie_heading_sub('_demie_h_sub', 'Our Portfolio'); ?></h6>
                     <h1 class="wptb-item--title"><?php demie_heading_h1('_demie_h_l1', '_demie_h_l2', '_demie_h_l3', __('Demie Photography captures', 'demie-photography'), __('All of Your', 'demie-photography'), __('beautiful memories', 'demie-photography')); ?></h1>
                 </div>
             </div>

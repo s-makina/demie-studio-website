@@ -30,7 +30,7 @@ $demie_faqs = demie_get_faqs();
             <div class="col-lg-6">
                 <div class="wptb-heading">
                     <div class="wptb-item--inner">
-                        <h6 class="wptb-item--subtitle"><?php demie_heading_sub('_demie_h_sub', '01 // About Us'); ?></h6>
+                        <h6 class="wptb-item--subtitle"><?php demie_heading_sub('_demie_h_sub', 'About Us'); ?></h6>
                         <h1 class="wptb-item--title"><?php demie_heading_h1('_demie_h_l1', '_demie_h_l2', null, __('About', 'demie-photography'), __('Demie Photography', 'demie-photography')); ?></h1>
                     </div>
                 </div>

@@ -211,17 +211,13 @@ function demie_home_fields() {
         ['_demie_counter3_suffix', __('Counter 3 — suffix', 'demie-photography'), 'text'],
         ['_demie_counter3_label', __('Counter 3 — label', 'demie-photography'), 'text'],
 
-        // Section headings — sub labels carry the full "NN // Label" text;
-        // the numeric prefix is auto-highlighted by demie_heading_sub().
-        ['_demie_h_about_sub', __('Section 02 label (e.g. "02 // About Agency")', 'demie-photography'), 'text'],
+        // Section headings
         ['_demie_h_about_l1', __('About section H1, part 1', 'demie-photography'), 'text'],
         ['_demie_h_about_l2', __('About section H1, highlighted part', 'demie-photography'), 'text'],
         ['_demie_h_about_l3', __('About section H1, part 3 (after the line break)', 'demie-photography'), 'text'],
-        ['_demie_h_portfolio_sub', __('Section 03 label (e.g. "03// Our Portfolio")', 'demie-photography'), 'text'],
         ['_demie_h_portfolio_l1', __('Portfolio H1, part 1', 'demie-photography'), 'text'],
         ['_demie_h_portfolio_l2', __('Portfolio H1, highlighted part', 'demie-photography'), 'text'],
         ['_demie_h_portfolio_l3', __('Portfolio H1, part 3 (after the line break)', 'demie-photography'), 'text'],
-        ['_demie_h_blog_sub', __('Section 04 label (e.g. "04 // Latest News")', 'demie-photography'), 'text'],
         ['_demie_h_blog_l1', __('Blog section H1, part 1', 'demie-photography'), 'text'],
         ['_demie_h_blog_l2', __('Blog section H1, highlighted part', 'demie-photography'), 'text'],
         ['_demie_h_blog_desc', __('Blog section description', 'demie-photography'), 'textarea', ['rows' => 2]],
@@ -243,7 +239,7 @@ function demie_home_fields() {
 
 function demie_page_heading_fields() {
     return [
-        ['_demie_h_sub', __('Section label (e.g. "01// Our Services")', 'demie-photography'), 'text', ['desc' => __('A leading "NN //" prefix is automatically highlighted in the accent color.', 'demie-photography')]],
+        ['_demie_h_sub', __('Section label (e.g. "Our Services")', 'demie-photography'), 'text', ['desc' => __('Shown above the page heading.', 'demie-photography')]],
         ['_demie_h_l1', __('Page H1, part 1', 'demie-photography'), 'text'],
         ['_demie_h_l2', __('Page H1, highlighted part', 'demie-photography'), 'text'],
         ['_demie_h_l3', __('Page H1, part 3 (after the line break)', 'demie-photography'), 'text'],

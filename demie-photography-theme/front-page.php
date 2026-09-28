@@ -111,7 +111,6 @@ $demie_testimonials = demie_get_testimonials();
             <div class="wptb-item--inner">
                 <div class="row align-items-center">
                     <div class="col-lg-7">
-                        <h6 class="wptb-item--subtitle"><?php demie_heading_sub('_demie_h_about_sub', '02 // About Agency'); ?></h6>
                         <h1 class="wptb-item--title"><?php demie_heading_h1('_demie_h_about_l1', '_demie_h_about_l2', '_demie_h_about_l3', __('Demie Photography captures', 'demie-photography'), __('All of Your', 'demie-photography'), __('beautiful memories', 'demie-photography')); ?></h1>
                     </div>
                     <div class="col-lg-5 text-lg-end">
@@ -176,7 +175,6 @@ $demie_testimonials = demie_get_testimonials();
     <div class="container">
         <div class="wptb-heading">
             <div class="wptb-item--inner text-center">
-                <h6 class="wptb-item--subtitle"><?php demie_heading_sub('_demie_h_portfolio_sub', '03// Our Portfolio'); ?></h6>
                 <h1 class="wptb-item--title"><?php demie_heading_h1('_demie_h_portfolio_l1', '_demie_h_portfolio_l2', '_demie_h_portfolio_l3', __('Demie Photography captures', 'demie-photography'), __('All of Your', 'demie-photography'), __('beautiful memories', 'demie-photography')); ?></h1>
             </div>
         </div>
@@ -346,7 +344,6 @@ $demie_testimonials = demie_get_testimonials();
             <div class="wptb-item--inner">
                 <div class="row align-items-center">
                     <div class="col-lg-6">
-                        <h6 class="wptb-item--subtitle"><?php demie_heading_sub('_demie_h_blog_sub', '04 // Latest News'); ?></h6>
                         <h1 class="wptb-item--title mb-0"><?php demie_heading_h1('_demie_h_blog_l1', '_demie_h_blog_l2', null, __('Our Photography', 'demie-photography'), __('Related Blog', 'demie-photography')); ?></h1>
                     </div>
 
