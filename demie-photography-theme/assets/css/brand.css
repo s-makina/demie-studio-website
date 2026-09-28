@@ -97,3 +97,92 @@ a.dark_logo.logo-wordmark { color: #151515; }
         max-height: 360px;
     }
 }
+
+/* ------------------------------------------------------------------
+   Image height guards
+   The theme sizes most image slots from the image itself, so a very
+   tall portrait upload (e.g. 4000x6000 straight off a camera) can
+   stretch a whole section. These caps keep every homepage slot within
+   its intended height while object-fit: cover + a fixed height keep
+   rows aligned. Aspect ratios are untouched, so the template's own
+   images render exactly as designed.
+   ------------------------------------------------------------------ */
+
+/* About section main photo ("Explore Us") */
+.wptb-about-two .wptb-image-single .wptb-item--image > img {
+    display: block;
+    width: auto;
+    max-width: 100%;
+    height: auto;
+    max-height: 640px;
+    object-fit: contain;
+    margin-inline: auto;
+}
+
+/* Portfolio grid (also used by the Gallery page) — crop inside the
+   existing item, never grow it. Heights follow the template's own
+   seeded dimensions: ~2:1 for the two-thirds-wide tiles, ~1:1 for the
+   one-third tiles, and squarer on phones. */
+.effect-gradient .grid-item .wptb-item--image {
+    overflow: hidden;
+}
+.effect-gradient .grid-item .wptb-item--image img {
+    width: 100%;
+    height: auto;
+    max-height: 390px;
+    object-fit: cover;
+    object-position: center;
+}
+@media (min-width: 768px) {
+    .effect-gradient .grid-item.col-md-8 .wptb-item--image img {
+        max-height: 394px;
+    }
+    .effect-gradient .grid-item.col-md-4 .wptb-item--image img {
+        max-height: 380px;
+    }
+}
+@media (max-width: 767.98px) {
+    .effect-gradient .grid-item .wptb-item--image img {
+        max-height: 300px;
+    }
+}
+
+/* Blog cards — one shared crop height keeps the 3 columns even. */
+.wptb-blog-grid1 .wptb-item--image a {
+    display: block;
+    height: auto;
+}
+.wptb-blog-grid1 .wptb-item--image img {
+    width: 100%;
+    height: 260px;
+    max-height: 260px;
+    object-fit: cover;
+    object-position: center;
+}
+
+/* Instagram strip — square tiles like the template art. */
+.wptb-instagram--gallery .wptb-item--image {
+    overflow: hidden;
+}
+.wptb-instagram--gallery .wptb-item--image img {
+    width: 100%;
+    height: auto;
+    max-height: 384px;
+    aspect-ratio: 1 / 1;
+    object-fit: cover;
+    object-position: center;
+}
+
+/* Service card icons (homepage row + Services page). The base cap is
+   max-width only, so a portrait upload still grows tall. */
+.wptb-icon-box6 .wptb-item--icon {
+    display: flex;
+    align-items: center;
+}
+.wptb-icon-box6 .wptb-item--icon img {
+    width: auto;
+    height: auto;
+    max-width: 70px;
+    max-height: 50px;
+    object-fit: contain;
+}

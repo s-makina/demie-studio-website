@@ -1,6 +1,6 @@
 # Demie Photography — WordPress Theme Usage
 
-Theme folder: `demie-photography-theme/` · Deliverable: `demie-photography-theme.zip` · Version 1.3.1
+Theme folder: `demie-photography-theme/` · Deliverable: `demie-photography-theme.zip` · Version 1.3.2
 
 ## Install on the live site
 
@@ -45,6 +45,23 @@ Service icons appear on the homepage cards and the Services page. Each service's
 
 The same featured-image mechanic drives testimonial photos, slide backgrounds and portfolio images.
 
+### Image sizes on the homepage
+
+The homepage **never over-stretches**, whatever you upload. Every image slot has a maximum height (brand.css "Image height guards"): tall camera originals are cropped or scaled down instead of pushing the sections apart.
+
+For the sharpest results, aim close to how each slot displays:
+
+| Slot | Displayed as | Ideal upload |
+| --- | --- | --- |
+| Slide backgrounds | Full-screen cover | 1920×1080 (landscape) |
+| Portfolio grid | Wide tiles ~2:1, small tiles ~1:1 | 900×450 or 600×600 |
+| Blog cards | Uniform 260px-tall crop | 700×500 (landscape) |
+| Instagram strip | Square tiles | 600×600 |
+| About "Explore Us" photo | Capped at 640px tall | 700×600 |
+| Service icons | Max 70×50 | Square ~106×106 |
+
+You can upload larger images — WordPress will resize them — just avoid extreme aspect ratios (e.g. a 4000×12000 panorama in the portfolio grid simply shows its middle).
+
 ### The email the contact form sends to
 
 The form mails via `wp_mail` to the **Email** in **Settings → Demie Settings**. Deliverability depends on the host's mail — install an SMTP plugin (e.g. WP Mail SMTP) and point it at the studio's mailbox for reliable delivery.
@@ -68,5 +85,5 @@ front-page.php             homepage sections (all dynamic)
 page-about-us.php / page-services.php / page-gallery.php / page-blog.php / page-contact.php
 page.php / single.php      generic page + single post (optional custom headings)
 header.php / footer.php    preloader, menus, search modal, footer, WhatsApp float
-assets/css/brand.css       brand overrides (logo wordmark, WhatsApp button)
+assets/css/brand.css       brand overrides (logo wordmark, WhatsApp button, image height guards)
 ```
