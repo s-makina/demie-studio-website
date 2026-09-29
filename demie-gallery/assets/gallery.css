@@ -1,0 +1,131 @@
+/**
+ * Demie Gallery — front-end styles.
+ *
+ * The Kimono grid/effect system (grid-N, gutter-*, effect-*, wptb-item--*)
+ * comes from the theme's portfolio.css; this file only adds plugin-specific
+ * pieces: load-more button, spinner, overlapping collage, guards.
+ */
+
+/* ---------- Load more ---------- */
+
+.demie-g-load-more-wrap {
+    margin-top: 50px;
+}
+
+.demie-g-load-more {
+    position: relative;
+    min-width: 180px;
+}
+
+.demie-g-load-more.is-loading {
+    pointer-events: none;
+    opacity: 0.75;
+}
+
+.demie-g-load-more .demie-g-spinner {
+    display: none;
+    position: absolute;
+    inset: 0;
+    margin: auto;
+    width: 22px;
+    height: 22px;
+    border: 2px solid rgba(255, 255, 255, 0.4);
+    border-top-color: #fff;
+    border-radius: 50%;
+    animation: demie-g-spin 0.7s linear infinite;
+}
+
+.demie-g-load-more.is-loading .btn-wrap {
+    visibility: hidden;
+}
+
+.demie-g-load-more.is-loading .demie-g-spinner {
+    display: block;
+}
+
+@keyframes demie-g-spin {
+    to { transform: rotate(360deg); }
+}
+
+/* Appended items fade in (class removed after insertion) */
+.demie-g-item.demie-g-entering {
+    opacity: 0;
+    transition: opacity 0.4s ease;
+}
+
+.demie-g-grid .demie-g-entering {
+    opacity: 0;
+}
+
+/* ---------- Overlapping layout (CSS collage; the Kimono original is a GSAP
+   scrolltrigger showcase the theme does not enqueue) ---------- */
+
+.demie-g-overlap__grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 14px;
+    position: relative;
+}
+
+.demie-g-overlap__grid .grid-item {
+    margin: 0;
+}
+
+.demie-g-overlap__grid .grid-item:nth-child(3n+2) {
+    transform: translateY(38px);
+}
+
+.demie-g-overlap__grid .grid-item:nth-child(3n) {
+    transform: translateY(76px);
+}
+
+.demie-g-overlap__grid + * {
+    clear: both;
+}
+
+.demie-g-overlap {
+    padding-bottom: 76px; /* room for the translated last row */
+}
+
+@media screen and (max-width: 767px) {
+    .demie-g-overlap__grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    .demie-g-overlap__grid .grid-item:nth-child(3n+2),
+    .demie-g-overlap__grid .grid-item:nth-child(3n) {
+        transform: none;
+    }
+    .demie-g-overlap {
+        padding-bottom: 0;
+    }
+}
+
+/* ---------- Video tiles ---------- */
+
+/* Poster-less videos / embed thumbnails without intrinsic ratio */
+.demie-g-item.demie-g-video .wptb-item--image img {
+    min-height: 220px;
+    object-fit: cover;
+}
+
+/* The play icon inside the Fancybox trigger circle */
+.demie-g-item .wptb-item--link .bi-play-btn {
+    font-size: 26px;
+    line-height: 1;
+}
+
+/* ---------- Distortion fallback ----------
+   The theme ships hover-effect.umd.js + three.min.js but no displacement
+   textures, so WebGL distortion cannot run; .grid renders plain via Isotope
+   and the effect-tilt hover still works. Nothing else needed here. */
+
+/* ---------- Filterable ---------- */
+
+.demie-g-wrap .portfolio-filters-content .filters-button-group .button {
+    cursor: pointer;
+}
+
+/* Keep hidden items out of the flow when Isotope filters them */
+.demie-g-grid .grid-item.is-hidden-by-filter {
+    visibility: hidden;
+}

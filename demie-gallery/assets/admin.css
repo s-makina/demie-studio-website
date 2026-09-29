@@ -1,0 +1,129 @@
+/**
+ * Demie Gallery — admin styles: builder grid, tiles, metaboxes.
+ */
+
+.demie-g-builder .demie-g-toolbar {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin: 12px 0;
+}
+
+.demie-g-builder .demie-g-toolbar .dashicons {
+    vertical-align: text-bottom;
+    margin-right: 4px;
+}
+
+.demie-g-video-add {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.demie-g-video-add input[type="url"] {
+    min-width: 280px;
+}
+
+.demie-g-feedback {
+    font-size: 12px;
+    color: #2271b1;
+}
+
+.demie-g-feedback.is-error {
+    color: #d63638;
+}
+
+.demie-g-count-badge {
+    color: #646970;
+    font-size: 12px;
+}
+
+.demie-g-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+    gap: 12px;
+    margin: 10px 0 4px;
+}
+
+.demie-g-grid.is-empty {
+    display: none;
+}
+
+.demie-g-tile {
+    position: relative;
+    border: 1px solid #dcdcde;
+    border-radius: 4px;
+    background: #fff;
+    overflow: hidden;
+    cursor: move;
+}
+
+.demie-g-tile img {
+    display: block;
+    width: 100%;
+    height: 100px;
+    object-fit: cover;
+    pointer-events: none; /* let the sortable handle own the drag */
+}
+
+.demie-g-tile-handle {
+    position: absolute;
+    top: 4px;
+    left: 4px;
+    color: #fff;
+    background: rgba(0, 0, 0, 0.55);
+    border-radius: 3px;
+    cursor: move;
+    z-index: 2;
+}
+
+.demie-g-tile-badge {
+    position: absolute;
+    bottom: 6px;
+    left: 6px;
+    padding: 1px 8px;
+    border-radius: 10px;
+    font-size: 11px;
+    line-height: 18px;
+    color: #fff;
+    background: #2271b1;
+}
+
+.demie-g-tile-badge--video {
+    background: #bd8600;
+}
+
+.demie-g-tile-remove {
+    position: absolute;
+    top: 4px;
+    right: 4px;
+    width: 22px;
+    height: 22px;
+    border: 0;
+    border-radius: 3px;
+    background: rgba(0, 0, 0, 0.55);
+    color: #fff;
+    font-size: 16px;
+    line-height: 20px;
+    cursor: pointer;
+    z-index: 2;
+}
+
+.demie-g-tile-remove:hover {
+    background: #d63638;
+}
+
+/* Shortcode copy hint on the list table */
+td.column-demie_g_sc code.demie-g-copy {
+    cursor: pointer;
+}
+
+td.column-demie_g_sc code.demie-g-copy:hover {
+    background: #f0f0f1;
+}
+
+/* Desc metabox */
+.demie-g-desc-metabox textarea {
+    width: 100%;
+}
