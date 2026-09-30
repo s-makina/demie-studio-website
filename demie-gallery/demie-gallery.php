@@ -20,7 +20,7 @@
 
 if (!defined('ABSPATH')) exit;
 
-define('DEMIE_G_VERSION', '0.1.1');
+define('DEMIE_G_VERSION', '0.1.2');
 define('DEMIE_G_DIR', plugin_dir_path(__FILE__));
 define('DEMIE_G_URI', plugin_dir_url(__FILE__));
 

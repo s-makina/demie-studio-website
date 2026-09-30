@@ -2,7 +2,7 @@
 
 if (!defined('ABSPATH')) exit;
 
-define('DEMIE_VERSION', '1.3.64');
+define('DEMIE_VERSION', '1.3.67');
 define('DEMIE_DIR', get_template_directory());
 define('DEMIE_URI', get_template_directory_uri());
 
@@ -12,6 +12,16 @@ require_once DEMIE_DIR . '/inc/cpts.php';
 require_once DEMIE_DIR . '/inc/metaboxes.php';
 require_once DEMIE_DIR . '/inc/template-tags.php';
 require_once DEMIE_DIR . '/inc/seed.php';
+
+// TEMP: Force create homepage gallery (remove after it runs once)
+if (function_exists('demie_g_seed_homepage_gallery')) {
+    error_log('DEMIE DEBUG: Calling demie_g_seed_homepage_gallery');
+    delete_option('demie_g_seed_version');
+    $result = demie_g_seed_homepage_gallery();
+    error_log('DEMIE DEBUG: Seed result: ' . print_r($result, true));
+} else {
+    error_log('DEMIE DEBUG: demie_g_seed_homepage_gallery NOT DEFINED YET');
+}
 
 function demie_setup() {
     load_theme_textdomain('demie-photography', DEMIE_DIR . '/languages');

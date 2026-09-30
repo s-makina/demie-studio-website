@@ -100,10 +100,26 @@ function demie_g_seed_demo_gallery() {
  * front-page gallery section. Runs alongside the demo gallery seed.
  */
 function demie_g_seed_homepage_gallery() {
+    error_log('DEMIE DEBUG: demie_g_seed_homepage_gallery() called');
     // Check if homepage gallery already exists
     $existing = get_page_by_path('homepage', OBJECT, 'demie_gallery');
     if ($existing) {
-        return 0;
+        error_log('DEMIE DEBUG: Homepage gallery already exists, ID: ' . $existing->ID . ' - UPDATING MEDIA');
+        $gallery_id = $existing->ID;
+    } else {
+        $gallery_id = wp_insert_post([
+            'post_type'   => 'demie_gallery',
+            'post_status' => 'publish',
+            'post_name'   => 'homepage',
+            'post_title'  => __('Homepage Gallery', 'demie-gallery'),
+            'post_author' => get_current_user_id() ?: 1,
+        ]);
+
+        if (is_wp_error($gallery_id) || !$gallery_id) {
+            error_log('DEMIE DEBUG: Failed to create gallery post: ' . print_r($gallery_id, true));
+            return 0;
+        }
+        error_log('DEMIE DEBUG: Created gallery with ID: ' . $gallery_id);
     }
 
     $items = [];
@@ -116,6 +132,7 @@ function demie_g_seed_homepage_gallery() {
         'orderby'        => 'menu_order',
         'order'          => 'ASC',
     ]);
+    error_log('DEMIE DEBUG: Found ' . count($portfolio) . ' portfolio items');
 
     foreach ($portfolio as $item) {
         $thumb_id = (int) get_post_thumbnail_id($item);
@@ -123,6 +140,7 @@ function demie_g_seed_homepage_gallery() {
             $items[] = ['type' => 'attachment', 'id' => $thumb_id];
         }
     }
+    error_log('DEMIE DEBUG: Collected ' . count($items) . ' items from portfolio');
 
     // Fall back to any 6 image attachments
     if (count($items) < 6) {
@@ -133,30 +151,23 @@ function demie_g_seed_homepage_gallery() {
             'post_status'    => 'inherit',
             'fields'         => 'ids',
         ]);
+        error_log('DEMIE DEBUG: Fallback attachments found: ' . count($attachments));
         foreach ($attachments as $id) {
             if (count($items) >= 6) break;
             $items[] = ['type' => 'attachment', 'id' => (int) $id];
         }
     }
 
+    error_log('DEMIE DEBUG: Final items count: ' . count($items));
+
     if (!$items) {
+        error_log('DEMIE DEBUG: No items to seed, returning 0');
         return 0; // nothing to seed from — skip quietly
-    }
-
-    $gallery_id = wp_insert_post([
-        'post_type'   => 'demie_gallery',
-        'post_status' => 'publish',
-        'post_name'   => 'homepage',
-        'post_title'  => __('Homepage Gallery', 'demie-gallery'),
-        'post_author' => get_current_user_id() ?: 1,
-    ]);
-
-    if (is_wp_error($gallery_id) || !$gallery_id) {
-        return 0;
     }
 
     update_post_meta($gallery_id, DEMIE_G_META_MEDIA, wp_json_encode($items));
     update_post_meta($gallery_id, DEMIE_G_META_DESC, __('Featured images for the homepage gallery section.', 'demie-gallery'));
 
+    error_log('DEMIE DEBUG: Updated gallery media with ' . count($items) . ' items');
     return (int) $gallery_id;
 }
