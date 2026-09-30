@@ -170,7 +170,7 @@ $demie_testimonials = demie_get_testimonials();
     </div>
 </section>
 
-<!-- Our Portfolio -->
+<!-- Our Gallery -->
 <section class="wptb-project">
     <div class="container">
         <div class="wptb-heading">
@@ -179,44 +179,57 @@ $demie_testimonials = demie_get_testimonials();
             </div>
         </div>
 
-        <?php if ($demie_projects) : ?>
-        <div class="effect-gradient has-radius">
-            <div class="grid gutter-10 clearfix">
-                <div class="grid-sizer"></div>
-                <div class="row">
-                    <?php
-                    $demie_spans = ['col-md-4', 'col-md-4', 'col-md-4', 'col-md-8', 'col-md-8', 'col-md-4'];
-                    foreach ($demie_projects as $demie_i => $demie_project) :
-                        $demie_span   = isset($demie_spans[$demie_i]) ? $demie_spans[$demie_i] : 'col-md-4';
-                        $demie_img    = demie_portfolio_img($demie_project, 'full');
-                        $demie_src    = $demie_img ? $demie_img : DEMIE_URI . '/assets/img/projects/4/' . (($demie_i % 6) + 1) . '.jpg';
-                        $demie_title  = get_the_title($demie_project);
-                        ?>
-                        <div class="grid-item <?php echo esc_attr($demie_span); ?>">
-                            <div class="wptb-item--inner">
-                                <div class="wptb-item--image">
-                                    <img src="<?php echo esc_url($demie_src); ?>" alt="<?php echo esc_attr($demie_title); ?>">
-                                    <a class="wptb-item--link" href="<?php echo esc_url($demie_src); ?>" data-fancybox="portfolio" data-caption="<?php echo esc_attr($demie_title); ?>"><i class="bi bi-chevron-right"></i></a>
-                                </div>
+        <?php if (function_exists('demie_g_render_gallery')) : ?>
+            <?php
+            // Use a dedicated "homepage" gallery (slug: homepage)
+            echo demie_g_render_gallery([
+                'slug'       => 'homepage',
+                'layout'     => 'masonry',
+                'per_page'   => 6,
+                'pagination' => 'none',
+            ]);
+            ?>
+        <?php else : ?>
+            <!-- Fallback to portfolio if gallery plugin inactive -->
+            <?php if ($demie_projects) : ?>
+            <div class="effect-gradient has-radius">
+                <div class="grid gutter-10 clearfix">
+                    <div class="grid-sizer"></div>
+                    <div class="row">
+                        <?php
+                        $demie_spans = ['col-md-4', 'col-md-4', 'col-md-4', 'col-md-8', 'col-md-8', 'col-md-4'];
+                        foreach ($demie_projects as $demie_i => $demie_project) :
+                            $demie_span   = isset($demie_spans[$demie_i]) ? $demie_spans[$demie_i] : 'col-md-4';
+                            $demie_img    = demie_portfolio_img($demie_project, 'full');
+                            $demie_src    = $demie_img ? $demie_img : DEMIE_URI . '/assets/img/projects/4/' . (($demie_i % 6) + 1) . '.jpg';
+                            $demie_title  = get_the_title($demie_project);
+                            ?>
+                            <div class="grid-item <?php echo esc_attr($demie_span); ?>">
+                                <div class="wptb-item--inner">
+                                    <div class="wptb-item--image">
+                                        <img src="<?php echo esc_url($demie_src); ?>" alt="<?php echo esc_attr($demie_title); ?>">
+                                        <a class="wptb-item--link" href="<?php echo esc_url($demie_src); ?>" data-fancybox="portfolio" data-caption="<?php echo esc_attr($demie_title); ?>"><i class="bi bi-chevron-right"></i></a>
+                                    </div>
 
-                                <div class="wptb-item--holder">
-                                    <div class="wptb-item--meta">
-                                        <h4><a href="<?php echo esc_url($demie_src); ?>" data-fancybox="portfolio" data-caption="<?php echo esc_attr($demie_title); ?>"><?php echo esc_html($demie_title); ?></a></h4>
-                                        <p><?php esc_html_e('By Demie Photography', 'demie-photography'); ?></p>
+                                    <div class="wptb-item--holder">
+                                        <div class="wptb-item--meta">
+                                            <h4><a href="<?php echo esc_url($demie_src); ?>" data-fancybox="portfolio" data-caption="<?php echo esc_attr($demie_title); ?>"><?php echo esc_html($demie_title); ?></a></h4>
+                                            <p><?php esc_html_e('By Demie Photography', 'demie-photography'); ?></p>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
-                        </div>
-                    <?php endforeach; ?>
+                        <?php endforeach; ?>
+                    </div>
                 </div>
             </div>
-        </div>
+            <?php endif; ?>
         <?php endif; ?>
 
         <div class="wptb-item--button text-center mt-5">
             <a class="btn btn-two text-uppercase" href="<?php echo esc_url($gallery_url); ?>">
                 <span class="btn-wrap">
-                    <span class="text-first"><?php esc_html_e('See All Projects', 'demie-photography'); ?></span>
+                    <span class="text-first"><?php esc_html_e('See All Gallery', 'demie-photography'); ?></span>
                     <span class="text-second"> <i class="bi bi-arrow-up-right"></i> <i class="bi bi-arrow-up-right"></i> </span>
                 </span>
             </a>
