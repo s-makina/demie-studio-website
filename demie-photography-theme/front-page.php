@@ -181,9 +181,11 @@ $demie_testimonials = demie_get_testimonials();
 
         <?php if (function_exists('demie_g_render_gallery')) : ?>
             <?php
-            // Use a dedicated "homepage" gallery (slug: homepage)
+            // Use a dedicated "homepage" gallery (slug: homepage). Resolve the
+            // slug to an ID here so this works with any plugin version (the
+            // renderer takes gallery_id, not slug).
             echo demie_g_render_gallery([
-                'slug'       => 'homepage',
+                'gallery_id' => demie_g_resolve_gallery_id(['slug' => 'homepage']),
                 'layout'     => 'masonry',
                 'per_page'   => 6,
                 'pagination' => 'none',
