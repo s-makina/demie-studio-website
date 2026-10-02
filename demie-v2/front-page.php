@@ -8,6 +8,7 @@ get_template_part('template-parts/gallery');
 get_template_part('template-parts/featured-story');
 get_template_part('template-parts/services');
 get_template_part('template-parts/why');
+get_template_part('template-parts/agency');
 get_template_part('template-parts/testimonials');
 get_template_part('template-parts/booking');
 
