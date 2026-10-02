@@ -31,6 +31,10 @@ body {
   flex-shrink: 0;
   opacity: 1;
 }
+
+/* nav: remove list bullets, keep underline */
+nav[aria-label="Primary"] { display: flex; gap: 2.5rem; }
+nav[aria-label="Primary"] > li { list-style: none; }
 .reveal-on-scroll {
   opacity: 0;
   transform: translateY(32px);

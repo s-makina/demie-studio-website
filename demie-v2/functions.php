@@ -131,7 +131,7 @@ class Demie_V2_Walker extends Walker_Nav_Menu {
         $classes = empty($item->classes) ? [] : (array) $item->classes;
         $is_current = in_array('current-menu-item', $classes, true);
         $li_class = 'relative group' . ($is_current ? ' text-brand-champagne' : '');
-        $a_class = "hover:text-brand-champagne transition-colors py-1 relative after:content-[''] after:absolute after:bottom-0 after:left-0 after:w-full after:h-[1px] after:bg-brand-champagne after:transition-transform after:duration-300 " . ($is_current ? 'text-brand-champagne after:scale-x-100' : 'after:scale-x-0 hover:after:scale-x-100');
+        $a_class = "hover:text-brand-champagne transition-colors py-1" . ($is_current ? ' text-brand-champagne' : '');
         $output .= '<li class="' . esc_attr($li_class) . '">';
         $output .= '<a class="' . esc_attr($a_class) . '" href="' . esc_url($item->url) . '">' . esc_html($item->title) . '</a>';
     }
