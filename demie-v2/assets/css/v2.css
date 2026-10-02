@@ -21,6 +21,21 @@ body {
 .editorial-zoom { transition: transform 1.2s cubic-bezier(0.2,0.8,0.2,1), filter 0.8s ease; }
 .editorial-card:hover .editorial-zoom { transform: scale(1.05); }
 
+/* Masonry gallery with blur-reveal hover (masonry-2 design) */
+.masonry-card img { transition: transform 1s ease, filter 0.8s ease; }
+.masonry-card:hover img {
+  transform: scale(1.12);
+  transform-origin: center;
+  filter: brightness(.45) contrast(1.1) saturate(1.2) blur(3px);
+}
+.masonry-card .masonry-meta > * {
+  opacity: 0;
+  transform: translateY(12px);
+  transition: opacity 0.8s ease, transform 0.8s ease;
+}
+.masonry-card:hover .masonry-meta > * { opacity: 1; transform: translateY(0); }
+.masonry-card:hover .masonry-meta > :nth-child(2) { transition-delay: 0.08s; }
+
 .gold-divider {
   height: 1px;
   background: linear-gradient(90deg, rgba(197,168,128,0) 0%, rgba(197,168,128,0.6) 50%, rgba(197,168,128,0) 100%);
@@ -50,4 +65,6 @@ body {
 @media (prefers-reduced-motion: reduce) {
   .reveal-on-scroll { opacity: 1 !important; transform: none !important; transition: none !important; }
   .editorial-zoom { transition: none !important; }
+  .masonry-card img { transition: none !important; }
+  .masonry-card .masonry-meta > * { opacity: 1 !important; transform: none !important; transition: none !important; }
 }

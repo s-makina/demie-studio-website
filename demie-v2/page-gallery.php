@@ -14,18 +14,19 @@ get_template_part('template-parts/page-titlebar', null, ['title' => get_the_titl
     <?php else :
       $items = function_exists('demie_get_portfolio') ? demie_get_portfolio(12) : [];
       if ($items) : ?>
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+        <div class="columns-1 sm:columns-2 lg:columns-3 gap-8">
           <?php foreach ($items as $item) :
             $src = function_exists('demie_portfolio_img') ? demie_portfolio_img($item, 'large') : '';
             if (!$src) continue; ?>
-            <div class="editorial-card group relative overflow-hidden bg-brand-stone shadow-lg">
-              <div class="aspect-[4/5] overflow-hidden bg-brand-charcoal">
-                <img src="<?php echo esc_url($src); ?>" alt="<?php echo esc_attr(get_the_title($item)); ?>" class="w-full h-full object-cover editorial-zoom" loading="lazy">
+            <a href="<?php echo esc_url($src); ?>" target="_blank" rel="noopener" class="masonry-card group relative block overflow-hidden bg-brand-charcoal mb-8 break-inside-avoid shadow-lg">
+              <img src="<?php echo esc_url($src); ?>" alt="<?php echo esc_attr(get_the_title($item)); ?>" class="w-full h-auto" loading="lazy">
+              <div class="absolute inset-0 flex items-center justify-center text-center p-8">
+                <div class="masonry-meta">
+                  <h4 class="font-serif text-2xl font-light tracking-wide text-white"><?php echo esc_html(get_the_title($item)); ?></h4>
+                  <p class="text-[11px] uppercase tracking-widest2 text-brand-champagne mt-2"><?php echo esc_html(get_the_date('', $item)); ?></p>
+                </div>
               </div>
-              <div class="p-5 bg-brand-cream border-t border-brand-stone/60">
-                <h4 class="font-serif text-xl text-brand-charcoal"><?php echo esc_html(get_the_title($item)); ?></h4>
-              </div>
-            </div>
+            </a>
           <?php endforeach; ?>
         </div>
       <?php else : ?>
