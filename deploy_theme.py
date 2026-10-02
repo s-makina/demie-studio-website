@@ -15,11 +15,11 @@ What it does
 Usage
 -----
     python deploy_theme.py                 # sync + bump version + verify
-    python deploy_theme.py --no-bump       # sync + verify, keep the version
+    python deploy_theme.py --no-bump     # sync + verify, keep the version
     python deploy_theme.py --zip           # also rebuild the deliverable zip
-    python deploy_theme.py --watch         # keep running, auto-sync on save
+    python deploy_theme.py --watch           # keep running, auto-sync on save
     python deploy_theme.py --dry-run       # show what would change, touch nothing
-
+project-masonry-2.htm l
 The paths below match this machine. Edit DEV_THEME / LIVE_THEME if they move.
 """
 
