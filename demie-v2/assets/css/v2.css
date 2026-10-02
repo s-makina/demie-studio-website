@@ -74,6 +74,175 @@ nav[aria-label="Primary"] > li { list-style: none; }
 }
 .btn-luxury:hover::before { left: 100%; }
 
+/* Footer — ported from Kimono index-3.html (footer style1) */
+.footer {
+  position: relative;
+  z-index: 1;
+  font-size: 1rem;
+  font-weight: 300;
+  line-height: 34px;
+  color: #ffffff;
+  background-color: #1A1816;
+  background-position: center;
+  background-size: cover;
+  background-repeat: no-repeat;
+  overflow: hidden;
+}
+.footer.style1::before {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 0;
+  width: 1px;
+  height: 110px;
+  background-color: #3C3C3C;
+}
+.footer .footer--inner {
+  position: relative;
+  padding-top: 155px;
+  padding-bottom: 100px;
+  overflow: hidden;
+}
+.footer .container {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 0 24px;
+}
+.footer-row {
+  display: flex;
+  flex-wrap: wrap;
+  margin: 0 -15px;
+}
+.footer-col {
+  flex: 0 0 100%;
+  max-width: 100%;
+  padding: 0 15px;
+  margin-bottom: 3rem;
+}
+@media (min-width: 768px) {
+  .footer-col {
+    flex: 0 0 33.333333%;
+    max-width: 33.333333%;
+    margin-bottom: 0;
+  }
+  .footer-col--center { padding: 0 3rem; }
+  .footer-col--right .footer-widget { text-align: right; }
+}
+.footer .footer-widget:has(.footer-nav) { margin-top: 50px; }
+.footer ul { padding: 0; margin-bottom: 0; list-style-type: none; }
+.footer ul li { list-style-type: none; }
+.footer ul li a { color: #ffffff; }
+.footer .widget-title {
+  color: #DDDDDD;
+  font-size: 18px;
+  font-weight: 500;
+  letter-spacing: 2px;
+  padding-top: 20px;
+}
+.footer .mr-bottom-55 { margin-bottom: 55px; }
+.footer .footer-nav li { position: relative; line-height: normal; }
+.footer .footer-nav li + li { margin-top: 26px; }
+.footer .footer-nav li a {
+  position: relative;
+  display: inline-flex;
+  padding-left: 0px;
+  text-decoration: none;
+  color: #DDDDDD;
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 26px;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.footer .footer-nav li a:hover { color: #D9C8B4; }
+
+.footer .footer-bottom {
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  padding: 27px 0;
+}
+.footer .footer-bottom-inner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  color: #DDDDDD;
+  gap: 1rem;
+}
+.footer .copyright p { margin-bottom: 0; }
+
+.footer .social-box ul {
+  margin: 0; padding: 0; list-style-type: none;
+  display: flex; align-items: center; gap: 13px; flex-wrap: wrap;
+}
+.footer .social-box.style-oval ul li a {
+  font-size: 13px;
+  line-height: 15px;
+  width: 50px;
+  height: 27px;
+  border-radius: 100%;
+  background-color: transparent;
+  border: 1px solid #ffffff;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.footer .social-box.style-oval ul li a:hover {
+  border-color: #D9C8B4;
+  background-color: #D9C8B4;
+  color: #1A1816;
+}
+
+/* Newsletter form (Kimono style1) */
+.newsletter-form { position: relative; }
+.newsletter-form .form-control {
+  display: block;
+  width: 100%;
+  height: 49px;
+  padding: 15px 20px;
+  font-size: 15px;
+  font-weight: 300;
+  color: #DDDDDD;
+  background-color: rgba(0, 0, 0, 0.3);
+  border: 1px solid #3C3C3C;
+  border-radius: 0;
+  outline: none;
+  box-sizing: border-box;
+}
+.newsletter-form .form-control::placeholder { color: rgba(221, 221, 221, 0.6); }
+.newsletter-form .form-control:focus { border-color: #D9C8B4; }
+.newsletter-form button.btn {
+  position: absolute;
+  top: 0;
+  right: 0;
+  min-width: auto;
+  height: 100%;
+  padding: 0 20px;
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  border: 0;
+  border-left: 1px solid #3C3C3C;
+  background-color: transparent;
+  color: #DDDDDD;
+  cursor: pointer;
+  transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.newsletter-form button.btn:hover { background-color: #ffffff; color: #B45309; }
+.btn-two .btn-wrap { display: flex; align-items: center; }
+.btn-two .text-first { padding-right: 10px; }
+.btn-two .text-second { position: relative; overflow: hidden; }
+.btn-two .text-second i:nth-child(1) { display: inline-block; transition: transform 0.5s linear; }
+.btn-two .text-second i + i {
+  position: absolute; left: 0; top: 0;
+  transform: translate(-30px, 30px);
+  transition: transform 0.5s linear;
+}
+.btn-two:hover .text-second i:nth-child(1) { transform: translate(30px, -30px); }
+.btn-two:hover .text-second i + i { transform: translate(0px, 0px); }
+
 /* v2 contact form inputs (sits on dark booking panel) */
 .demie-v2-input {
   width: 100%; background: transparent; border: 1px solid rgba(255,255,255,0.25);
