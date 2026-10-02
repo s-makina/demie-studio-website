@@ -16,7 +16,7 @@ $video  = demie_v2_get('demie_v2_hero_video', DEMIE_URI . '/assets/video/hero.mp
   <div class="hero-overlay absolute inset-0 z-10"></div>
   <div class="absolute inset-0 z-10 bg-gradient-to-t from-brand-charcoal via-transparent to-black/40"></div>
   <!-- Kimono style2 inset frame + ring -->
-  <div class="hero-frame z-10" aria-hidden="true">
+  <div class="hero-frame z-10" aria-hidden="true" style="background: rgba(255,255,255,0.02);">
     <img class="hero-ring" src="<?php echo esc_url(DEMIE_URI . '/assets/img/layer-3.png'); ?>" alt="">
   </div>
   <div class="relative z-20 max-w-5xl mx-auto px-6 text-center text-white flex flex-col items-center mt-12">
