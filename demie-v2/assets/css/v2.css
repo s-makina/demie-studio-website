@@ -10,6 +10,27 @@ body {
 .hero-overlay {
   background: radial-gradient(circle at center, rgba(18,17,16,0.35) 0%, rgba(18,17,16,0.75) 100%);
 }
+
+/* Kimono style2 inset frame: rectangular border line + circle ring */
+.hero-frame {
+  position: absolute;
+  left: 20px; top: 20px; right: 20px; bottom: 20px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  pointer-events: none;
+}
+@media (min-width: 768px) {
+  .hero-frame { left: 100px; top: 100px; right: 100px; bottom: 100px; }
+}
+.hero-frame .hero-ring {
+  width: 110%;
+  max-width: none;
+  flex-shrink: 0;
+  opacity: 0.55;
+}
 .reveal-on-scroll {
   opacity: 0;
   transform: translateY(32px);
