@@ -38,21 +38,31 @@ $gallery_url = demie_page_url('gallery');
       </p>
     </div>
 
-    <div class="columns-1 sm:columns-2 lg:columns-3 gap-8">
-      <?php foreach ($cards as $card) : ?>
-      <a href="<?php echo esc_url($gallery_url); ?>" class="masonry-card group relative block overflow-hidden bg-brand-charcoal mb-8 break-inside-avoid shadow-lg reveal-on-scroll">
-        <img alt="<?php echo esc_attr($card['title']); ?>" class="w-full h-auto" loading="lazy" src="<?php echo esc_url($card['img']); ?>">
-        <div class="absolute inset-0 flex items-center justify-center text-center p-8 md:p-12">
-          <div class="masonry-meta">
-            <?php if ('video' === ($card['kind'] ?? 'photo')) : ?>
-            <span class="inline-block text-[10px] uppercase tracking-widest2 text-brand-charcoal bg-brand-champagne px-3 py-1 mb-3">▶ <?php esc_html_e('Film', 'demie-v2'); ?></span>
-            <?php endif; ?>
-            <h4 class="font-serif text-2xl md:text-3xl font-light tracking-wide text-white"><?php echo esc_html($card['title']); ?></h4>
-            <p class="text-[11px] uppercase tracking-widest2 text-brand-champagne mt-2"><?php echo esc_html($card['loc']); ?></p>
+    <div class="swiper-container swiper-gallery-two has-radius">
+      <div class="swiper-wrapper">
+        <?php foreach ($cards as $card) : ?>
+        <div class="swiper-slide">
+          <div class="grid-item group relative block overflow-hidden">
+            <div class="wptb-item--inner relative">
+              <div class="wptb-item--image">
+                <img alt="<?php echo esc_attr($card['title']); ?>" class="w-full h-[260px] md:h-[340px] object-cover" loading="lazy" src="<?php echo esc_url($card['img']); ?>">
+                <a class="wptb-item--link" href="<?php echo esc_url($gallery_url); ?>" aria-label="<?php echo esc_attr($card['title']); ?>"><i class="bi bi-chevron-right"></i></a>
+              </div>
+              <div class="wptb-item--holder">
+                <div class="wptb-item--meta">
+                  <h4><a href="<?php echo esc_url($gallery_url); ?>"><?php echo esc_html($card['title']); ?></a></h4>
+                  <p><?php echo esc_html($card['loc']); ?></p>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
-      </a>
-      <?php endforeach; ?>
+        <?php endforeach; ?>
+      </div>
+      <div class="wptb-swiper-navigation style2">
+        <div class="wptb-swiper-arrow swiper-button-prev"></div>
+        <div class="wptb-swiper-arrow swiper-button-next"></div>
+      </div>
     </div>
 
     <div class="mt-16 text-center reveal-on-scroll">

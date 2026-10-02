@@ -1,7 +1,7 @@
 <?php
 if (!defined('ABSPATH')) exit;
 
-define('DEMIE_VERSION', '0.1.39');
+define('DEMIE_VERSION', '0.1.49');
 define('DEMIE_DIR', get_template_directory());
 define('DEMIE_URI', get_template_directory_uri());
 
@@ -102,8 +102,10 @@ function demie_enqueue_assets() {
     wp_enqueue_style('demie-v2-fonts', 'https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400&family=Plus+Jakarta+Sans:wght@300;400;500;600&display=swap', [], null);
     wp_enqueue_style('demie-bootstrap-icons', 'https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css', [], '1.11.3');
     wp_enqueue_style('demie-v2', DEMIE_URI . '/assets/css/v2.css', [], DEMIE_VERSION);
+    wp_enqueue_style('demie-swiper', DEMIE_URI . '/assets/vendor/swiper/swiper-bundle.min.css', [], '7.x');
+    wp_enqueue_script('demie-swiper', DEMIE_URI . '/assets/vendor/swiper/swiper-bundle.min.js', [], '7.x', true);
 
-    wp_enqueue_script('demie-v2-theme', DEMIE_URI . '/assets/js/theme-v2.js', [], DEMIE_VERSION, true);
+    wp_enqueue_script('demie-v2-theme', DEMIE_URI . '/assets/js/theme-v2.js', ['demie-swiper'], DEMIE_VERSION, true);
     // Contact form AJAX (reuse v1 handler).
     wp_enqueue_script('demie-v2-forms', DEMIE_URI . '/assets/js/demie-forms.js', ['jquery'], DEMIE_VERSION, true);
     wp_localize_script('demie-v2-forms', 'demieCtx', [

@@ -58,6 +58,27 @@ document.addEventListener('DOMContentLoaded', () => {
     revealElements.forEach((el) => el.classList.add('is-revealed'));
   }
 
+  // 5. Selected Wedding Portfolios carousel (project-carousel.html binding)
+  const gallerySwiper = document.querySelector('.swiper-gallery-two');
+  if (gallerySwiper && typeof Swiper === 'function') {
+    new Swiper(gallerySwiper, {
+      loop: true,
+      autoplay: { delay: 3000 },
+      speed: 1500,
+      slidesPerView: 1,
+      spaceBetween: 30,
+      centeredSlides: false,
+      navigation: {
+        nextEl: '.swiper-button-next',
+        prevEl: '.swiper-button-prev',
+      },
+      breakpoints: {
+        992: { slidesPerView: 2, spaceBetween: 30, centeredSlides: false },
+        1200: { slidesPerView: 2, spaceBetween: 85, centeredSlides: true },
+      },
+    });
+  }
+
   // 4. Hero video autoplay fallback
   const heroVideo = document.getElementById('heroVideo');
   if (heroVideo) {

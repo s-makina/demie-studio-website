@@ -61,6 +61,106 @@ nav[aria-label="Primary"] > li { list-style: none; }
 .masonry-card:hover .masonry-meta > * { opacity: 1; transform: translateY(0); }
 .masonry-card:hover .masonry-meta > :nth-child(2) { transition-delay: 0.08s; }
 
+/* Selected Wedding Portfolios carousel (project-carousel.html style) */
+.swiper-gallery-two { position: relative; }
+.swiper-gallery-two .swiper-wrapper { padding-top: 50px; padding-bottom: 100px; }
+.swiper-gallery-two .swiper-slide .grid-item .wptb-item--inner {
+  border-radius: 20px;
+  overflow: hidden;
+}
+.swiper-gallery-two .swiper-slide.swiper-slide-active .grid-item {
+  border-radius: 20px;
+  box-shadow: 0px 25px 60px 15px rgba(0, 0, 0, 0.35);
+}
+.swiper-gallery-two .grid-item .wptb-item--image { border-radius: 20px; overflow: hidden; }
+.swiper-gallery-two .grid-item .wptb-item--image img { width: 100%; display: block; }
+.swiper-gallery-two .grid-item .wptb-item--holder {
+  position: absolute;
+  left: 0;
+  bottom: -100%;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: end;
+  justify-content: start;
+  padding: 40px;
+  text-align: left;
+  transition: all 1.5s ease-in-out;
+}
+.swiper-gallery-two .swiper-slide-active .grid-item .wptb-item--holder { bottom: 0; }
+.swiper-gallery-two .grid-item .wptb-item--meta h4 {
+  font-family: 'Cormorant Garamond', Georgia, serif;
+  font-size: 28px;
+  line-height: 34px;
+  font-weight: 400;
+  transform: translateY(10px);
+  opacity: 0;
+  transition: all 1.5s ease-in-out;
+  transition-delay: 0.3s;
+}
+.swiper-gallery-two .swiper-slide-active .grid-item .wptb-item--meta h4 { transform: translateY(0); opacity: 1; }
+.swiper-gallery-two .grid-item .wptb-item--meta h4 a { color: #fff; text-decoration: none; }
+.swiper-gallery-two .grid-item .wptb-item--meta h4 a:hover { color: #D9C8B4; }
+.swiper-gallery-two .grid-item .wptb-item--meta p {
+  color: #fff;
+  font-size: 13px;
+  font-weight: 300;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  transform: translateY(10px);
+  opacity: 0;
+  transition: all 2s ease-in-out;
+  transition-delay: 0.8s;
+}
+.swiper-gallery-two .swiper-slide-active .grid-item .wptb-item--meta p { transform: translateY(0); opacity: 1; }
+.swiper-gallery-two .wptb-item--link {
+  position: absolute;
+  top: 35px;
+  right: 35px;
+  z-index: 2;
+  width: 54px;
+  height: 54px;
+  font-size: 20px;
+  color: #B45309;
+  background-color: #ffffff;
+  border-radius: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transform: translateX(-10px);
+  opacity: 0;
+  transition: all 2s ease-in-out;
+}
+.swiper-gallery-two .swiper-slide-active .grid-item .wptb-item--link { transform: translateX(0); opacity: 1; }
+.swiper-gallery-two .wptb-swiper-navigation.style2 {
+  position: absolute;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  left: 50px;
+  right: 50px;
+  bottom: calc(50% - 25px);
+  pointer-events: none;
+  z-index: 3;
+}
+.swiper-gallery-two .wptb-swiper-arrow {
+  width: 60px;
+  height: 60px;
+  color: #1A1816;
+  background: transparent;
+  font-size: 60px;
+  border: 0;
+  border-radius: 100%;
+  cursor: pointer;
+  pointer-events: auto;
+}
+.swiper-gallery-two .wptb-swiper-arrow:after {
+  font-family: 'bootstrap-icons';
+  font-size: inherit;
+}
+.swiper-gallery-two .swiper-button-prev:after { content: "\f12f"; }
+.swiper-gallery-two .swiper-button-next:after { content: "\f138"; }
+
 .gold-divider {
   height: 1px;
   background: linear-gradient(90deg, rgba(197,168,128,0) 0%, rgba(197,168,128,0.6) 50%, rgba(197,168,128,0) 100%);
