@@ -5,7 +5,7 @@ $slide_poster = '';
 if ($slides) {
     $slide_poster = get_the_post_thumbnail_url($slides[0], 'full') ?: '';
 }
-$poster = $slide_poster ?: demie_v2_get('demie_v2_hero_poster', 'https://images.unsplash.com/photo-1519741497674-611481863552?auto=format&fit=crop&w=2000&q=85');
+$poster = $slide_poster ?: demie_v2_get('demie_v2_hero_poster', DEMIE_URI . '/assets/video/hero-poster.jpg');
 // Customizer URL wins; otherwise the bundled hero loop shipped with the theme.
 $video  = demie_v2_get('demie_v2_hero_video', DEMIE_URI . '/assets/video/hero.mp4');
 ?>
