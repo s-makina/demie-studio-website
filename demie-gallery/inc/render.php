@@ -61,6 +61,9 @@ function demie_g_normalize_args($args) {
 
     $defaults = [
         'gallery_id' => 0,
+        'id'         => 0,
+        'slug'       => '',
+        'latest'     => '',
         'layout'     => 'masonry',
         'per_page'   => 24,
         'pagination' => 'load_more',
@@ -71,6 +74,13 @@ function demie_g_normalize_args($args) {
     $args = wp_parse_args(is_array($args) ? $args : [], $defaults);
 
     $args['gallery_id'] = (int) $args['gallery_id'];
+
+    // Resolve id/slug/latest when no explicit gallery_id was given (same rule
+    // the shortcode uses), so theme wrappers can pass any of these forms.
+    if (!$args['gallery_id'] && (!empty($args['id']) || '' !== (string) $args['slug'] || !empty($args['latest']))) {
+        $args['gallery_id'] = demie_g_resolve_gallery_id($args);
+    }
+
     $args['layout']     = isset($layouts[$args['layout']]) ? $args['layout'] : 'masonry';
     $args['per_page']   = max(1, (int) $args['per_page']);
 
@@ -100,7 +110,7 @@ function demie_g_normalize_args($args) {
 /**
  * Render a gallery. Returns HTML (never echoes) so callers can embed it.
  *
- * @param array $args gallery_id, layout, per_page, pagination, columns, page (AJAX only).
+ * @param array $args gallery_id|id|slug|latest, layout, per_page, pagination, columns, page (AJAX only).
  */
 function demie_g_render_gallery($args = []) {
     $args = demie_g_normalize_args($args);
