@@ -75,6 +75,10 @@ nav[aria-label="Primary"] > li { list-style: none; }
 .btn-luxury:hover::before { left: 100%; }
 
 /* Footer — ported from Kimono index-3.html (footer style1) */
+.text-outline {
+  -webkit-text-stroke: 2px #FDFBF7;
+  -webkit-text-fill-color: transparent;
+}
 .footer {
   position: relative;
   z-index: 1;
