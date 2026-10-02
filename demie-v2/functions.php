@@ -1,7 +1,7 @@
 <?php
 if (!defined('ABSPATH')) exit;
 
-define('DEMIE_VERSION', '0.1.68');
+define('DEMIE_VERSION', '0.1.69');
 define('DEMIE_DIR', get_template_directory());
 define('DEMIE_URI', get_template_directory_uri());
 
@@ -185,7 +185,7 @@ function demie_v2_mobile_menu() {
         [__('Home', 'demie-v2'), '#home'],
         [__('About', 'demie-v2'), '#statement'],
         [__('Weddings & Portfolio', 'demie-v2'), '#gallery'],
-        [__('Featured Story', 'demie-v2'), '#featured-story'],
+        [__('Experience', 'demie-v2'), '#experience'],
         [__('Photography & Film', 'demie-v2'), '#services'],
         [__('Kind Words', 'demie-v2'), '#testimonials'],
         [__('Contact', 'demie-v2'), '#booking'],

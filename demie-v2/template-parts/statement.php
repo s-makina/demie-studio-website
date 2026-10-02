@@ -8,7 +8,7 @@
     <p class="max-w-2xl mx-auto text-white/60 text-base md:text-lg font-light leading-relaxed mb-10">
       <?php echo esc_html(demie_v2_get('demie_v2_statement_text', 'We believe the most memorable photographs aren’t forced or staged into stiff poses. They are discovered in the shared glances, the unhurried laughter, the gentle clasp of hands, and the spontaneous joy of two lives uniting. We blend documentary intimacy with high-fashion editorial composition to craft archives worthy of heirloom preservation.')); ?>
     </p>
-    <a class="inline-flex items-center space-x-2 text-xs uppercase tracking-luxury font-medium text-white hover:text-brand-gold transition-colors pb-1 border-b border-white/30 hover:border-brand-gold" href="#featured-story">
+    <a class="inline-flex items-center space-x-2 text-xs uppercase tracking-luxury font-medium text-white hover:text-brand-gold transition-colors pb-1 border-b border-white/30 hover:border-brand-gold" href="#gallery">
       <span><?php esc_html_e('Discover Our Story', 'demie-v2'); ?></span>
       <span>→</span>
     </a>
