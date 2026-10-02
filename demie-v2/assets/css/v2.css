@@ -29,7 +29,7 @@ body {
   width: 110%;
   max-width: none;
   flex-shrink: 0;
-  opacity: 0.55;
+  opacity: 1; /* was 0.55 - ring is semi-transparent PNG */
 }
 .reveal-on-scroll {
   opacity: 0;
