@@ -11,10 +11,11 @@ body {
   background: radial-gradient(circle at center, rgba(18,17,16,0.35) 0%, rgba(18,17,16,0.75) 100%);
 }
 
-/* Kimono style2 inset frame: rectangular border line + circle ring */
+/* Kimono style2 inset frame: rectangular border line + circle ring.
+   Starts at navbar bottom edge (48px = py-6), so it visually connects. */
 .hero-frame {
   position: absolute;
-  left: 20px; top: 20px; right: 20px; bottom: 20px;
+  left: 20px; top: 48px; right: 20px; bottom: 20px;
   border: 1px solid rgba(255, 255, 255, 0.2);
   display: flex;
   align-items: center;
