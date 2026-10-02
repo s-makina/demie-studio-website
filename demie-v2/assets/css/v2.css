@@ -1,0 +1,53 @@
+/* Demie v2 — extracted from v2/code.html <style> + small WP additions */
+body {
+  background-color: #FDFBF7;
+  color: #1A1816;
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  overflow-x: hidden;
+}
+::selection { background: #EAE5DB; color: #121110; }
+
+.hero-overlay {
+  background: radial-gradient(circle at center, rgba(18,17,16,0.35) 0%, rgba(18,17,16,0.75) 100%);
+}
+.reveal-on-scroll {
+  opacity: 0;
+  transform: translateY(32px);
+  transition: opacity 1.1s cubic-bezier(0.16,1,0.3,1), transform 1.1s cubic-bezier(0.16,1,0.3,1);
+  will-change: opacity, transform;
+}
+.reveal-on-scroll.is-revealed { opacity: 1; transform: translateY(0); }
+
+.editorial-zoom { transition: transform 1.2s cubic-bezier(0.2,0.8,0.2,1), filter 0.8s ease; }
+.editorial-card:hover .editorial-zoom { transform: scale(1.05); }
+
+.gold-divider {
+  height: 1px;
+  background: linear-gradient(90deg, rgba(197,168,128,0) 0%, rgba(197,168,128,0.6) 50%, rgba(197,168,128,0) 100%);
+}
+.btn-luxury { position: relative; overflow: hidden; transition: all 0.4s cubic-bezier(0.16,1,0.3,1); }
+.btn-luxury::before {
+  content: ''; position: absolute; top: 0; left: -100%;
+  width: 100%; height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.18), transparent);
+  transition: left 0.7s ease;
+}
+.btn-luxury:hover::before { left: 100%; }
+
+/* v2 contact form inputs (sits on dark booking panel) */
+.demie-v2-input {
+  width: 100%; background: transparent; border: 1px solid rgba(255,255,255,0.25);
+  color: #FDFBF7; padding: 0.85rem 1.1rem; font-size: 0.85rem; font-weight: 300;
+}
+.demie-v2-input::placeholder { color: rgba(253,251,247,0.5); text-transform: uppercase; letter-spacing: 0.12em; font-size: 0.72rem; }
+.demie-v2-input:focus { outline: none; border-color: #D9C8B4; background: rgba(255,255,255,0.05); }
+.demie-form-feedback { margin-top: 1rem; font-size: 0.8rem; color: #D9C8B4; }
+
+/* generic content areas (page.php / single.php) */
+.demie-v2-prose p { margin-bottom: 1.25rem; line-height: 1.8; color: #4a4640; font-weight: 300; }
+.demie-v2-prose h2, .demie-v2-prose h3 { font-family: 'Cormorant Garamond', serif; margin: 2rem 0 1rem; }
+
+@media (prefers-reduced-motion: reduce) {
+  .reveal-on-scroll { opacity: 1 !important; transform: none !important; transition: none !important; }
+  .editorial-zoom { transition: none !important; }
+}
