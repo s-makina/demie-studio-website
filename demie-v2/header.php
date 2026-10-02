@@ -8,7 +8,7 @@
 <body <?php body_class('antialiased'); ?>>
 <?php wp_body_open(); ?>
 
-<header id="mainNav" class="fixed top-0 left-0 w-full z-50 transition-all duration-500 px-6 md:px-14 flex items-center justify-between text-white py-6 border-b border-white/10">
+<header id="mainNav" class="fixed top-0 left-0 w-full z-50 transition-all duration-500 px-6 md:px-14 flex items-center justify-between text-white py-6">
   <a class="group flex flex-col items-start focus:outline-none" href="<?php echo esc_url(home_url('/')); ?>">
     <?php demie_logo_wordmark(); ?>
     <span class="text-[9px] tracking-widest2 uppercase text-white/70 font-sans -mt-1 group-hover:text-white transition-colors"><?php esc_html_e('Photographers & Filmmakers', 'demie-v2'); ?></span>
