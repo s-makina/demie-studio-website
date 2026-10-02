@@ -18,10 +18,10 @@ if ($recent && has_post_thumbnail($recent[0])) {
         <div class="relative overflow-hidden shadow-2xl bg-brand-deep">
           <img alt="<?php echo esc_attr($story_title); ?>" class="w-full h-auto max-h-[700px] object-cover object-top" loading="lazy" src="<?php echo esc_url($story_img); ?>">
         </div>
-        <div class="absolute -bottom-6 -right-4 sm:-right-8 bg-brand-bone text-brand-charcoal p-5 sm:p-7 shadow-xl border border-brand-stone max-w-[240px] hidden sm:block">
+        <div class="absolute -bottom-6 -right-4 sm:-right-8 bg-brand-deep text-brand-cream p-5 sm:p-7 shadow-xl border border-white/15 max-w-[240px] hidden sm:block">
           <span class="text-[9px] uppercase tracking-widest2 text-brand-gold font-sans block mb-1"><?php esc_html_e('Issue No. 14', 'demie-v2'); ?></span>
           <p class="font-serif text-lg leading-tight font-medium"><?php esc_html_e('35mm & 16mm Film Archive', 'demie-v2'); ?></p>
-          <p class="text-[10px] text-brand-muted mt-2 tracking-wide font-sans"><?php esc_html_e('Full cinematic coverage & bespoke leather album.', 'demie-v2'); ?></p>
+          <p class="text-[10px] text-white/60 mt-2 tracking-wide font-sans"><?php esc_html_e('Full cinematic coverage & bespoke leather album.', 'demie-v2'); ?></p>
         </div>
       </div>
       <div class="lg:col-span-5 reveal-on-scroll flex flex-col justify-center">

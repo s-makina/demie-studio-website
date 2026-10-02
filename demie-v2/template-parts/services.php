@@ -1,9 +1,9 @@
-<section class="py-24 md:py-36 px-6 md:px-14 bg-brand-cream" id="services">
+<section class="py-24 md:py-36 px-6 md:px-14 bg-brand-deep" id="services">
   <div class="max-w-7xl mx-auto">
     <div class="text-center max-w-3xl mx-auto mb-16 reveal-on-scroll">
       <span class="text-xs uppercase tracking-widest2 text-brand-gold font-sans font-medium mb-3 block"><?php esc_html_e('Our Disciplines', 'demie-v2'); ?></span>
-      <h2 class="font-serif text-3xl sm:text-5xl text-brand-charcoal font-normal tracking-tight mb-4"><?php esc_html_e('Photography & Cinematic Films', 'demie-v2'); ?></h2>
-      <p class="text-brand-muted text-sm md:text-base font-light">
+      <h2 class="font-serif text-3xl sm:text-5xl text-brand-cream font-normal tracking-tight mb-4"><?php esc_html_e('Photography & Cinematic Films', 'demie-v2'); ?></h2>
+      <p class="text-white/60 text-sm md:text-base font-light">
         <?php esc_html_e('Two complementary art forms, executed in quiet harmony by a synchronized team of directors, photographers, and audio recordists.', 'demie-v2'); ?>
       </p>
     </div>
@@ -54,9 +54,9 @@
     <?php if ($services) : ?>
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mt-12">
       <?php foreach ($services as $svc) : ?>
-      <a href="<?php echo esc_url(demie_page_url('services')); ?>" class="reveal-on-scroll block p-7 bg-brand-bone border border-brand-stone/60 hover:border-brand-gold transition-colors group">
-        <h4 class="font-serif text-xl text-brand-charcoal group-hover:text-brand-gold transition-colors mb-2"><?php echo esc_html(get_the_title($svc)); ?></h4>
-        <p class="text-brand-muted text-xs font-light leading-relaxed"><?php echo esc_html(function_exists('demie_service_short') ? demie_service_short($svc) : ''); ?></p>
+      <a href="<?php echo esc_url(demie_page_url('services')); ?>" class="reveal-on-scroll block p-7 bg-brand-charcoal border border-white/10 hover:border-brand-gold transition-colors group">
+        <h4 class="font-serif text-xl text-brand-cream group-hover:text-brand-gold transition-colors mb-2"><?php echo esc_html(get_the_title($svc)); ?></h4>
+        <p class="text-white/60 text-xs font-light leading-relaxed"><?php echo esc_html(function_exists('demie_service_short') ? demie_service_short($svc) : ''); ?></p>
       </a>
       <?php endforeach; ?>
     </div>

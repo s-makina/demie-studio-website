@@ -24,7 +24,7 @@ foreach ($fallback as $i => $fb) {
 }
 $gallery_url = demie_page_url('gallery');
 ?>
-<section class="py-20 md:py-32 px-6 md:px-14 bg-brand-bone border-t border-brand-stone/40" id="gallery">
+<section class="py-20 md:py-32 px-6 md:px-14 bg-brand-charcoal border-t border-white/10" id="gallery">
   <div class="max-w-7xl mx-auto">
     <div class="text-center mb-14 reveal-on-scroll">
       <div class="flex items-center justify-center space-x-2 mb-3">
@@ -32,8 +32,8 @@ $gallery_url = demie_page_url('gallery');
         <span class="text-xs uppercase tracking-widest2 text-brand-gold font-sans font-medium"><?php esc_html_e('Curated Archives', 'demie-v2'); ?></span>
         <span class="w-5 h-[1px] bg-brand-gold"></span>
       </div>
-      <h2 class="font-serif text-3xl sm:text-5xl lg:text-6xl text-brand-charcoal font-normal tracking-tight"><?php esc_html_e('Selected Wedding Portfolios', 'demie-v2'); ?></h2>
-      <p class="text-brand-muted text-sm max-w-xl mx-auto mt-4 font-light leading-relaxed">
+      <h2 class="font-serif text-3xl sm:text-5xl lg:text-6xl text-brand-cream font-normal tracking-tight"><?php esc_html_e('Selected Wedding Portfolios', 'demie-v2'); ?></h2>
+      <p class="text-white/60 text-sm max-w-xl mx-auto mt-4 font-light leading-relaxed">
         <?php esc_html_e('A glimpse into quiet destination vows, lakeside estates, and timeless evening celebrations documented across Malawi and beyond.', 'demie-v2'); ?>
       </p>
     </div>
@@ -66,7 +66,7 @@ $gallery_url = demie_page_url('gallery');
     </div>
 
     <div class="mt-16 text-center reveal-on-scroll">
-      <a class="inline-flex items-center space-x-3 px-9 py-4 border border-brand-charcoal text-brand-charcoal text-xs uppercase tracking-luxury font-medium hover:bg-brand-charcoal hover:text-white transition-all shadow-sm" href="<?php echo esc_url($gallery_url); ?>">
+      <a class="inline-flex items-center space-x-3 px-9 py-4 border border-white/40 text-white text-xs uppercase tracking-luxury font-medium hover:bg-white hover:text-brand-charcoal transition-all shadow-sm" href="<?php echo esc_url($gallery_url); ?>">
         <span><?php esc_html_e('View Complete Portfolio Gallery', 'demie-v2'); ?></span>
         <span>→</span>
       </a>
