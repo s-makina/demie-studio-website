@@ -8,15 +8,15 @@
 <body <?php body_class('antialiased'); ?>>
 <?php wp_body_open(); ?>
 
-<header id="mainNav" class="fixed top-0 left-0 w-full z-50 transition-all duration-500 px-6 md:px-14 flex items-center justify-between text-white py-6">
-  <a class="group flex flex-col items-start focus:outline-none" href="<?php echo esc_url(home_url('/')); ?>">
+<header id="mainNav" class="fixed top-0 left-0 w-full z-50 transition-all duration-500 px-6 md:px-14 grid grid-cols-3 gap-4 items-center text-white py-6">
+  <a class="group flex flex-col items-start focus:outline-none justify-self-start" href="<?php echo esc_url(home_url('/')); ?>">
     <?php demie_logo_wordmark(); ?>
     <span class="text-[9px] tracking-widest2 uppercase text-white/70 font-sans -mt-1 group-hover:text-white transition-colors"><?php esc_html_e('Photographers & Filmmakers', 'demie-v2'); ?></span>
   </a>
-  <nav class="hidden md:flex items-center space-x-10 text-xs uppercase tracking-luxury font-medium text-white/90" aria-label="<?php esc_attr_e('Primary', 'demie-v2'); ?>">
+  <nav class="hidden md:flex items-center justify-center space-x-10 text-xs uppercase tracking-luxury font-medium text-white/90" aria-label="<?php esc_attr_e('Primary', 'demie-v2'); ?>">
     <?php demie_render_primary_menu(); ?>
   </nav>
-  <div class="flex items-center space-x-5">
+  <div class="flex items-center justify-end space-x-5">
     <a class="btn-luxury hidden sm:inline-flex items-center justify-center px-6 py-2.5 text-[11px] uppercase tracking-widest font-medium border border-white/80 text-white hover:bg-white hover:text-brand-charcoal hover:border-white transition-all duration-300" href="<?php echo esc_url(demie_page_url('contact')); ?>">
       <?php esc_html_e('Book Your Date', 'demie-v2'); ?>
     </a>

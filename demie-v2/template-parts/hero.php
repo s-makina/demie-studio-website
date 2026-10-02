@@ -41,7 +41,7 @@ $video  = demie_v2_get('demie_v2_hero_video', DEMIE_URI . '/assets/video/hero.mp
       </a>
     </div>
   </div>
-  <div class="absolute bottom-16 left-1/2 -translate-x-1/2 z-20 flex flex-col items-center cursor-pointer text-white/70 hover:text-brand-champagne transition-colors" onclick="document.getElementById('statement').scrollIntoView({behavior: 'smooth'})">
+  <div class="absolute bottom-8 left-1/2 -translate-x-1/2 z-20 flex flex-col items-center cursor-pointer text-white/70 hover:text-brand-champagne transition-colors" onclick="document.getElementById('statement').scrollIntoView({behavior: 'smooth'})">
     <span class="text-[9px] uppercase tracking-widest2 font-sans mb-2"><?php esc_html_e('Scroll To Discover', 'demie-v2'); ?></span>
     <div class="w-[1px] h-8 bg-white/30 relative overflow-hidden">
       <div class="w-full h-1/2 bg-brand-champagne absolute top-0 animate-pulse"></div>
