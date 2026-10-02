@@ -9,5 +9,6 @@ get_template_part('template-parts/why');
 get_template_part('template-parts/agency');
 get_template_part('template-parts/testimonials');
 get_template_part('template-parts/booking');
+get_template_part('template-parts/instagram');
 
 get_footer();
