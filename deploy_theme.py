@@ -7,9 +7,9 @@ What it does
 1. Copies every changed file from the dev theme into the live WP theme folder.
 2. Bumps the theme version (DEMIE_VERSION in functions.php) so browsers
    drop their cached CSS/JS — no more "my edits are not applying".
-3. (Optional) Fetches the live homepage and brand.css to PROVE the new
+3. (Optional) Fetches the live homepage and v2.css to PROVE the new
    version is actually being served.
-4. (Optional) Rebuilds demie-photography-theme.zip for manual WP admin upload.
+4. (Optional) Rebuilds demie-v2.zip for manual WP admin upload.
 5. (Optional) --watch mode: re-syncs automatically whenever a file changes.
 
 Usage
@@ -40,11 +40,11 @@ from pathlib import Path
 # Configuration — adjust here if the project moves
 # --------------------------------------------------------------------------
 PROJECT_ROOT = Path(r"C:\xampp\htdocs\other\demie-studio-website")
-DEV_THEME    = PROJECT_ROOT / "demie-photography-theme"
+DEV_THEME    = PROJECT_ROOT / "demie-v2"
 LIVE_THEME   = Path(r"C:\xampp\htdocs\other\demie-studio-wp\wp-content\themes"
-                    r"\demie-photography-theme")
+                    r"\demie-v2")
 SITE_URL     = "http://localhost/other/demie-studio-wp"
-ZIP_PATH     = PROJECT_ROOT / "demie-photography-theme.zip"
+ZIP_PATH     = PROJECT_ROOT / "demie-v2.zip"
 
 # Files that never get copied to the live theme (dev-only clutter).
 EXCLUDE_PATTERNS = [
@@ -144,29 +144,29 @@ def bump_version() -> str:
 
 
 def verify(version: str) -> bool:
-    """Fetch the live homepage + brand.css and confirm the version is served."""
+    """Fetch the live homepage + v2.css and confirm the version is served."""
     ok = True
     page_url = f"{SITE_URL}/"
-    css_url  = f"{SITE_URL}/wp-content/themes/demie-photography-theme/assets/css/brand.css?ver={version}"
+    css_url  = f"{SITE_URL}/wp-content/themes/demie-v2/assets/css/v2.css?ver={version}"
 
     try:
         with urllib.request.urlopen(page_url, timeout=10) as r:
             html = r.read().decode("utf-8", errors="replace")
-        if f"brand.css?ver={version}" in html:
-            log(f"  + Homepage links brand.css?ver={version}  (cache-bust live)")
+        if f"v2.css?ver={version}" in html:
+            log(f"  + Homepage links v2.css?ver={version}  (cache-bust live)")
         else:
-            log(f"  !! Homepage does NOT link brand.css?ver={version}")
+            log(f"  !! Homepage does NOT link v2.css?ver={version}")
             ok = False
 
         with urllib.request.urlopen(css_url, timeout=10) as r:
             css = r.read().decode("utf-8", errors="replace")
-        marker = "Image height guards"
-        if marker in css and md5_path_bytes(css) == md5(DEV_THEME / "assets/css/brand.css"):
-            log(f"  + Live brand.css is the deployed version (guards present, md5 match)")
+        marker = "editorial-zoom"
+        if marker in css and md5_path_bytes(css) == md5(DEV_THEME / "assets/css/v2.css"):
+            log(f"  + Live v2.css is the deployed version (marker present, md5 match)")
         elif marker in css:
-            log(f"  + Live brand.css contains the guards (md5 differs — check for drift)")
+            log(f"  + Live v2.css contains the marker (md5 differs — check for drift)")
         else:
-            log(f"  !! Live brand.css is MISSING the guards")
+            log(f"  !! Live v2.css is MISSING the marker")
             ok = False
     except Exception as e:
         log(f"  !! Could not reach {SITE_URL}: {e}")
@@ -287,7 +287,7 @@ def main() -> None:
     ap.add_argument("--no-bump", dest="bump", action="store_false",
                     help="do not bump DEMIE_VERSION")
     ap.add_argument("--zip", action="store_true",
-                    help="also rebuild demie-photography-theme.zip")
+                    help="also rebuild demie-v2.zip")
     ap.add_argument("--force", action="store_true",
                     help="bump version + verify even if nothing changed")
     ap.add_argument("--watch", action="store_true",
