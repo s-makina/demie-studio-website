@@ -1,6 +1,7 @@
 <?php
 // Gallery: masonry-2 design — 3-column masonry grid with blur-reveal hover.
-// Portfolio Items drive the cards; curated archives are the fallback.
+// Cards pull from the Demie Gallery plugin (`homepage` gallery, else latest);
+// Portfolio Items cover a missing/empty plugin; curated archives are last resort.
 $fallback = [
     ['title' => 'Clara & Julian',    'loc' => 'Tuscany Estate • Golden Hour',      'img' => 'https://images.unsplash.com/photo-1519741497674-611481863552?auto=format&fit=crop&w=800&h=1000&q=80'],
     ['title' => 'Elena & Arthur',    'loc' => 'Villa Balbianello • Sunset Cruise', 'img' => 'https://images.unsplash.com/photo-1511285560929-80b456fea0bc?auto=format&fit=crop&w=800&h=600&q=80'],
@@ -12,18 +13,13 @@ $fallback = [
     ['title' => 'Amara & Daniel',    'loc' => 'Lakeside Vows • Golden Light',      'img' => 'https://images.unsplash.com/photo-1583939003579-730e3918a45a?auto=format&fit=crop&w=800&h=1050&q=80'],
     ['title' => 'Sofia & Matteo',    'loc' => 'Vineyard Terrace • Dusk',           'img' => 'https://images.unsplash.com/photo-1537633552985-df8429e8048b?auto=format&fit=crop&w=800&h=700&q=80'],
 ];
-$items = function_exists('demie_get_portfolio') ? demie_get_portfolio(9) : [];
+$items = function_exists('demie_v2_gallery_cards') ? demie_v2_gallery_cards(9, 'homepage') : [];
 $cards = [];
 foreach ($fallback as $i => $fb) {
     if (isset($items[$i])) {
-        $img = demie_portfolio_img($items[$i], 'large');
-        $cards[] = [
-            'title' => get_the_title($items[$i]),
-            'loc'   => get_the_date('', $items[$i]),
-            'img'   => $img ?: $fb['img'],
-        ];
+        $cards[] = $items[$i];
     } else {
-        $cards[] = $fb;
+        $cards[] = $fb + ['kind' => 'photo'];
     }
 }
 $gallery_url = demie_page_url('gallery');
@@ -48,6 +44,9 @@ $gallery_url = demie_page_url('gallery');
         <img alt="<?php echo esc_attr($card['title']); ?>" class="w-full h-auto" loading="lazy" src="<?php echo esc_url($card['img']); ?>">
         <div class="absolute inset-0 flex items-center justify-center text-center p-8 md:p-12">
           <div class="masonry-meta">
+            <?php if ('video' === ($card['kind'] ?? 'photo')) : ?>
+            <span class="inline-block text-[10px] uppercase tracking-widest2 text-brand-charcoal bg-brand-champagne px-3 py-1 mb-3">▶ <?php esc_html_e('Film', 'demie-v2'); ?></span>
+            <?php endif; ?>
             <h4 class="font-serif text-2xl md:text-3xl font-light tracking-wide text-white"><?php echo esc_html($card['title']); ?></h4>
             <p class="text-[11px] uppercase tracking-widest2 text-brand-champagne mt-2"><?php echo esc_html($card['loc']); ?></p>
           </div>

@@ -18,8 +18,13 @@ working AJAX contact form.
   and **V2 Content** (statement quote/text, booking title/text).
 - CPTs + Studio Details + contact AJAX are reused verbatim from v1 (`inc/`),
   so Slides, Services, Portfolio Items, Testimonials, FAQs and
-  Settings → Demie Settings keep working, including the Demie Gallery plugin
-  shortcode on the Gallery page template.
+  Settings → Demie Settings keep working.
+- Gallery content comes from the Demie Gallery plugin via the shared
+  `demie_v2_gallery_cards()` helper (functions.php): the homepage section
+  shows the `homepage` gallery (else latest gallery), the Gallery page shows
+  the latest gallery in full. Video items get a "Film" badge. Portfolio Items
+  cover a missing/empty plugin; curated Unsplash archives are the last resort
+  on the homepage only.
 - Contact details default to the CONTEXT.md brand facts
   (+265 884 44 48 02 · demiestudios@gmail.com · Chilomoni, Blantyre, Malawi).
 

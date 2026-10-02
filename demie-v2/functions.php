@@ -198,6 +198,67 @@ function demie_page_url($slug) {
     return home_url('/' . $slug);
 }
 
+/**
+ * Gallery cards for the v2 masonry grid, sourced from the Demie Gallery plugin.
+ *
+ * Source chain: `homepage` gallery (or latest when $slug is empty) ->
+ * Portfolio Items (plugin inactive/empty) -> [] (caller shows curated fallbacks).
+ *
+ * @param int    $limit Max cards; 0 = all.
+ * @param string $slug  Gallery slug; '' = latest published gallery.
+ * @return array[] Each: title, loc, img, kind (photo|video).
+ */
+function demie_v2_gallery_cards($limit = 9, $slug = 'homepage') {
+    $cards = [];
+
+    if (function_exists('demie_g_get_media') && function_exists('demie_g_resolve_item')) {
+        $gid = 0;
+        if ('' !== (string) $slug && function_exists('demie_g_resolve_gallery_id')) {
+            $gid = demie_g_resolve_gallery_id(['slug' => $slug]);
+        }
+        if (!$gid && function_exists('demie_g_latest_gallery_id')) {
+            $gid = demie_g_latest_gallery_id();
+        }
+        if ($gid) {
+            $gtitle = get_the_title($gid);
+            $media  = demie_g_get_media($gid);
+            if ($limit > 0) {
+                $media = array_slice($media, 0, $limit);
+            }
+            foreach ($media as $entry) {
+                $r = demie_g_resolve_item($entry);
+                if (empty($r['thumb'])) {
+                    continue;
+                }
+                $title = '' !== $r['title'] ? $r['title'] : $gtitle;
+                $cards[] = [
+                    'title' => $title,
+                    'loc'   => 'video' === $r['kind'] ? __('Film', 'demie-v2') . ' • ' . $gtitle : $gtitle,
+                    'img'   => $r['thumb'],
+                    'kind'  => $r['kind'],
+                ];
+            }
+        }
+    }
+
+    if (!$cards && function_exists('demie_get_portfolio')) {
+        foreach (demie_get_portfolio($limit > 0 ? $limit : 24) as $p) {
+            $img = demie_portfolio_img($p, 'large');
+            if (!$img) {
+                continue;
+            }
+            $cards[] = [
+                'title' => get_the_title($p),
+                'loc'   => get_the_date('', $p),
+                'img'   => $img,
+                'kind'  => 'photo',
+            ];
+        }
+    }
+
+    return $cards;
+}
+
 function demie_logo_wordmark($class = '') {
     if (has_custom_logo()) {
         $logo_id  = get_theme_mod('custom_logo');
