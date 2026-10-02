@@ -26,10 +26,9 @@ body {
   .hero-frame { left: 100px; top: 100px; right: 100px; bottom: 100px; }
 }
 .hero-frame .hero-ring {
-  width: 110%;
-  max-width: none;
+  width: 100%;
   flex-shrink: 0;
-  opacity: 1; /* was 0.55 - ring is semi-transparent PNG */
+  opacity: 1;
 }
 .reveal-on-scroll {
   opacity: 0;
