@@ -24,7 +24,7 @@ function demie_v2_customize($wp_customize) {
         'demie_v2_hero_title_a' => 'Your Story,',
         'demie_v2_hero_title_b' => 'Beautifully Remembered.',
         'demie_v2_hero_sub'     => 'Capturing intimate celebrations, quiet romance, and timeless grandeur worldwide with an elevated editorial eye and pure emotional honesty.',
-        'demie_v2_hero_video'   => '',
+        'demie_v2_hero_video'   => DEMIE_URI . '/assets/video/hero.mp4',
         'demie_v2_hero_poster'  => 'https://images.unsplash.com/photo-1519741497674-611481863552?auto=format&fit=crop&w=2000&q=85',
     ];
     foreach ($settings as $key => $def) {

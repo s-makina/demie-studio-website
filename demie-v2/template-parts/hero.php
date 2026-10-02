@@ -6,15 +6,12 @@ if ($slides) {
     $slide_poster = get_the_post_thumbnail_url($slides[0], 'full') ?: '';
 }
 $poster = $slide_poster ?: demie_v2_get('demie_v2_hero_poster', 'https://images.unsplash.com/photo-1519741497674-611481863552?auto=format&fit=crop&w=2000&q=85');
-$video  = demie_v2_get('demie_v2_hero_video', '');
+// Customizer URL wins; otherwise the bundled hero loop shipped with the theme.
+$video  = demie_v2_get('demie_v2_hero_video', DEMIE_URI . '/assets/video/hero.mp4');
 ?>
 <section class="relative w-full h-screen min-h-[640px] flex items-center justify-center overflow-hidden bg-brand-deep" id="home">
-  <video autoplay muted loop playsinline id="heroVideo" poster="<?php echo esc_url($poster); ?>" class="absolute inset-0 w-full h-full object-cover object-center scale-105">
-    <?php if ($video) : ?>
-      <source src="<?php echo esc_url($video); ?>" type="video/mp4">
-    <?php else : ?>
-      <source src="https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/WeAreGoingOnBullrun.mp4" type="video/mp4">
-    <?php endif; ?>
+  <video autoplay muted loop playsinline preload="metadata" disablepictureinpicture aria-hidden="true" id="heroVideo" poster="<?php echo esc_url($poster); ?>" class="absolute inset-0 w-full h-full object-cover object-center scale-105">
+    <source src="<?php echo esc_url($video); ?>" type="video/mp4">
   </video>
   <div class="hero-overlay absolute inset-0 z-10"></div>
   <div class="absolute inset-0 z-10 bg-gradient-to-t from-brand-charcoal via-transparent to-black/40"></div>
