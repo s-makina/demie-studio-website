@@ -1,11 +1,11 @@
 /* Demie v2 — extracted from v2/code.html <style> + small WP additions */
 body {
   background-color: #FDFBF7;
-  color: #1A1816;
+  color: #151515;
   font-family: 'Plus Jakarta Sans', sans-serif;
   overflow-x: hidden;
 }
-::selection { background: #EAE5DB; color: #121110; }
+::selection { background: #EAE5DB; color: #121212; }
 
 .hero-overlay {
   background: radial-gradient(circle at center, rgba(18,17,16,0.35) 0%, rgba(18,17,16,0.75) 100%);
@@ -186,7 +186,7 @@ nav[aria-label="Primary"] > li { list-style: none; }
   font-weight: 300;
   line-height: 34px;
   color: #ffffff;
-  background-color: #1A1816;
+  background-color: #151515;
   background-position: center;
   background-size: cover;
   background-repeat: no-repeat;
@@ -295,7 +295,7 @@ nav[aria-label="Primary"] > li { list-style: none; }
 .footer .social-box.style-oval ul li a:hover {
   border-color: #D9C8B4;
   background-color: #D9C8B4;
-  color: #1A1816;
+  color: #151515;
 }
 
 /* Newsletter form (Kimono style1) */

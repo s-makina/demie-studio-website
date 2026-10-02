@@ -1,5 +1,7 @@
-<section class="py-24 md:py-32 px-6 md:px-14 bg-brand-charcoal border-y border-white/10">
-  <div class="max-w-7xl mx-auto">
+<section class="py-24 md:py-32 px-6 md:px-14 bg-brand-charcoal border-y border-white/10 relative overflow-hidden">
+  <?php $deco = random_int(0, 1) ? 'texture-5.png' : 'texture-4.png'; ?>
+  <img src="<?php echo esc_url(DEMIE_URI . '/assets/img/more/' . $deco); ?>" alt="" aria-hidden="true" class="absolute top-0 right-0 w-56 md:w-80 pointer-events-none select-none opacity-70">
+  <div class="max-w-7xl mx-auto relative z-10">
     <div class="max-w-2xl mb-16 reveal-on-scroll">
       <span class="text-xs uppercase tracking-widest2 text-brand-gold font-sans font-medium mb-3 block"><?php esc_html_e('The Demie Standard', 'demie-v2'); ?></span>
       <h2 class="font-serif text-3xl sm:text-4xl md:text-5xl text-brand-cream font-normal"><?php esc_html_e('Why Couples Entrust Us With Their Days', 'demie-v2'); ?></h2>

@@ -1,7 +1,7 @@
 <?php
 if (!defined('ABSPATH')) exit;
 
-define('DEMIE_VERSION', '0.1.72');
+define('DEMIE_VERSION', '0.1.76');
 define('DEMIE_DIR', get_template_directory());
 define('DEMIE_URI', get_template_directory_uri());
 
@@ -96,7 +96,7 @@ add_action('after_setup_theme', 'demie_content_width', 0);
 function demie_enqueue_assets() {
     // Tailwind via CDN (per design brief — keeps v2/code.html utilities working).
     wp_enqueue_script('demie-tailwind-cdn', 'https://cdn.tailwindcss.com', [], null, false);
-    $tailwind_config = "tailwind.config = { theme: { extend: { fontFamily: { serif: ['\"Cormorant Garamond\"','Georgia','serif'], sans: ['\"Plus Jakarta Sans\"','sans-serif'] }, colors: { brand: { cream:'#FDFBF7', bone:'#F7F4EE', stone:'#EAE5DB', champagne:'#D9C8B4', gold:'#C5A880', charcoal:'#1A1816', deep:'#121110', muted:'#7A756E' } }, letterSpacing: { widest2:'0.25em', luxury:'0.18em' } } } }";
+    $tailwind_config = "tailwind.config = { theme: { extend: { fontFamily: { serif: ['\"Cormorant Garamond\"','Georgia','serif'], sans: ['\"Plus Jakarta Sans\"','sans-serif'] }, colors: { brand: { cream:'#FDFBF7', bone:'#F7F4EE', stone:'#EAE5DB', champagne:'#D9C8B4', gold:'#C5A880', charcoal:'#151515', deep:'#121212', muted:'#7A756E' } }, letterSpacing: { widest2:'0.25em', luxury:'0.18em' } } } }";
     wp_add_inline_script('demie-tailwind-cdn', $tailwind_config, 'after');
 
     wp_enqueue_style('demie-v2-fonts', 'https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400&family=Plus+Jakarta+Sans:wght@300;400;500;600&display=swap', [], null);
