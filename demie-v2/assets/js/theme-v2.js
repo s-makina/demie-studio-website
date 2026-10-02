@@ -5,10 +5,10 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!mainNav) return;
     if (window.scrollY > 80) {
       mainNav.classList.add('bg-brand-deep/90', 'backdrop-blur-md', 'py-4', 'shadow-md');
-      mainNav.classList.remove('py-6', 'border-b', 'border-white/10');
+      mainNav.classList.remove('py-6');
     } else {
       mainNav.classList.remove('bg-brand-deep/90', 'backdrop-blur-md', 'py-4', 'shadow-md');
-      mainNav.classList.add('py-6', 'border-b', 'border-white/10');
+      mainNav.classList.add('py-6');
     }
   };
   window.addEventListener('scroll', handleScroll, { passive: true });
