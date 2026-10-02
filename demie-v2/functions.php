@@ -1,7 +1,7 @@
 <?php
 if (!defined('ABSPATH')) exit;
 
-define('DEMIE_VERSION', '0.1.21');
+define('DEMIE_VERSION', '0.1.27');
 define('DEMIE_DIR', get_template_directory());
 define('DEMIE_URI', get_template_directory_uri());
 
@@ -47,8 +47,8 @@ function demie_v2_customize($wp_customize) {
     $general = [
         'demie_v2_statement_quote' => '“For the moments you’ll want to remember forever — raw, poetic, and effortlessly true.”',
         'demie_v2_statement_text'  => 'We believe the most memorable photographs aren’t forced or staged into stiff poses. They are discovered in the shared glances, the unhurried laughter, the gentle clasp of hands, and the spontaneous joy of two lives uniting. We blend documentary intimacy with high-fashion editorial composition to craft archives worthy of heirloom preservation.',
-        'demie_v2_booking_title'   => 'Let’s Tell Your Story.',
-        'demie_v2_booking_text'    => 'Your wedding deserves more than photographs. It deserves to be remembered with intention, artfulness, and enduring reverence.',
+        'demie_v2_booking_title'   => 'Have a Question?',
+        'demie_v2_booking_text'    => 'Whether you’re planning a celebration, exploring packages, or simply want to reach out — send us a note and we’ll get back to you.',
     ];
     foreach ($general as $key => $def) {
         $wp_customize->add_setting($key, ['default' => $def, 'sanitize_callback' => 'wp_kses_post']);
