@@ -36,6 +36,10 @@ _Avoid_: "gallery post", fake blog posts for gallery content
 The public page where visitors browse the current Gallery. Its content is rendered from the latest Gallery by the plugin; the owner edits galleries in the admin, not the page.
 _Avoid_: confusing the Gallery Page (a page) with a Gallery (a collection)
 
+**Portfolio Page**:
+The independent public page at `portfolio/` listing curated Galleries (one Gallery = one card: cover, title, media count, short description). Visibility is per-Gallery via a "Show on portfolio" check; unchecked Galleries are hidden from the index and blocked from direct detail. Clicking a card shows that Gallery's grid inline on the same page (`portfolio/?project=slug`, masonry + load more). Manual WP page with the Portfolio template; no seeder involvement.
+_Avoid_: confusing the Portfolio Page (curated index of Galleries) with the Gallery Page (latest Gallery browser) or with a Project detail/download portal (deferred to a separate app)
+
 **Gallery**:
 An owner-created collection of media (photos and videos), managed in the admin as its own entity and presented on the site as one browsable set. A Gallery owns an ordered list of media chosen from the Media Library; the order is the display order. Built and delivered by the Demie Gallery plugin, not the theme.
 _Avoid_: treating a Gallery as a Portfolio Item or a place where Portfolio Items are grouped
@@ -43,3 +47,7 @@ _Avoid_: treating a Gallery as a Portfolio Item or a place where Portfolio Items
 **Gallery Media Item**:
 One entry in a Gallery's ordered list: either a Media Library attachment (photo or uploaded video) or an external video link (YouTube/Vimeo). The item, not the Gallery, is where captions and per-media settings live.
 _Avoid_: "slide", "photo" as the umbrella term (videos are in scope)
+
+**Project**:
+A client-owned Gallery: a Gallery with a client name and a private-link token. The public sees only its cover; the full media set and downloads unlock via the private link. Same CPT and admin as Gallery, not a separate entity.
+_Avoid_: treating Project as a separate CPT or menu; "project" for the homepage Portfolio Items

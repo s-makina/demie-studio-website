@@ -26,6 +26,7 @@ define('DEMIE_G_URI', plugin_dir_url(__FILE__));
 
 require_once DEMIE_G_DIR . 'inc/cpt.php';
 require_once DEMIE_G_DIR . 'inc/media-list.php';
+require_once DEMIE_G_DIR . 'inc/portfolio.php';
 require_once DEMIE_G_DIR . 'inc/admin-ui.php';
 require_once DEMIE_G_DIR . 'inc/shortcode.php';
 require_once DEMIE_G_DIR . 'inc/render.php';
