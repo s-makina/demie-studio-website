@@ -1,7 +1,7 @@
 <?php
 if (!defined('ABSPATH')) exit;
 
-define('DEMIE_VERSION', '0.1.76');
+define('DEMIE_VERSION', '0.1.95');
 define('DEMIE_DIR', get_template_directory());
 define('DEMIE_URI', get_template_directory_uri());
 
