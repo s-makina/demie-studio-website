@@ -107,6 +107,9 @@ function demie_g_seed_demo_gallery() {
 
     update_post_meta($gallery_id, DEMIE_G_META_MEDIA, wp_json_encode($items));
     update_post_meta($gallery_id, DEMIE_G_META_DESC, __('A selection of our weddings, portraits, events and studio work.', 'demie-gallery'));
+    if (false === get_post_meta($gallery_id, DEMIE_G_META_PORTFOLIO, true) || '' === (string) get_post_meta($gallery_id, DEMIE_G_META_PORTFOLIO, true)) {
+        update_post_meta($gallery_id, DEMIE_G_META_PORTFOLIO, '1');
+    }
 
     return (int) $gallery_id;
 }
@@ -177,6 +180,9 @@ function demie_g_seed_homepage_gallery() {
     }
 
     update_post_meta($gallery_id, DEMIE_G_META_MEDIA, wp_json_encode($items));
+    if ('' === (string) get_post_meta($gallery_id, DEMIE_G_META_PORTFOLIO, true)) {
+        update_post_meta($gallery_id, DEMIE_G_META_PORTFOLIO, '1');
+    }
 
     return (int) $gallery_id;
 }

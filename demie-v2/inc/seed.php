@@ -40,6 +40,7 @@ function demie_seed_maybe_upgrade() {
 function demie_seed_run() {
     demie_seed_permalinks();
     demie_seed_pages();
+    demie_seed_menus();
     demie_seed_settings();
     demie_seed_services();
     demie_seed_testimonials();
@@ -225,6 +226,7 @@ function demie_seed_pages() {
     $gallery  = demie_seed_page('gallery', __('Gallery', 'demie-photography'), 'page-gallery.php');
     $blog     = demie_seed_page('blog', __('Blog', 'demie-photography'), 'page-blog.php');
     $contact  = demie_seed_page('contact', __('Contact', 'demie-photography'), 'page-contact.php');
+    $portfolio = demie_seed_page('portfolio', __('Portfolio', 'demie-photography'), 'page-portfolio.php');
 
     if ($front_id) {
         update_option('show_on_front', 'page');
@@ -233,6 +235,71 @@ function demie_seed_pages() {
     if ($blog) {
         update_option('page_for_posts', $blog);
     }
+}
+
+/**
+ * Primary menu matching local: Home, Services, Portfolio assigned to primary.
+ * Idempotent: if primary location already has a menu, do nothing. If
+ * Primary Menu exists but is empty, fill missing items only.
+ */
+function demie_seed_menus() {
+    $locations = get_theme_mod('nav_menu_locations');
+    if (!is_array($locations)) {
+        $locations = [];
+    }
+    if (!empty($locations['primary'])) {
+        $assigned = wp_get_nav_menu_object($locations['primary']);
+        if ($assigned) {
+            return;
+        }
+    }
+
+    $menu = wp_get_nav_menu_object('Primary Menu');
+    if ($menu) {
+        $menu_id = (int) $menu->term_id;
+    } else {
+        $menu_id = wp_create_nav_menu('Primary Menu');
+        if (is_wp_error($menu_id) || !$menu_id) {
+            return;
+        }
+    }
+
+    $wanted = [
+        'home'      => demie_seed_page_id('home'),
+        'services'  => demie_seed_page_id('services'),
+        'portfolio' => demie_seed_page_id('portfolio'),
+    ];
+
+    $existing_ids = [];
+    $items = wp_get_nav_menu_items($menu_id);
+    if (is_array($items)) {
+        foreach ($items as $item) {
+            $obj_id = (int) get_post_meta($item->ID, '_menu_item_object_id', true);
+            if ($obj_id) {
+                $existing_ids[$obj_id] = true;
+            }
+        }
+    }
+
+    $order = 1;
+    foreach ($wanted as $slug => $page_id) {
+        if (!$page_id || isset($existing_ids[$page_id])) {
+            $order++;
+            continue;
+        }
+        wp_update_nav_menu_item($menu_id, 0, [
+            'menu-item-title'     => get_the_title($page_id),
+            'menu-item-object'    => 'page',
+            'menu-item-object-id' => $page_id,
+            'menu-item-type'      => 'post_type',
+            'menu-item-status'    => 'publish',
+            'menu-item-position'  => $order,
+        ]);
+        $order++;
+    }
+
+    $locations['primary'] = $menu_id;
+    set_theme_mod('nav_menu_locations', $locations);
 }
 
 /* ---------- Studio Details settings ---------- */

@@ -2,7 +2,7 @@
 
 if (!defined('ABSPATH')) exit;
 
-define('DEMIE_VERSION', '1.3.69');
+define('DEMIE_VERSION', '1.3.70');
 define('DEMIE_DIR', get_template_directory());
 define('DEMIE_URI', get_template_directory_uri());
 
