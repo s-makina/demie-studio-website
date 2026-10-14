@@ -30,10 +30,13 @@ public class S3Service {
     private final String zipsBucket;
 
     public S3Service(S3Client s3, S3Presigner presigner,
-                     @Value("${S3_BUCKET_ORIGINALS:originals}") String originalsBucket,
-                     @Value("${S3_BUCKET_PREVIEWS:previews}") String previewsBucket,
-                     @Value("${S3_BUCKET_THUMBS:thumbs}") String thumbsBucket,
-                     @Value("${S3_BUCKET_ZIPS:zips}") String zipsBucket) {
+                     // Single-bucket mode: all four classes live in one bucket
+                     // (demie-studio) under key prefixes (originals/, previews/,
+                     // thumbs/, zips/). Split via env if buckets ever diverge.
+                     @Value("${S3_BUCKET_ORIGINALS:demie-studio}") String originalsBucket,
+                     @Value("${S3_BUCKET_PREVIEWS:demie-studio}") String previewsBucket,
+                     @Value("${S3_BUCKET_THUMBS:demie-studio}") String thumbsBucket,
+                     @Value("${S3_BUCKET_ZIPS:demie-studio}") String zipsBucket) {
         this.s3 = s3;
         this.presigner = presigner;
         this.originalsBucket = originalsBucket;

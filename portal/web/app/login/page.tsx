@@ -1,6 +1,48 @@
+"use client";
+
+import { useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+
+const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "";
 
 export default function LoginPage() {
+  const router = useRouter();
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState<string | null>(null);
+  const [submitting, setSubmitting] = useState(false);
+
+  async function onSubmit(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setError(null);
+    setSubmitting(true);
+
+    try {
+      const response = await fetch(`${API_URL}/auth/login`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ email, password }),
+      });
+
+      if (response.ok) {
+        router.push("/projects");
+        return;
+      }
+
+      setError(
+        response.status === 401
+          ? "Email or password is incorrect."
+          : "Sign-in failed. Please try again."
+      );
+    } catch {
+      setError("Could not reach the server. Check your connection.");
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
   return (
     <div className="flex min-h-screen flex-col">
       <header className="border-b border-border bg-surface">
@@ -9,10 +51,7 @@ export default function LoginPage() {
             Demie Photography
           </Link>
           <nav className="flex gap-6 text-sm text-muted">
-            <Link
-              href="/login"
-              className="hover:text-foreground"
-            >
+            <Link href="/login" className="hover:text-foreground">
               Sign in
             </Link>
           </nav>
@@ -26,12 +65,19 @@ export default function LoginPage() {
             Photographers sign in here. Clients use their share link — no login needed.
           </p>
 
-          <form className="space-y-5">
+          {!API_URL && (
+            <p className="mb-6 rounded-lg border border-border bg-surface-2 px-4 py-3 text-sm text-muted">
+              Set{" "}
+              <code className="rounded bg-surface px-1 py-0.5 font-mono text-accent">
+                NEXT_PUBLIC_API_URL
+              </code>{" "}
+              to point at the portal API.
+            </p>
+          )}
+
+          <form className="space-y-5" onSubmit={onSubmit}>
             <div>
-              <label
-                htmlFor="email"
-                className="mb-1.5 block text-sm font-medium text-foreground"
-              >
+              <label htmlFor="email" className="mb-1.5 block text-sm font-medium text-foreground">
                 Email
               </label>
               <input
@@ -40,16 +86,15 @@ export default function LoginPage() {
                 type="email"
                 autoComplete="email"
                 required
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
                 className="w-full rounded-lg border border-border bg-surface-2 px-3 py-2 text-foreground placeholder:text-muted focus:outline-none focus:ring-2 focus:ring-accent"
                 placeholder="you@example.com"
               />
             </div>
 
             <div>
-              <label
-                htmlFor="password"
-                className="mb-1.5 block text-sm font-medium text-foreground"
-              >
+              <label htmlFor="password" className="mb-1.5 block text-sm font-medium text-foreground">
                 Password
               </label>
               <input
@@ -58,24 +103,30 @@ export default function LoginPage() {
                 type="password"
                 autoComplete="current-password"
                 required
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
                 className="w-full rounded-lg border border-border bg-surface-2 px-3 py-2 text-foreground placeholder:text-muted focus:outline-none focus:ring-2 focus:ring-accent"
                 placeholder="••••••••"
               />
             </div>
 
+            {error && (
+              <p role="alert" className="text-sm text-red-400">
+                {error}
+              </p>
+            )}
+
             <button
               type="submit"
-              className="w-full rounded-lg bg-accent px-4 py-2.5 font-medium text-background transition hover:bg-accent-hover"
+              disabled={submitting}
+              className="w-full rounded-lg bg-accent px-4 py-2.5 font-medium text-background transition hover:bg-accent-hover disabled:opacity-60"
             >
-              Sign in
+              {submitting ? "Signing in…" : "Sign in"}
             </button>
           </form>
 
           <p className="mt-8 text-center text-sm text-muted">
-            Forgot your password?{" "}
-            <Link href="/login/forgot" className="underline hover:text-foreground">
-              Reset it
-            </Link>
+            Invited? Use the link in your invite email to set a password.
           </p>
         </div>
       </main>

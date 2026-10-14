@@ -1,6 +1,5 @@
-# Test profile used by API tests against a manually-run local Postgres.
-# Schema is managed by Flyway at runtime; tests that need tables run the
-# migrations themselves, so Flyway is disabled here for context-load tests.
+# Test profile used by API tests against a manually-run local Postgres
+# (portal_test). Flyway is enabled so tests run against the real schema.
 spring:
   datasource:
     url: jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5432}/${TEST_DB_NAME:portal_test}
@@ -8,7 +7,9 @@ spring:
     password: ${DB_PASSWORD:Forcode123!}
     driver-class-name: org.postgresql.Driver
   flyway:
-    enabled: false
+    enabled: true
+    clean-disabled: false
+    locations: classpath:db/migration
 
 logging:
   level:

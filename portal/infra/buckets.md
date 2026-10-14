@@ -1,23 +1,25 @@
 # S3 buckets (portal)
 
-The portal stores four classes of object. In Phase 0 these are four separate
-S3-compatible buckets (local MinIO uses exactly these names; prod S3 uses
-unique, environment-scoped names — see "prod naming" below).
+The portal stores four classes of object. They all live in a **single bucket**,
+`demie-studio`, separated by key prefix (single-bucket mode). The API's bucket
+settings (`S3_BUCKET_ORIGINALS`, `S3_BUCKET_PREVIEWS`, `S3_BUCKET_THUMBS`,
+`S3_BUCKET_ZIPS`) all default to `demie-studio` and can be split per class via
+env if buckets ever diverge.
 
-| Bucket | Purpose | Who writes | Who reads |
+| Prefix (in `demie-studio`) | Purpose | Who writes | Who reads |
 |---|---|---|---|
-| `originals` | Photographer-uploaded originals (the source of truth) | API (presigned PUT, browser → S3) | ZIP worker, download presign |
-| `previews`   | Photo previews (~1600px) + video poster frames | Derivative worker | Lightbox upgrade |
-| `thumbs`     | Thumbs (~400px) served in the grid | Derivative worker | Grid, lightbox |
-| `zips`       | Background ZIP builds (close-and-return) | ZIP worker | Client download (presigned) |
+| `originals/` | Photographer-uploaded originals (the source of truth) | API (presigned PUT, browser → S3) | ZIP worker, download presign |
+| `previews/`   | Photo previews (~1600px) + video poster frames | Derivative worker | Lightbox upgrade |
+| `thumbs/`     | Thumbs (~400px) served in the grid | Derivative worker | Grid, lightbox |
+| `zips/`       | Background ZIP builds (close-and-return) | ZIP worker | Client download (presigned) |
 
 Object keys are namespaced under project, e.g.:
 
 ```
-originals/<project-id>/<media-id>/<filename>
-previews/<project-id>/<media-id>.jpg
-thumbs/<project-id>/<media-id>.jpg
-zips/<job-id>.zip
+demie-studio/originals/<project-id>/<media-id>/<filename>
+demie-studio/previews/<project-id>/<media-id>.jpg
+demie-studio/thumbs/<project-id>/<media-id>.jpg
+demie-studio/zips/<job-id>.zip
 ```
 
 Originals are **never** written to the VPS disk — they land directly in S3 via
@@ -26,23 +28,34 @@ and by download presigns. The API never proxies bytes.
 
 ## Lifecycle
 
-- `zips/` has a 7-day expiry (objects deleted 7 days after creation). On a
-  fresh bucket the worker should also handle missing ZIPs by rebuilding
-  (Task 12).
+- `zips/` has a 7-day expiry (objects deleted 7 days after creation). In
+  single-bucket mode this is a prefix-filtered ILM rule on `zips/` (console:
+  Buckets → `demie-studio` → Lifecycle → prefix `zips/`). On a fresh bucket
+  the worker should also handle missing ZIPs by rebuilding (Task 12).
 - `originals/`, `previews/`, `thumbs/` are retained until a project is deleted
   (cascade in v1; retention policy deferred).
 
+## Live (Dokploy MinIO)
+
+- Console: `https://salvation-minio-bdd8cc-102-202-45-205.sslip.io`
+  (Traefik → port 9001).
+- S3 API: `http://salvation-minio-7c8f86-102-202-45-205.sslip.io` (Traefik →
+  port 9000). This is the `S3_ENDPOINT` value; never use the console domain.
+- Bucket: create `demie-studio` once (console → Buckets → Create, or
+  `mc mb alias/demie-studio`). S3 names allow only lowercase, digits, `-`
+  and `.` — underscores are rejected with `InvalidBucketName`. The API's
+  `S3Service.ensureBucket()` also creates it on first use (idempotent).
+- Credentials are a MinIO service account; keep them in `infra/.env`
+  (gitignored), never in committed files.
+
 ## Local (MinIO)
 
-Phase 0 runs MinIO as a manual local process (no Docker). Create the four
-buckets before the API starts uploading:
+Phase 0 runs MinIO as a manual local process (no Docker). Create the single
+bucket before the API starts uploading:
 
 ```bash
 mc alias set local http://localhost:9000 <access-key> <secret-key>
-mc mb --ignore-existing local/originals
-mc mb --ignore-existing local/previews
-mc mb --ignore-existing local/thumbs
-mc mb --ignore-existing local/zips
+mc mb --ignore-existing local/demie-studio
 ```
 
 The API's `S3Service.ensureBucket()` also creates a bucket on first use (idempotent),
@@ -51,19 +64,12 @@ round-trip test (`S3PresignIT`) deterministic.
 
 ## Prod naming
 
-S3 bucket names are globally unique. For prod, use environment-scoped names,
-e.g.:
-
-```
-demie-portal-originals-prod
-demie-portal-previews-prod
-demie-portal-thumbs-prod
-demie-portal-zips-prod
-```
-
-Set these via env (`S3_BUCKET_ORIGINALS`, `S3_BUCKET_PREVIEWS`, …) — the API
-defaults to `originals`/`previews`/`thumbs`/`zips` which is correct for local
-MinIO. See `infra/.env.example`.
+`demie-studio` is the live bucket name (MinIO is not subject to global S3
+name uniqueness). If a second environment ever needs isolating, use an
+environment-scoped bucket (e.g. `demie-studio-dev`) and set it via env
+(`S3_BUCKET_ORIGINALS`, `S3_BUCKET_PREVIEWS`, …) — the API defaults to
+`demie-studio` for all four classes, which is correct for local MinIO too.
+See `infra/.env.example`.
 
 ## Access model
 

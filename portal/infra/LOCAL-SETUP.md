@@ -23,17 +23,14 @@ The spec says MinIO runs as a manual local process for Phase 0. One option:
 minio server /tmp/minio-data --address ":9000" --console-address ":9001"
 ```
 
-Create the four buckets the API expects (`originals`, `previews`, `thumbs`,
-`zips`). The buckets are S3 prefixes in this phase; the API creates objects
-under `originals/<project>/<media>...`. Use the MinIO console or `mc` to
-create them:
+Create the single bucket the API expects (`demie-studio`). Object classes
+are key prefixes inside it (`originals/`, `previews/`, `thumbs/`, `zips/`);
+the API creates objects under `demie-studio/originals/<project>/<media>...`.
+Use the MinIO console or `mc` to create it:
 
 ```bash
 mc alias set local http://localhost:9000 <access-key> <secret-key>
-mc mb --ignore-existing local/originals
-mc mb --ignore-existing local/previews
-mc mb --ignore-existing local/thumbs
-mc mb --ignore-existing local/zips
+mc mb --ignore-existing local/demie-studio
 ```
 
 For prod, bucket policy and lifecycle (7-day expiry on `zips/`) are documented

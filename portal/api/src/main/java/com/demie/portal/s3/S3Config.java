@@ -8,6 +8,7 @@ import software.amazon.awssdk.auth.credentials.AnonymousCredentialsProvider;
 import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider;
 import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.s3.S3Client;
+import software.amazon.awssdk.services.s3.S3Configuration;
 import software.amazon.awssdk.services.s3.presigner.S3Presigner;
 
 import java.net.URI;
@@ -49,6 +50,13 @@ public class S3Config {
         if (endpoint != null && !endpoint.isBlank()) {
             builder.endpointOverride(URI.create(endpoint));
         }
+
+        // Must match S3Client's path-style access: without this the presigner
+        // emits virtual-hosted-style URLs (https://bucket.host/key) which
+        // MinIO behind a hostname-routed reverse proxy cannot resolve.
+        builder.serviceConfiguration(S3Configuration.builder()
+                .pathStyleAccessEnabled(true)
+                .build());
 
         return builder.build();
     }

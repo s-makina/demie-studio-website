@@ -23,10 +23,11 @@ Order is by dependency. No task touches more than ~5 files. Check a task off onl
 
 ## Phase 1 — Access + Projects
 
-- [ ] Task 3: Admin login + invite-only client accounts (no public signup)
+- [x] Task 3: Admin login + invite-only client accounts (no public signup)
   - Acceptance: photographer logs in; invite-by-email creates/links a client account; there is no self-registration endpoint (404/403 proven by test).
   - Verify: `./mvnw test -Dtest=AuthTest`; manual: invite email → set password → login
   - Files: `portal/api/.../AuthController.java`, `portal/api/.../AccountService.java`, `portal/web/app/login/**`
+  - Done 2026-10-14: `AuthTest` 9/9 green; live smoke against `demie_portal` — login 200 admin, `/auth/register` 403, admin-only invite enforced (403 anonymous), invite-accept 204, client login 200, wrong password 401, replayed token 400. Bootstrap admin via `ADMIN_EMAIL`/`ADMIN_PASSWORD`; web `/login` + `/login/accept` call the API.
 
 - [ ] Task 4: Projects CRUD + member assignment
   - Acceptance: photographer creates/renames/archives a project and assigns invited emails; assigned client sees it in list, stranger account does not.
