@@ -22,6 +22,15 @@
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <java.version>21</java.version>
+
+    <!-- Local dev DB defaults, matching application.yml. Override on the
+         command line, e.g. `./mvnw flyway:migrate -Ddb.name=portal_test`.
+         Password intentionally omitted here; set it via the FLYWAY_PASSWORD
+         / DB_PASSWORD env var instead of committing it. -->
+    <db.host>localhost</db.host>
+    <db.port>5432</db.port>
+    <db.name>demie_portal</db.name>
+    <db.username>postgres</db.username>
   </properties>
 
   <dependencies>
@@ -36,14 +45,12 @@
       <groupId>org.springframework.boot</groupId>
       <artifactId>spring-boot-starter-data-jdbc</artifactId>
     </dependency>
+    <!-- Flyway 9.22.3 (managed by Spring Boot 3.2.12) already supports
+         PostgreSQL in flyway-core; the separate flyway-database-postgresql
+         module is Flyway 10+ only and must not be mixed in. -->
     <dependency>
       <groupId>org.flywaydb</groupId>
       <artifactId>flyway-core</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>org.flywaydb</groupId>
-      <artifactId>flyway-database-postgresql</artifactId>
-      <version>10.10.0</version>
     </dependency>
 
     <!-- PostgreSQL -->
@@ -105,14 +112,18 @@
       <plugin>
         <groupId>org.flywaydb</groupId>
         <artifactId>flyway-maven-plugin</artifactId>
-        <version>10.10.0</version>
+        <version>9.22.3</version>
         <configuration>
           <!-- Phase 0: DB and S3 are manual local processes configured via env.
-               JDBC user/password are read by Flyway from the DATABASE_URL query
-               params (user / password) when flyway.user / flyway.password are
-               not set explicitly. -->
-          <url>${env.DATABASE_URL}</url>
-          <locations>classpath:db/migration</locations>
+               Host/port/db/user default to local dev values from <properties>
+               and can be overridden with -Ddb.host=... etc. The password is
+               NOT set here; supply it via the FLYWAY_PASSWORD (or DB_PASSWORD)
+               env var so it is never committed. -->
+          <url>jdbc:postgresql://${db.host}:${db.port}/${db.name}</url>
+          <user>${db.username}</user>
+          <!-- Read from source so `flyway:migrate` reflects edits without a
+               prior compile. Runtime Flyway uses classpath:db/migration. -->
+          <locations>filesystem:src/main/resources/db/migration</locations>
           <cleanDisabled>false</cleanDisabled>
         </configuration>
       </plugin>

@@ -9,6 +9,10 @@
 SET statement_timeout = 0;
 SET lock_timeout = 0;
 
+-- Case-insensitive email storage: `account.email` is CITEXT so that
+-- invite-by-email links an existing account regardless of case.
+CREATE EXTENSION IF NOT EXISTS citext;
+
 -- ----------------------------------------------------------------------
 -- account
 -- Photographers (admin) and invited client accounts.
@@ -29,8 +33,6 @@ CREATE TABLE account (
     CONSTRAINT account_email_unique UNIQUE (email)
 );
 
-CREATE INDEX account_email_idx ON account (email);
-
 -- ----------------------------------------------------------------------
 -- project
 -- A photographer-owned client project / gallery.
@@ -43,9 +45,7 @@ CREATE TABLE project (
     status          TEXT NOT NULL DEFAULT 'active' CHECK (status IN ('active', 'archived')),
     cover_s3_key    TEXT,
     created_at      TIMESTAMPTZ NOT NULL DEFAULT now(),
-    updated_at      TIMESTAMPTZ NOT NULL DEFAULT now(),
-
-    CONSTRAINT project_account_idx FOREIGN KEY (account_id) REFERENCES account (id)
+    updated_at      TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
 CREATE INDEX project_account_id_idx ON project (account_id);
@@ -81,9 +81,7 @@ CREATE TABLE media (
     kind            TEXT NOT NULL CHECK (kind IN ('photo', 'video')),
     sort            INTEGER NOT NULL,
     status          TEXT NOT NULL DEFAULT 'uploading' CHECK (status IN ('uploading', 'uploaded', 'derivative_failed')),
-    created_at      TIMESTAMPTZ NOT NULL DEFAULT now(),
-
-    CONSTRAINT media_project_idx FOREIGN KEY (project_id) REFERENCES project (id)
+    created_at      TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
 CREATE INDEX media_project_sort_idx ON media (project_id, sort);

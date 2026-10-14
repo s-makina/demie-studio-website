@@ -9,8 +9,8 @@ Install Postgres 16 locally (apt, homebrew, etc.) and start the server. Then:
 
 ```bash
 # Create the database the API will use.
-createdb -U postgres portal
-# Optional test database used by integration-style tests once added.
+createdb -U postgres demie_portal
+# Test database used by the test profile (application-test.yml).
 createdb -U postgres portal_test
 ```
 
@@ -46,8 +46,15 @@ in the values that match your local Postgres and MinIO.
 
 ### API
 
+The datasource is built from these env vars (defaults target local dev):
+
 ```bash
-export DATABASE_URL="jdbc:postgresql://localhost:5432/portal?user=postgres"
+export DB_HOST=localhost
+export DB_PORT=5432
+export DB_NAME=demie_portal
+export DB_USERNAME=postgres
+export DB_PASSWORD="<your-postgres-password>"
+
 export S3_ENDPOINT="http://localhost:9000"
 export S3_ACCESS_KEY="<access-key>"
 export S3_SECRET_KEY="<secret-key>"
@@ -61,6 +68,22 @@ cd portal
 ./mvnw spring-boot:run -pl api
 ```
 
+### Flyway (schema)
+
+The Maven Flyway plugin reads host/port/db/user from Maven properties
+(`-Ddb.host=…`, `-Ddb.name=…`) and the password from the `FLYWAY_PASSWORD` env
+var. Apply migrations with:
+
+```bash
+cd portal
+FLYWAY_PASSWORD="<your-postgres-password>" ./mvnw flyway:migrate -pl api
+FLYWAY_PASSWORD="<your-postgres-password>" ./mvnw flyway:info -pl api
+```
+
+The plugin reads migrations from `src/main/resources/db/migration` directly, so
+edits take effect without a prior compile. `flyway:clean -pl api` resets the
+schema (the `target`-independent dev workflow).
+
 ### Web
 
 ```bash
@@ -71,6 +94,10 @@ npm run dev
 
 `NEXT_PUBLIC_API_URL` must point at the running API. Without it, `/login` and
 `/projects` render a placeholder note.
+
+> **Security note:** `application.yml` and `application-test.yml` currently
+> carry a dev-only Postgres password default so the local verify just works.
+> Move it to `DB_PASSWORD` env before any shared deployment.
 
 ## 4. Verify (Phase 0 Task 0)
 
