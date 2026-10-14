@@ -1,0 +1,10 @@
+spring:
+  datasource:
+    url: jdbc:postgresql://localhost:5432/portal_test
+    driver-class-name: org.postgresql.Driver
+  flyway:
+    enabled: false
+
+logging:
+  level:
+    root: warn
