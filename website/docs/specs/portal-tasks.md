@@ -16,10 +16,11 @@ Order is by dependency. No task touches more than ~5 files. Check a task off onl
   - Done 2026-10-14: V1 applied to `demie_portal` (PG 16.15); clean→migrate roll-forward and idempotent re-run pass; 7 tables, 10 FKs, indexes verified; citext enabled for `account.email`.
   - Files: `portal/api/src/main/resources/db/migration/V1__portal.sql`
 
-- [ ] Task 2: S3 buckets + presign helper + round-trip test
-  - Acceptance: buckets `originals/`, `previews/`, `thumbs/`, `zips/` exist (MinIO binary/console local, documented policy for prod); helper issues presigned PUT/GET; integration test PUTs and GETs an object against the manually-run MinIO.
-  - Verify: API integration test `S3PresignIT` green against manual MinIO (S3_ENDPOINT env)
-  - Files: `portal/api/.../S3Service.java`, `portal/api/.../S3PresignIT.java`, `portal/infra/buckets.md`
+- [x] Task 2: S3 buckets + presign helper + round-trip test
+  - Acceptance: single bucket `demie-studio` with `originals/`, `previews/`, `thumbs/`, `zips/` prefixes (Dokploy MinIO; policy documented in buckets.md); helper issues presigned PUT/GET; integration test PUTs and GETs an object.
+  - Verify: API integration test `S3PresignIT` green with `S3_ENDPOINT` pointing at the MinIO S3 API domain
+  - Files: `portal/api/.../S3Service.java`, `portal/api/.../S3Config.java`, `portal/api/.../S3PresignIT.java`, `portal/infra/buckets.md`, `portal/infra/.env.example`
+  - Done 2026-10-14: `S3PresignIT` 2/2 green live against Dokploy MinIO (`demie-studio` auto-created via `ensureBucket`, PUT→HEAD→GET byte-identical); presigner fixed to path-style URLs (virtual-hosted style 404s behind Traefik); single-bucket mode (all `S3_BUCKET_*` default `demie-studio`, classes separated by prefix); stray debug buckets removed.
 
 ## Phase 1 — Access + Projects
 
@@ -29,10 +30,11 @@ Order is by dependency. No task touches more than ~5 files. Check a task off onl
   - Files: `portal/api/.../AuthController.java`, `portal/api/.../AccountService.java`, `portal/web/app/login/**`
   - Done 2026-10-14: `AuthTest` 9/9 green; live smoke against `demie_portal` — login 200 admin, `/auth/register` 403, admin-only invite enforced (403 anonymous), invite-accept 204, client login 200, wrong password 401, replayed token 400. Bootstrap admin via `ADMIN_EMAIL`/`ADMIN_PASSWORD`; web `/login` + `/login/accept` call the API.
 
-- [ ] Task 4: Projects CRUD + member assignment
+- [x] Task 4: Projects CRUD + member assignment
   - Acceptance: photographer creates/renames/archives a project and assigns invited emails; assigned client sees it in list, stranger account does not.
   - Verify: `./mvnw test -Dtest=ProjectAccessTest`
-  - Files: `portal/api/.../ProjectController.java`, `portal/api/.../ProjectService.java`, migration delta if needed
+  - Files: `portal/api/.../ProjectController.java`, `portal/api/.../ProjectService.java`, `portal/api/.../Project.java`, `portal/api/.../ProjectAccessTest.java` (no migration delta — V1 schema covered it)
+  - Done 2026-10-14: `ProjectAccessTest` 10/10 green, full suite 20/20. `POST/PATCH /projects/**` admin-only via `SecurityConfig`; reads scoped per caller (admin: all, client: active memberships); assign-by-email idempotent, works for pending invites; archived hidden from clients (403), visible to admin.
 
 - [ ] Task 5: Share tokens — issue / rotate / revoke + bearer guard
   - Acceptance: each project has a 256-bit token (hash stored); `/p/<token>` grants view/download without login; rotate invalidates old, revoke denies instantly; token probes are rate-limited with constant-time compare.

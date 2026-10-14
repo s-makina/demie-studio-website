@@ -3,6 +3,7 @@ package com.demie.portal.account;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
@@ -55,6 +56,10 @@ public class SecurityConfig {
                         // Public health probe.
                         .requestMatchers("/actuator/health").permitAll()
                         .requestMatchers("/auth/invite").hasRole("ADMIN")
+                        // Project mutations are photographer-only (Task 4);
+                        // reads stay authenticated and are scoped per caller.
+                        .requestMatchers(HttpMethod.POST, "/projects", "/projects/**").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.PATCH, "/projects/**").hasRole("ADMIN")
                         .requestMatchers("/auth/me", "/auth/logout").authenticated()
                         .anyRequest().authenticated())
                 .sessionManagement(session ->
