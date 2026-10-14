@@ -3,19 +3,29 @@ package com.demie.portal.s3;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import software.amazon.awssdk.services.s3.S3Client;
+import software.amazon.awssdk.services.s3.model.AbortMultipartUploadRequest;
+import software.amazon.awssdk.services.s3.model.CompleteMultipartUploadRequest;
+import software.amazon.awssdk.services.s3.model.CompletedMultipartUpload;
+import software.amazon.awssdk.services.s3.model.CompletedPart;
 import software.amazon.awssdk.services.s3.model.CreateBucketRequest;
+import software.amazon.awssdk.services.s3.model.CreateMultipartUploadRequest;
 import software.amazon.awssdk.services.s3.model.GetObjectRequest;
 import software.amazon.awssdk.services.s3.model.HeadObjectRequest;
 import software.amazon.awssdk.services.s3.model.HeadObjectResponse;
 import software.amazon.awssdk.services.s3.model.NoSuchKeyException;
 import software.amazon.awssdk.services.s3.model.PutObjectRequest;
+import software.amazon.awssdk.services.s3.model.UploadPartRequest;
 import software.amazon.awssdk.services.s3.presigner.S3Presigner;
 import software.amazon.awssdk.services.s3.presigner.model.GetObjectPresignRequest;
 import software.amazon.awssdk.services.s3.presigner.model.PresignedGetObjectRequest;
 import software.amazon.awssdk.services.s3.presigner.model.PresignedPutObjectRequest;
+import software.amazon.awssdk.services.s3.presigner.model.PresignedUploadPartRequest;
 import software.amazon.awssdk.services.s3.presigner.model.PutObjectPresignRequest;
+import software.amazon.awssdk.services.s3.presigner.model.UploadPartPresignRequest;
 
+import java.io.InputStream;
 import java.time.Duration;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
@@ -117,6 +127,97 @@ public class S3Service {
         return get;
     }
 
+    // ---- multipart upload (browser sends bytes direct-to-S3; API signs) ----
+
+    /**
+     * Starts a multipart upload. Returns the S3 upload id, which the browser
+     * passes back when requesting part URLs and completing.
+     */
+    public String createMultipartUpload(String bucket, String key, String contentType) {
+        var builder = CreateMultipartUploadRequest.builder()
+                .bucket(bucket)
+                .key(key);
+        if (contentType != null && !contentType.isBlank()) {
+            builder.contentType(contentType);
+        }
+        return s3.createMultipartUpload(builder.build()).uploadId();
+    }
+
+    /** Presigned URL for one part (1-based part number). Bytes never touch the API. */
+    public PresignedPart presignUploadPart(String bucket, String key, String uploadId,
+                                           int partNumber, Duration expires) {
+        var request = UploadPartPresignRequest.builder()
+                .signatureDuration(expires)
+                .uploadPartRequest(UploadPartRequest.builder()
+                        .bucket(bucket)
+                        .key(key)
+                        .uploadId(uploadId)
+                        .partNumber(partNumber)
+                        .build())
+                .build();
+
+        PresignedUploadPartRequest presigned = presigner.presignUploadPart(request);
+
+        PresignedPart part = new PresignedPart();
+        part.url = presigned.url().toString();
+        part.expiresAt = System.currentTimeMillis() + expires.toMillis();
+        return part;
+    }
+
+    /**
+     * Completes a multipart upload from the browser-supplied part ETags.
+     * This is the one S3 call the API makes itself (metadata only, no bytes).
+     */
+    public void completeMultipartUpload(String bucket, String key, String uploadId,
+                                        List<CompletedPart> parts) {
+        s3.completeMultipartUpload(CompleteMultipartUploadRequest.builder()
+                .bucket(bucket)
+                .key(key)
+                .uploadId(uploadId)
+                .multipartUpload(CompletedMultipartUpload.builder().parts(parts).build())
+                .build());
+    }
+
+    /** Best-effort abort of a multipart upload (abandoned or superseded). */
+    public void abortMultipartUpload(String bucket, String key, String uploadId) {
+        try {
+            s3.abortMultipartUpload(AbortMultipartUploadRequest.builder()
+                    .bucket(bucket)
+                    .key(key)
+                    .uploadId(uploadId)
+                    .build());
+        } catch (Exception e) {
+            // Already completed/aborted or never existed; nothing to do.
+        }
+    }
+
+    // ---- server-side object access (workers; never the browser path) ----
+
+    /** Streams an object's bytes (caller must close). Used by workers. */
+    public InputStream getObject(String bucket, String key) {
+        return s3.getObject(GetObjectRequest.builder().bucket(bucket).key(key).build());
+    }
+
+    /** Server-side PUT of worker-produced bytes (derivatives, ZIPs). */
+    public void putObject(String bucket, String key, String contentType,
+                          long contentLength, InputStream body) {
+        s3.putObject(PutObjectRequest.builder()
+                        .bucket(bucket)
+                        .key(key)
+                        .contentType(contentType)
+                        .contentLength(contentLength)
+                        .build(),
+                software.amazon.awssdk.core.sync.RequestBody.fromInputStream(body, contentLength));
+    }
+
+    /** Server-side DELETE (test cleanup, project deletion paths). */
+    public void deleteObject(String bucket, String key) {
+        s3.deleteObject(software.amazon.awssdk.services.s3.model.DeleteObjectRequest.builder()
+                .bucket(bucket)
+                .key(key)
+                .build());
+    }
+
     // ---- object metadata / existence ----
 
     public Optional<Long> objectSize(String bucket, String key) {
@@ -150,6 +251,11 @@ public class S3Service {
     }
 
     public static final class PresignedGet {
+        public String url;
+        public long expiresAt;
+    }
+
+    public static final class PresignedPart {
         public String url;
         public long expiresAt;
     }

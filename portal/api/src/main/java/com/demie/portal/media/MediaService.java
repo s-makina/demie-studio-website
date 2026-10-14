@@ -1,0 +1,275 @@
+package com.demie.portal.media;
+
+import com.demie.portal.account.Account;
+import com.demie.portal.project.ProjectService;
+import com.demie.portal.s3.S3Service;
+import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.jdbc.core.RowMapper;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import software.amazon.awssdk.services.s3.model.CompletedPart;
+
+import java.net.URLConnection;
+import java.nio.charset.StandardCharsets;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.time.Duration;
+import java.util.ArrayList;
+import java.util.Base64;
+import java.util.List;
+import java.util.Optional;
+
+/**
+ * Upload lifecycle (Task 6): the API only signs — browsers PUT part bytes
+ * straight to S3. Init reserves the {@code media} row and opens the
+ * multipart upload; complete closes it and records the verified size.
+ * Listing is keyset-paginated on {@code (sort, id)} over the
+ * {@code media_project_sort_idx} index (no full scans).
+ */
+@Service
+public class MediaService {
+
+    private static final String COLUMNS =
+            "id, project_id, s3_key, size_bytes, kind, sort, status, s3_upload_id, " +
+                    "derivative_status, derivative_attempts, created_at";
+
+    private static final int DEFAULT_LIMIT = 50;
+    private static final int MAX_LIMIT = 200;
+    private static final int MAX_PART_NUMBER = 10_000;
+    private static final Duration PART_URL_TTL = Duration.ofMinutes(10);
+
+    private final JdbcTemplate jdbc;
+    private final ProjectService projects;
+    private final S3Service s3;
+
+    public MediaService(JdbcTemplate jdbc, ProjectService projects, S3Service s3) {
+        this.jdbc = jdbc;
+        this.projects = projects;
+        this.s3 = s3;
+    }
+
+    // ------------------------------------------------------------------- init
+
+    /**
+     * Reserves a media row and opens the S3 multipart upload. Returns the row
+     * id, key and upload id the browser needs for part URLs / completion.
+     */
+    @Transactional
+    public MediaInit initUpload(Account caller, long projectId, String filename,
+                                String contentType, long sizeBytes) {
+        projects.getForAccount(projectId, caller);
+
+        String kind = kindFor(contentType);
+        String safeName = sanitizeFilename(filename);
+        String objectContentType = (contentType == null || contentType.isBlank())
+                ? guessContentType(safeName) : contentType;
+
+        Integer maxSort = jdbc.queryForObject(
+                "SELECT COALESCE(MAX(sort), 0) FROM media WHERE project_id = ?", Integer.class,
+                projectId);
+        int sort = (maxSort == null ? 0 : maxSort) + 1;
+
+        Long mediaId = jdbc.queryForObject(
+                "INSERT INTO media (project_id, s3_key, size_bytes, kind, sort, status) " +
+                        "VALUES (?, '', ?, ?, ?, 'uploading') RETURNING id",
+                Long.class, projectId, Math.max(0, sizeBytes), kind, sort);
+
+        String key = "originals/" + projectId + "/" + mediaId + "/" + safeName;
+        String uploadId = s3.createMultipartUpload(
+                s3.originalsBucket(), key, objectContentType);
+        jdbc.update("UPDATE media SET s3_key = ?, s3_upload_id = ? WHERE id = ?",
+                key, uploadId, mediaId);
+
+        return new MediaInit(mediaId, key, uploadId);
+    }
+
+    /** Presigned URL for one part of an open upload. */
+    public S3Service.PresignedPart partUrl(Account caller, long mediaId, int partNumber) {
+        if (partNumber < 1 || partNumber > MAX_PART_NUMBER) {
+            throw new IllegalArgumentException("partNumber must be 1.." + MAX_PART_NUMBER);
+        }
+        Media media = findById(mediaId).orElseThrow(ProjectService.NotFoundException::new);
+        projects.getForAccount(media.projectId(), caller);
+        if (!media.isUploading() || media.uploadId() == null) {
+            throw new IllegalArgumentException("upload is not open");
+        }
+        return s3.presignUploadPart(s3.originalsBucket(), media.s3Key(), media.uploadId(),
+                partNumber, PART_URL_TTL);
+    }
+
+    // --------------------------------------------------------------- complete
+
+    /**
+     * Closes the multipart upload from the browser-supplied part ETags,
+     * verifies the object exists, and flips the row to {@code uploaded}
+     * (which also enqueues it for derivatives).
+     */
+    @Transactional
+    public MediaItem completeUpload(Account caller, long mediaId, List<PartETag> parts) {
+        if (parts == null || parts.isEmpty()) {
+            throw new IllegalArgumentException("at least one part ETag is required");
+        }
+        Media media = findById(mediaId).orElseThrow(ProjectService.NotFoundException::new);
+        projects.getForAccount(media.projectId(), caller);
+        if (!media.isUploading() || media.uploadId() == null) {
+            throw new IllegalArgumentException("upload is not open");
+        }
+
+        List<CompletedPart> completed = new ArrayList<>();
+        for (PartETag part : parts) {
+            if (part.partNumber() < 1 || part.partNumber() > MAX_PART_NUMBER
+                    || part.etag() == null || part.etag().isBlank()) {
+                throw new IllegalArgumentException("invalid part entry");
+            }
+            // Browsers/Fetch expose ETags quoted; S3 wants the bare hex.
+            String etag = part.etag().replace("\"", "").strip();
+            completed.add(CompletedPart.builder().partNumber(part.partNumber()).eTag(etag).build());
+        }
+
+        s3.completeMultipartUpload(s3.originalsBucket(), media.s3Key(), media.uploadId(), completed);
+
+        long actualSize = s3.objectSize(s3.originalsBucket(), media.s3Key())
+                .orElseThrow(() -> new IllegalStateException("completed object not found"));
+
+        jdbc.update("UPDATE media SET status = 'uploaded', size_bytes = ?, s3_upload_id = NULL " +
+                        "WHERE id = ?",
+                actualSize, mediaId);
+        return itemOf(findById(mediaId).orElseThrow());
+    }
+
+    /** Aborts the multipart upload and drops the reserved row. Idempotent-ish. */
+    @Transactional
+    public void abortUpload(Account caller, long mediaId) {
+        Media media = findById(mediaId).orElseThrow(ProjectService.NotFoundException::new);
+        projects.getForAccount(media.projectId(), caller);
+        if (media.uploadId() != null) {
+            s3.abortMultipartUpload(s3.originalsBucket(), media.s3Key(), media.uploadId());
+        }
+        jdbc.update("DELETE FROM media WHERE id = ?", mediaId);
+    }
+
+    // ---------------------------------------------------------------- listing
+
+    /**
+     * Keyset page over {@code (sort, id)}. The cursor is an opaque
+     * {@code base64url(sort:id)}; {@code nextCursor} is null on the last page.
+     */
+    public MediaPage list(Account caller, long projectId, String cursor, int limit) {
+        projects.getForAccount(projectId, caller);
+
+        int pageSize = limit < 1 ? DEFAULT_LIMIT : Math.min(limit, MAX_LIMIT);
+        int[] after = decodeCursor(cursor);
+
+        List<Media> rows = jdbc.query(
+                "SELECT " + COLUMNS + " FROM media " +
+                        "WHERE project_id = ? AND (sort > ? OR (sort = ? AND id > ?)) " +
+                        "ORDER BY sort, id LIMIT ?",
+                MAPPER, projectId, after[0], after[0], after[1], pageSize + 1);
+
+        boolean hasNext = rows.size() > pageSize;
+        List<Media> page = hasNext ? rows.subList(0, pageSize) : rows;
+        String nextCursor = hasNext
+                ? encodeCursor(page.get(page.size() - 1).sort(), page.get(page.size() - 1).id())
+                : null;
+        return new MediaPage(page.stream().map(MediaService::itemOf).toList(), nextCursor);
+    }
+
+    // ------------------------------------------------------------------ reads
+
+    public Optional<Media> findById(long mediaId) {
+        List<Media> rows = jdbc.query(
+                "SELECT " + COLUMNS + " FROM media WHERE id = ?", MAPPER, mediaId);
+        return rows.stream().findFirst();
+    }
+
+    // ---------------------------------------------------------------- helpers
+
+    static String kindFor(String contentType) {
+        if (contentType != null) {
+            String lower = contentType.toLowerCase();
+            if (lower.startsWith("image/")) {
+                return "photo";
+            }
+            if (lower.startsWith("video/")) {
+                return "video";
+            }
+        }
+        throw new IllegalArgumentException("contentType must be image/* or video/*");
+    }
+
+    static String sanitizeFilename(String filename) {
+        if (filename == null || filename.isBlank()) {
+            return "file";
+        }
+        String safe = filename.replace('\\', '/');
+        safe = safe.substring(safe.lastIndexOf('/') + 1).strip();
+        if (safe.isBlank() || safe.equals(".") || safe.equals("..")) {
+            return "file";
+        }
+        return safe.length() > 200 ? safe.substring(0, 200) : safe;
+    }
+
+    private static String guessContentType(String filename) {
+        String guessed = URLConnection.guessContentTypeFromName(filename);
+        return guessed != null ? guessed : "application/octet-stream";
+    }
+
+    static String encodeCursor(int sort, long id) {
+        String raw = sort + ":" + id;
+        return Base64.getUrlEncoder().withoutPadding()
+                .encodeToString(raw.getBytes(StandardCharsets.UTF_8));
+    }
+
+    /** Returns {@code [sort, id]}; blank cursor starts before the first row. */
+    static int[] decodeCursor(String cursor) {
+        if (cursor == null || cursor.isBlank()) {
+            return new int[]{0, 0};
+        }
+        try {
+            String[] parts = new String(Base64.getUrlDecoder().decode(cursor),
+                    StandardCharsets.UTF_8).split(":", 2);
+            return new int[]{Integer.parseInt(parts[0]), Integer.parseInt(parts[1])};
+        } catch (Exception e) {
+            throw new IllegalArgumentException("invalid cursor");
+        }
+    }
+
+    static MediaItem itemOf(Media media) {
+        return new MediaItem(media.id(), media.s3Key(), media.sizeBytes(), media.kind(),
+                media.sort(), media.status());
+    }
+
+    private static final RowMapper<Media> MAPPER = MediaService::mapRow;
+
+    private static Media mapRow(ResultSet rs, int rowNum) throws SQLException {
+        return new Media(
+                rs.getLong("id"),
+                rs.getLong("project_id"),
+                rs.getString("s3_key"),
+                rs.getLong("size_bytes"),
+                rs.getString("kind"),
+                rs.getInt("sort"),
+                rs.getString("status"),
+                rs.getString("s3_upload_id"),
+                rs.getString("derivative_status"),
+                rs.getInt("derivative_attempts"),
+                rs.getTimestamp("created_at").toInstant());
+    }
+
+    /** Result of {@link #initUpload}: everything the browser needs to upload. */
+    public record MediaInit(long mediaId, String key, String uploadId) {
+    }
+
+    /** One browser-reported uploaded part. */
+    public record PartETag(int partNumber, String etag) {
+    }
+
+    /** Listing view of a media row. */
+    public record MediaItem(long id, String s3Key, long sizeBytes, String kind, int sort,
+                            String status) {
+    }
+
+    /** One listing page plus the cursor for the next (null when last). */
+    public record MediaPage(List<MediaItem> items, String nextCursor) {
+    }
+}

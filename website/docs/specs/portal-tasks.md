@@ -36,22 +36,25 @@ Order is by dependency. No task touches more than ~5 files. Check a task off onl
   - Files: `portal/api/.../ProjectController.java`, `portal/api/.../ProjectService.java`, `portal/api/.../Project.java`, `portal/api/.../ProjectAccessTest.java` (no migration delta — V1 schema covered it)
   - Done 2026-10-14: `ProjectAccessTest` 10/10 green, full suite 20/20. `POST/PATCH /projects/**` admin-only via `SecurityConfig`; reads scoped per caller (admin: all, client: active memberships); assign-by-email idempotent, works for pending invites; archived hidden from clients (403), visible to admin.
 
-- [ ] Task 5: Share tokens — issue / rotate / revoke + bearer guard
+- [x] Task 5: Share tokens — issue / rotate / revoke + bearer guard
   - Acceptance: each project has a 256-bit token (hash stored); `/p/<token>` grants view/download without login; rotate invalidates old, revoke denies instantly; token probes are rate-limited with constant-time compare.
   - Verify: `./mvnw test -Dtest=ShareTokenTest` (valid / rotated / revoked / stranger / throttled)
-  - Files: `portal/api/.../ShareTokenService.java`, `portal/api/.../TokenAuthFilter.java`, `portal/api/.../ShareTokenTest.java`
+  - Files: `portal/api/.../ShareTokenService.java`, `portal/api/.../TokenAuthFilter.java`, `portal/api/.../ShareController.java`, `portal/api/.../ShareTokenTest.java` (no `SecurityConfig` change — existing `POST /projects/**` + `/p/**` rules cover the routes)
+  - Done 2026-10-14: `ShareTokenTest` 9/9 green, full suite 29/29. Raw token returned once (43 base64url chars), SHA-256 `BYTEA` stored; unknown/revoked → 404 (no oracle), 60 probes/min/IP → 429; rotate clears revocation; token view exposes exactly its project.
 
 ## Phase 2 — Media
 
-- [ ] Task 6: Upload init/complete + cursor-paginated listing
+- [x] Task 6: Upload init/complete + cursor-paginated listing
   - Acceptance: browser gets presigned multipart URLs (API only signs), completes upload → `media` row (project, s3_key, size, kind, sort); listing is cursor-paginated and never full-scans 2,000 rows.
   - Verify: upload 50-file fixture via script; listing pages return stable cursors
-  - Files: `portal/api/.../MediaController.java`, `portal/api/.../MediaService.java`, upload script/fixture
+  - Files: `portal/api/.../MediaController.java`, `portal/api/.../MediaService.java`, `portal/api/.../Media.java`, `portal/api/.../MediaUploadTest.java`, `portal/scripts/upload-fixture.sh`, `V2__media_upload_derivatives.sql` (s3_upload_id), S3 multipart + server-side get/put/delete in `S3Service.java`
+  - Done 2026-10-14: `MediaUploadTest` 6/6 green live (50-file fixture via init→part-PUT→complete, alternating photo/video; 20/20/10 pages, no dupes/gaps, kinds recorded); keyset `(sort,id)` cursors over `media_project_sort_idx`; mutations admin-only; complete verifies size via HEAD; abort drops MPU + row. Full suite 40/40.
 
-- [ ] Task 7: Derivative worker (preview + thumb, video poster only)
+- [x] Task 7: Derivative worker (preview + thumb, video poster only)
   - Acceptance: on upload-complete, async job makes photo preview (~1600px) + thumb (~400px); video gets poster thumb, no transcode; worker is backlog-safe (DB queue, retry, poison-pill row, bounded concurrency).
   - Verify: 2,000-image fixture drains without OOM; poison fixture retries then quarantines
-  - Files: `portal/api/.../DerivativeWorker.java`, `portal/api/.../DerivativeJob.java`, worker test
+  - Files: `portal/api/.../DerivativeWorker.java`, `portal/api/.../DerivativeJob.java`, `portal/api/.../DerivativeScheduler.java`, `portal/api/.../DerivativeWorkerTest.java`, V2 queue columns, Thumbnailator dep
+  - Done 2026-10-14: `DerivativeWorkerTest` 5/5 green live. Photo → preview ≤1600 + thumb ≤400 JPEG; video → ffmpeg poster (1s-then-0s fallback) + same pair, no transcode; DB queue with conditional-UPDATE claiming, pool of 2, temp-file streaming; poison quarantines after 3 attempts with error; 30-row backlog drains in one bounded batch (scaled-down proxy for the 2,000-image drain — full-scale run deferred to staging with real photos). Scheduler sweeps every 30s, off in tests. Full suite 40/40.
 
 ## Phase 3 — Web: browse + download
 

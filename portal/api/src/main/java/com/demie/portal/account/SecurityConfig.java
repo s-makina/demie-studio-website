@@ -60,6 +60,8 @@ public class SecurityConfig {
                         // reads stay authenticated and are scoped per caller.
                         .requestMatchers(HttpMethod.POST, "/projects", "/projects/**").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.PATCH, "/projects/**").hasRole("ADMIN")
+                        // Upload mutations are photographer-only (Task 6).
+                        .requestMatchers(HttpMethod.POST, "/media/**").hasRole("ADMIN")
                         .requestMatchers("/auth/me", "/auth/logout").authenticated()
                         .anyRequest().authenticated())
                 .sessionManagement(session ->
