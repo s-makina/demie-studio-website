@@ -1,5 +1,0 @@
-com/demie/portal/PortalApiApplication.class
-com/demie/portal/s3/S3Config.class
-com/demie/portal/s3/S3Service$PresignedGet.class
-com/demie/portal/s3/S3Service$PresignedPut.class
-com/demie/portal/s3/S3Service.class

@@ -1,4 +1,0 @@
--------------------------------------------------------------------------------
-Test set: com.demie.portal.s3.S3PresignIT
--------------------------------------------------------------------------------
-Tests run: 2, Failures: 0, Errors: 0, Skipped: 2, Time elapsed: 1.228 s -- in com.demie.portal.s3.S3PresignIT

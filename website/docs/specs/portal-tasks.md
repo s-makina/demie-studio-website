@@ -4,14 +4,16 @@ Order is by dependency. No task touches more than ~5 files. Check a task off onl
 
 ## Phase 0 — Foundation
 
-- [ ] Task 0: Scaffold portal root + manual local services
+- [x] Task 0: Scaffold portal root + manual local services
   - Acceptance: Postgres 16 and MinIO run manually as local processes (no Docker); api and web skeletons boot against them via env (DATABASE_URL, S3_ENDPOINT, S3 keys).
   - Verify: start postgres + minio manually, then `./mvnw -q -DskipTests package -pl api && npm --prefix web run build`
+  - Done 2026-10-14: package + web build pass; API boots against `demie_portal` (Flyway validated, Tomcat on :8080). MinIO not installed locally yet; S3 config boots with env absent.
   - Files: `portal/api/*skeleton*`, `portal/web/*skeleton*`, `portal/infra/LOCAL-SETUP.md`, `portal/infra/.env.example`
 
-- [ ] Task 1: DB schema via Flyway (all tables, no API yet)
+- [x] Task 1: DB schema via Flyway (all tables, no API yet)
   - Acceptance: single migration creates `account`, `project`, `project_member`, `media`, `share_token`, `download_event`, `zip_job` with indexes + FKs; rolls forward and back cleanly on empty DB.
   - Verify: `./mvnw flyway:migrate && ./mvnw flyway:info` on fresh PG; re-run is idempotent
+  - Done 2026-10-14: V1 applied to `demie_portal` (PG 16.15); clean→migrate roll-forward and idempotent re-run pass; 7 tables, 10 FKs, indexes verified; citext enabled for `account.email`.
   - Files: `portal/api/src/main/resources/db/migration/V1__portal.sql`
 
 - [ ] Task 2: S3 buckets + presign helper + round-trip test
