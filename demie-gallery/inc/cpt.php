@@ -103,6 +103,7 @@ add_action('admin_enqueue_scripts', function ($hook) {
     if (!$screen || 'demie_gallery' !== $screen->post_type) {
         return;
     }
+    wp_enqueue_media();
     wp_enqueue_style('demie-g-admin', DEMIE_G_URI . 'assets/admin.css', [], DEMIE_G_VERSION);
     wp_enqueue_script('demie-g-admin', DEMIE_G_URI . 'assets/admin.js', ['jquery', 'jquery-ui-sortable', 'media-editor'], DEMIE_G_VERSION, true);
 

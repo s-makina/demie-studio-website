@@ -14,26 +14,32 @@ const DEMIE_G_SEED_VERSION = '0.1.0';
 const DEMIE_G_SEED_SLUG    = 'demie-gallery-showcase';
 
 function demie_g_seed_maybe() {
-    if (get_option('demie_g_seed_version') === DEMIE_G_VERSION) {
+    $showcase = get_page_by_path(DEMIE_G_SEED_SLUG, OBJECT, 'demie_gallery');
+    $homepage = get_page_by_path('homepage', OBJECT, 'demie_gallery');
+    $showcase_ok = $showcase && demie_g_get_media($showcase->ID);
+    $homepage_ok = $homepage && demie_g_get_media($homepage->ID);
+
+    if ($showcase_ok && $homepage_ok) {
+        if (get_option('demie_g_seed_version') !== DEMIE_G_VERSION) {
+            update_option('demie_g_seed_version', DEMIE_G_VERSION);
+        }
         return;
     }
 
-    // Seed demo gallery only if NO galleries exist
-    $existing = get_posts([
-        'post_type'      => 'demie_gallery',
-        'post_status'    => 'any',
-        'posts_per_page' => 1,
-        'fields'         => 'ids',
-    ]);
-
-    if (empty($existing)) {
+    // Missing or empty — (re)seed without clobbering owner edits.
+    // First run can race the theme seed, so only mark done when both have media.
+    if (!$showcase_ok) {
         demie_g_seed_demo_gallery();
     }
+    if (!$homepage_ok) {
+        demie_g_seed_homepage_gallery();
+    }
 
-    // Always ensure homepage gallery exists (idempotent)
-    demie_g_seed_homepage_gallery();
-
-    update_option('demie_g_seed_version', DEMIE_G_VERSION);
+    $showcase = get_page_by_path(DEMIE_G_SEED_SLUG, OBJECT, 'demie_gallery');
+    $homepage = get_page_by_path('homepage', OBJECT, 'demie_gallery');
+    if ($showcase && demie_g_get_media($showcase->ID) && $homepage && demie_g_get_media($homepage->ID)) {
+        update_option('demie_g_seed_version', DEMIE_G_VERSION);
+    }
 }
 add_action('admin_init', 'demie_g_seed_maybe');
 
@@ -42,6 +48,12 @@ add_action('admin_init', 'demie_g_seed_maybe');
  * (their featured images are already in the Media Library).
  */
 function demie_g_seed_demo_gallery() {
+    // Idempotent by slug: refill when empty, never duplicate or clobber edits.
+    $existing = get_page_by_path(DEMIE_G_SEED_SLUG, OBJECT, 'demie_gallery');
+    if ($existing && demie_g_get_media($existing->ID)) {
+        return (int) $existing->ID;
+    }
+
     $items = [];
 
     $portfolio = get_posts([
@@ -77,16 +89,20 @@ function demie_g_seed_demo_gallery() {
         return 0; // nothing to seed from — skip quietly
     }
 
-    $gallery_id = wp_insert_post([
-        'post_type'   => 'demie_gallery',
-        'post_status' => 'publish',
-        'post_name'   => DEMIE_G_SEED_SLUG,
-        'post_title'  => __('Demie Photography Showcase', 'demie-gallery'),
-        'post_author' => get_current_user_id() ?: 1,
-    ]);
+    if ($existing) {
+        $gallery_id = (int) $existing->ID;
+    } else {
+        $gallery_id = wp_insert_post([
+            'post_type'   => 'demie_gallery',
+            'post_status' => 'publish',
+            'post_name'   => DEMIE_G_SEED_SLUG,
+            'post_title'  => __('Demie Photography Showcase', 'demie-gallery'),
+            'post_author' => get_current_user_id() ?: 1,
+        ]);
 
-    if (is_wp_error($gallery_id) || !$gallery_id) {
-        return 0;
+        if (is_wp_error($gallery_id) || !$gallery_id) {
+            return 0;
+        }
     }
 
     update_post_meta($gallery_id, DEMIE_G_META_MEDIA, wp_json_encode($items));
