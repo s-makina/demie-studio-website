@@ -31,10 +31,13 @@ public class ProjectController {
 
     private final ProjectService projects;
     private final AccountService accounts;
+    private final com.demie.portal.download.DownloadService downloads;
 
-    public ProjectController(ProjectService projects, AccountService accounts) {
+    public ProjectController(ProjectService projects, AccountService accounts,
+                             com.demie.portal.download.DownloadService downloads) {
         this.projects = projects;
         this.accounts = accounts;
+        this.downloads = downloads;
     }
 
     /** Photographer creates a project. */
@@ -54,11 +57,13 @@ public class ProjectController {
         return projects.listFor(caller).stream().map(ProjectResponse::from).toList();
     }
 
-    /** Single project with membership check for clients. */
+    /** Single project with membership check for clients (records a view event). */
     @GetMapping("/{id}")
     public ProjectResponse get(@PathVariable long id, Authentication authentication) {
         Account caller = currentAccount(authentication);
-        return ProjectResponse.from(projects.getForAccount(id, caller));
+        ProjectResponse response = ProjectResponse.from(projects.getForAccount(id, caller));
+        downloads.recordAccountView(caller, id);
+        return response;
     }
 
     /** Photographer renames and/or archives a project. */

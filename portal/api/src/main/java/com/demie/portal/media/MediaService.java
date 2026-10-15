@@ -3,6 +3,7 @@ package com.demie.portal.media;
 import com.demie.portal.account.Account;
 import com.demie.portal.project.ProjectService;
 import com.demie.portal.s3.S3Service;
+import com.demie.portal.share.ShareTokenService;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.stereotype.Service;
@@ -37,15 +38,19 @@ public class MediaService {
     private static final int MAX_LIMIT = 200;
     private static final int MAX_PART_NUMBER = 10_000;
     private static final Duration PART_URL_TTL = Duration.ofMinutes(10);
+    private static final Duration VIEW_URL_TTL = Duration.ofMinutes(15);
 
     private final JdbcTemplate jdbc;
     private final ProjectService projects;
     private final S3Service s3;
+    private final ShareTokenService tokens;
 
-    public MediaService(JdbcTemplate jdbc, ProjectService projects, S3Service s3) {
+    public MediaService(JdbcTemplate jdbc, ProjectService projects, S3Service s3,
+                        ShareTokenService tokens) {
         this.jdbc = jdbc;
         this.projects = projects;
         this.s3 = s3;
+        this.tokens = tokens;
     }
 
     // ------------------------------------------------------------------- init
@@ -153,10 +158,22 @@ public class MediaService {
     /**
      * Keyset page over {@code (sort, id)}. The cursor is an opaque
      * {@code base64url(sort:id)}; {@code nextCursor} is null on the last page.
+     * Items carry presigned thumb/preview URLs (Task 8/9); the internal S3
+     * key is never exposed to browsers.
      */
     public MediaPage list(Account caller, long projectId, String cursor, int limit) {
         projects.getForAccount(projectId, caller);
+        return page(projectId, cursor, limit);
+    }
 
+    /** Token-URL listing: unknown/revoked tokens read as not-found (no oracle). */
+    public MediaPage listByToken(String rawToken, String cursor, int limit) {
+        ShareTokenService.TokenGrant grant = tokens.resolve(rawToken)
+                .orElseThrow(ProjectService.NotFoundException::new);
+        return page(grant.projectId(), cursor, limit);
+    }
+
+    private MediaPage page(long projectId, String cursor, int limit) {
         int pageSize = limit < 1 ? DEFAULT_LIMIT : Math.min(limit, MAX_LIMIT);
         int[] after = decodeCursor(cursor);
 
@@ -171,7 +188,26 @@ public class MediaService {
         String nextCursor = hasNext
                 ? encodeCursor(page.get(page.size() - 1).sort(), page.get(page.size() - 1).id())
                 : null;
-        return new MediaPage(page.stream().map(MediaService::itemOf).toList(), nextCursor);
+        return new MediaPage(page.stream().map(this::viewOf).toList(), nextCursor);
+    }
+
+    /**
+     * Browser view of a media row: presigned thumb/preview URLs when
+     * derivatives are ready (null while pending/failed), never the raw key.
+     */
+    private MediaView viewOf(Media media) {
+        String thumbUrl = null;
+        String previewUrl = null;
+        if (media.isDerivativeReady()) {
+            thumbUrl = s3.presignGet(s3.thumbsBucket(),
+                    com.demie.portal.derivative.DerivativeWorker.thumbKeyFor(media),
+                    VIEW_URL_TTL).url;
+            previewUrl = s3.presignGet(s3.previewsBucket(),
+                    com.demie.portal.derivative.DerivativeWorker.previewKeyFor(media),
+                    VIEW_URL_TTL).url;
+        }
+        return new MediaView(media.id(), media.kind(), media.sort(), media.status(),
+                media.derivativeStatus(), thumbUrl, previewUrl);
     }
 
     // ------------------------------------------------------------------ reads
@@ -264,12 +300,17 @@ public class MediaService {
     public record PartETag(int partNumber, String etag) {
     }
 
-    /** Listing view of a media row. */
+    /** Complete-upload response for the photographer (unchanged shape). */
     public record MediaItem(long id, String s3Key, long sizeBytes, String kind, int sort,
                             String status) {
     }
 
+    /** Listing view of a media row (browser-safe: URLs, no raw keys). */
+    public record MediaView(long id, String kind, int sort, String status,
+                            String derivativeStatus, String thumbUrl, String previewUrl) {
+    }
+
     /** One listing page plus the cursor for the next (null when last). */
-    public record MediaPage(List<MediaItem> items, String nextCursor) {
+    public record MediaPage(List<MediaView> items, String nextCursor) {
     }
 }

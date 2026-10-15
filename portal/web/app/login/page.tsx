@@ -1,10 +1,9 @@
 "use client";
 
-import { useState } from "react";
-import Link from "next/link";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-
-const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "";
+import SiteHeader from "@/components/SiteHeader";
+import { API_URL, fetchMe } from "@/lib/api";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -12,6 +11,23 @@ export default function LoginPage() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
+
+  // Already signed in (session cookie alive)? Skip the form.
+  useEffect(() => {
+    let cancelled = false;
+    fetchMe()
+      .then(() => {
+        if (!cancelled) {
+          router.replace("/projects");
+        }
+      })
+      .catch(() => {
+        // Not signed in (or remount-aborted) — stay on the form.
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [router]);
 
   async function onSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -45,18 +61,7 @@ export default function LoginPage() {
 
   return (
     <div className="flex min-h-screen flex-col">
-      <header className="border-b border-border bg-surface">
-        <div className="mx-auto flex max-w-4xl items-center justify-between px-6 py-4">
-          <Link href="/" className="font-semibold tracking-tight text-foreground">
-            Demie Photography
-          </Link>
-          <nav className="flex gap-6 text-sm text-muted">
-            <Link href="/login" className="hover:text-foreground">
-              Sign in
-            </Link>
-          </nav>
-        </div>
-      </header>
+      <SiteHeader signedIn={false} />
 
       <main className="flex flex-1 items-center justify-center px-6 py-12">
         <div className="w-full max-w-sm">

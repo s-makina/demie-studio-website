@@ -111,12 +111,27 @@ public class S3Service {
     // ---- presigned GET (download / lightbox) ----
 
     public PresignedGet presignGet(String bucket, String key, Duration expires) {
+        return presignGet(bucket, key, expires, null);
+    }
+
+    /**
+     * Presigned GET, optionally forcing the browser to save the file under
+     * {@code downloadFilename} instead of displaying it inline (used by the
+     * per-file download redirect).
+     */
+    public PresignedGet presignGet(String bucket, String key, Duration expires,
+                                    String downloadFilename) {
+        var objectRequest = GetObjectRequest.builder()
+                .bucket(bucket)
+                .key(key);
+        if (downloadFilename != null && !downloadFilename.isBlank()) {
+            String safe = downloadFilename.replace("\"", "");
+            objectRequest.responseContentDisposition(
+                    "attachment; filename=\"" + safe + "\"");
+        }
         var request = GetObjectPresignRequest.builder()
                 .signatureDuration(expires)
-                .getObjectRequest(GetObjectRequest.builder()
-                        .bucket(bucket)
-                        .key(key)
-                        .build())
+                .getObjectRequest(objectRequest.build())
                 .build();
 
         PresignedGetObjectRequest presigned = presigner.presignGetObject(request);

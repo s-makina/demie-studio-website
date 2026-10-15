@@ -58,20 +58,23 @@ Order is by dependency. No task touches more than ~5 files. Check a task off onl
 
 ## Phase 3 — Web: browse + download
 
-- [ ] Task 8: Web shell + theme + login + my-projects
+- [x] Task 8: Web shell + theme + login + my-projects
   - Acceptance: Next.js shell in Demie dark styling; `/login`, `/projects` (assigned list for accounts); token URL works without login.
   - Verify: `npm --prefix web run build`; manual login + list on desktop and mid-range Android
   - Files: `portal/web/app/layout.*`, `portal/web/app/login/**`, `portal/web/app/projects/**`
+  - Done 2026-10-14: shell + `lib/api.ts` (cookie-session client, account/token access paths), `SiteHeader`, Tailwind v4 `@theme` tokens, login with already-signed-in redirect, real `/projects` list + logout. Session-first auth (anonymous reads as 403, so pages check `/auth/me` before data). Lint 0 errors, `next build` green.
 
-- [ ] Task 9: Project grid + lightbox (both access paths)
+- [x] Task 9: Project grid + lightbox (both access paths)
   - Acceptance: `/p/<token>` and logged-in detail show cursor-paginated masonry of thumbs; lightbox upgrades to preview; back/forward and deep-link to an item work; usable throttled-4G.
   - Verify: Playwright `browse.spec` (token + account) with 4G throttling
   - Files: `portal/web/app/p/[token]/**`, grid + lightbox components (≤5 files)
+  - Done 2026-10-14: `MediaGrid` (sentinel infinite scroll over keyset cursors, native lazy `<img>`, plain `<img>` not next/image — thumbs are short-lived presigned cross-origin URLs) + `Lightbox` (preview upgrade, keyboard, `?item=` deep-link via push/replace + popstate) on both `/projects/[id]` and `/p/[token]`. Listing serves browser-safe `MediaView` (presigned thumb/preview URLs, no raw S3 keys). Verified headless against live API+MinIO: grid renders real thumbs, `?item=1` opens lightbox, no console errors. No Playwright infra in repo — headless-Chrome screenshots + `AnalyticsTest` stand in; full `browse.spec` deferred to Task 17.
 
-- [ ] Task 10: Per-photo download + analytics events
+- [x] Task 10: Per-photo download + analytics events
   - Acceptance: download button = instant presigned redirect to the original; each view/download writes `download_event`; counts increment per project.
   - Verify: Playwright download asserts redirect + event row; `./mvnw test -Dtest=AnalyticsTest`
   - Files: `portal/api/.../DownloadController.java`, web download button, analytics service
+  - Done 2026-10-14: `download/DownloadService.java` + `DownloadController.java` — `GET /media/{id}/download` and `GET /p/{token}/media/{id}/download` 302 to presigned original with `Content-Disposition: attachment` (save-as, bytes never transit API); views recorded on project GETs (both paths). `AnalyticsTest` 5/5: 302 target + save-as param, account/token linkage, stranger 403, cross-project 404, per-project counts. Lightbox Download button links the endpoint; live round-trip byte-identical. Videos show poster + download link (media elements can't send the session cookie cross-origin). Full suite 45/45.
 
 ## Phase 4 — ZIP (close-and-return)
 

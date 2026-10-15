@@ -1,24 +1,26 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "";
 
+function inviteTokenFromUrl(): string {
+  if (typeof window === "undefined") {
+    return "";
+  }
+  return new URLSearchParams(window.location.search).get("token") ?? "";
+}
+
 export default function AcceptInvitePage() {
   const router = useRouter();
-  const [token, setToken] = useState("");
+  // Read the token during init (client component) to avoid a Suspense requirement.
+  const [token] = useState(inviteTokenFromUrl);
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
-
-  // Read the token from the URL on the client to avoid a Suspense requirement.
-  useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    setToken(params.get("token") ?? "");
-  }, []);
 
   async function onSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();

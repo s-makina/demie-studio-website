@@ -24,4 +24,8 @@ public record Media(
     public boolean isUploading() {
         return "uploading".equals(status);
     }
+
+    public boolean isDerivativeReady() {
+        return "ready".equals(derivativeStatus);
+    }
 }

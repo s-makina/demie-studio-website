@@ -1,79 +1,93 @@
+"use client";
+
+import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+import SiteHeader from "@/components/SiteHeader";
+import { ApiError, fetchMe, fetchProjects, isAbort, logout, type Project } from "@/lib/api";
 
 export default function ProjectsPage() {
+  const router = useRouter();
+  const [projects, setProjects] = useState<Project[] | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const controller = new AbortController();
+    (async () => {
+      try {
+        // Anonymous browsers read as 403 on data routes, same as a
+        // forbidden account — so check the session first and bounce to
+        // login before any project fetch can misreport.
+        await fetchMe(controller.signal);
+      } catch (e: unknown) {
+        if (!isAbort(e)) {
+          router.replace("/login");
+        }
+        return;
+      }
+      try {
+        setProjects(await fetchProjects(controller.signal));
+      } catch (e: unknown) {
+        if (!isAbort(e)) {
+          setError(e instanceof Error ? e.message : "Could not load projects.");
+        }
+      }
+    })();
+    return () => controller.abort();
+  }, [router]);
+
+  const onSignOut = useCallback(async () => {
+    try {
+      await logout();
+    } finally {
+      router.replace("/login");
+    }
+  }, [router]);
+
   return (
     <div className="flex min-h-screen flex-col">
-      <header className="border-b border-border bg-surface">
-        <div className="mx-auto flex max-w-4xl items-center justify-between px-6 py-4">
-          <Link href="/" className="font-semibold tracking-tight text-foreground">
-            Demie Photography
-          </Link>
-          <nav className="flex gap-6 text-sm text-muted">
-            <Link
-              href="/projects"
-              className="text-foreground"
-            >
-              My projects
-            </Link>
-            <Link
-              href="/login"
-              className="hover:text-foreground"
-            >
-              Sign out
-            </Link>
-          </nav>
-        </div>
-      </header>
+      <SiteHeader signedIn onSignOut={onSignOut} />
 
-      <main className="flex flex-1 items-start justify-center px-6 py-12">
-        <div className="w-full max-w-3xl">
-          <div className="mb-8 flex items-baseline justify-between">
-            <h1 className="text-2xl font-semibold">My projects</h1>
-            <span className="text-sm text-muted">signed in as photographer@example.com</span>
-          </div>
+      <main className="mx-auto w-full max-w-5xl flex-1 px-6 py-12">
+        <h1 className="mb-8 text-2xl font-semibold">My projects</h1>
 
+        {error && (
+          <p role="alert" className="rounded-lg border border-border bg-surface-2 px-4 py-3 text-sm text-red-400">
+            {error}
+          </p>
+        )}
+
+        {projects === null && !error && (
+          <p className="text-muted">Loading your shoots…</p>
+        )}
+
+        {projects !== null && projects.length === 0 && (
           <div className="rounded-lg border border-border bg-surface-2 p-6 text-center">
             <p className="text-muted">
-              No projects yet — or the API base URL is not configured.
-            </p>
-            <p className="mt-2 text-sm text-muted">
-              Set{" "}
-              <code className="rounded bg-surface px-1 py-0.5 font-mono text-accent">
-                NEXT_PUBLIC_API_URL
-              </code>{" "}
-              to point at the running portal API, then reload.
+              No projects yet. When your photographer shares a shoot, it appears here —
+              or open the share link they sent you directly.
             </p>
           </div>
+        )}
 
-          <section className="mt-8 rounded-lg border border-border bg-surface-2">
-            <div className="px-6 py-4 border-b border-border">
-              <h2 className="text-sm font-medium uppercase tracking-wide text-muted">
-                Placeholder project
-              </h2>
-            </div>
-            <div className="p-6">
-              <p className="text-sm text-muted">
-                When projects exist, each row shows the client name, photo count, and a
-                link into the grid. The public share link lives in project settings
-                (Task 14).
-              </p>
-              <div className="mt-4 flex gap-3">
+        {projects !== null && projects.length > 0 && (
+          <ul className="grid gap-4 sm:grid-cols-2">
+            {projects.map((project) => (
+              <li key={project.id}>
                 <Link
-                  href="/projects/placeholder"
-                  className="inline-flex items-center rounded-lg border border-border bg-surface px-4 py-2 text-sm text-foreground transition hover:bg-surface-2"
+                  href={`/projects/${project.id}`}
+                  className="block rounded-lg border border-border bg-surface-2 p-6 transition hover:border-accent"
                 >
-                  Open project
+                  <h2 className="font-medium text-foreground">{project.name}</h2>
+                  {project.clientName && (
+                    <p className="mt-1 text-sm text-muted">{project.clientName}</p>
+                  )}
+                  <p className="mt-3 text-sm text-accent">Open gallery →</p>
                 </Link>
-                <Link
-                  href="/login"
-                  className="inline-flex items-center rounded-lg border border-border bg-surface px-4 py-2 text-sm text-foreground transition hover:bg-surface-2"
-                >
-                  Back to sign in
-                </Link>
-              </div>
-            </div>
-          </section>
-        </div>
+              </li>
+            ))}
+          </ul>
+        )}
       </main>
     </div>
   );
