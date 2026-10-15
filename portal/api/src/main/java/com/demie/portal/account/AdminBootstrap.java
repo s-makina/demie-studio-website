@@ -8,10 +8,11 @@ import org.springframework.boot.ApplicationRunner;
 import org.springframework.stereotype.Component;
 
 /**
- * Creates the first photographer (admin) account from {@code ADMIN_EMAIL} /
- * {@code ADMIN_PASSWORD} env vars when no admin exists yet. Runs after Flyway
- * has migrated the schema. No-op when the env vars are unset or an admin
- * already exists.
+ * Creates the first photographer (admin) account when no admin exists yet.
+ * Defaults seed a local dev login ({@code admin@demiestudio.local} /
+ * {@code Admin@123}); override with {@code ADMIN_EMAIL} / {@code ADMIN_PASSWORD}
+ * env vars in any shared deployment. Runs after Flyway has migrated the
+ * schema. No-op when an admin already exists.
  */
 @Component
 public class AdminBootstrap implements ApplicationRunner {
@@ -24,8 +25,8 @@ public class AdminBootstrap implements ApplicationRunner {
     private final String adminName;
 
     public AdminBootstrap(AccountService accounts,
-                          @Value("${ADMIN_EMAIL:}") String adminEmail,
-                          @Value("${ADMIN_PASSWORD:}") String adminPassword,
+                          @Value("${ADMIN_EMAIL:admin@demiestudio.local}") String adminEmail,
+                          @Value("${ADMIN_PASSWORD:Admin@123}") String adminPassword,
                           @Value("${ADMIN_NAME:Photographer}") String adminName) {
         this.accounts = accounts;
         this.adminEmail = adminEmail;

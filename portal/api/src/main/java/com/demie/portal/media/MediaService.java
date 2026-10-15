@@ -153,6 +153,27 @@ public class MediaService {
         jdbc.update("DELETE FROM media WHERE id = ?", mediaId);
     }
 
+    /**
+     * Photographer removes a finished photo (Task 21). Deletes the original
+     * plus both derivatives from S3, then the row ({@code download_event}
+     * rows survive via {@code ON DELETE SET NULL}). Open uploads are
+     * rejected — abort covers that case.
+     */
+    @Transactional
+    public void deleteMedia(Account caller, long mediaId) {
+        Media media = findById(mediaId).orElseThrow(ProjectService.NotFoundException::new);
+        projects.getForAccount(media.projectId(), caller);
+        if (media.isUploading() || media.uploadId() != null) {
+            throw new IllegalArgumentException("upload still open — abort it instead");
+        }
+        s3.deleteObject(s3.thumbsBucket(),
+                com.demie.portal.derivative.DerivativeWorker.thumbKeyFor(media));
+        s3.deleteObject(s3.previewsBucket(),
+                com.demie.portal.derivative.DerivativeWorker.previewKeyFor(media));
+        s3.deleteObject(s3.originalsBucket(), media.s3Key());
+        jdbc.update("DELETE FROM media WHERE id = ?", mediaId);
+    }
+
     // ---------------------------------------------------------------- listing
 
     /**

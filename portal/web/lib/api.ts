@@ -80,8 +80,16 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
   return (await response.json()) as T;
 }
 
-/** Current session, or throws 401. */
-export function fetchMe(signal?: AbortSignal): Promise<{ email: string }> {
+/** Current session, or throws 401. Role drives the admin console. */
+export interface Me {
+  id: number;
+  email: string;
+  name: string | null;
+  role: "admin" | "client" | string;
+  status: string;
+}
+
+export function fetchMe(signal?: AbortSignal): Promise<Me> {
   return request("/auth/me", { signal });
 }
 
@@ -96,6 +104,60 @@ export function fetchProjects(signal?: AbortSignal): Promise<Project[]> {
 
 export function fetchProject(id: number, signal?: AbortSignal): Promise<Project> {
   return request(`/projects/${id}`, { signal });
+}
+
+/** Photographer creates a project (name + client name). */
+export function createProject(name: string, clientName?: string): Promise<Project> {
+  return request("/projects", {
+    method: "POST",
+    body: JSON.stringify({ name, clientName: clientName || null }),
+  });
+}
+
+/** Photographer renames and/or archives a project. */
+export function updateProject(
+  id: number,
+  patch: { name?: string; status?: "active" | "archived" }
+): Promise<Project> {
+  return request(`/projects/${id}`, {
+    method: "PATCH",
+    body: JSON.stringify(patch),
+  });
+}
+
+export interface InviteResult {
+  accountId: number;
+  email: string;
+  inviteToken: string | null;
+  expiresAt: string | null;
+  tokenIssued: boolean;
+}
+
+/** Photographer invites a client by email (one-time token, never stored). */
+export function inviteClient(email: string, name?: string): Promise<InviteResult> {
+  return request("/auth/invite", {
+    method: "POST",
+    body: JSON.stringify({ email, name: name || null }),
+  });
+}
+
+/** Photographer assigns an invited email to a project (idempotent). */
+export function assignMember(
+  projectId: number,
+  email: string
+): Promise<{ projectId: number; email: string }> {
+  return request(`/projects/${projectId}/members`, {
+    method: "POST",
+    body: JSON.stringify({ email }),
+  });
+}
+
+/** Full client-facing invite-accept URL for a raw token (same origin). */
+export function acceptUrl(token: string): string {
+  if (typeof window !== "undefined") {
+    return `${window.location.origin}/login/accept?token=${encodeURIComponent(token)}`;
+  }
+  return `/login/accept?token=${encodeURIComponent(token)}`;
 }
 
 /** Project behind a share-token URL (no login). */
@@ -236,4 +298,88 @@ export function shareUrl(token: string): string {
     return `${window.location.origin}/p/${token}`;
   }
   return `/p/${token}`;
+}
+
+// ------------------------------------------------------------ upload (Task 20)
+
+export interface UploadInit {
+  mediaId: number;
+  key: string;
+  uploadId: string;
+}
+
+export interface UploadPart {
+  url: string;
+  expiresAt: number;
+}
+
+export interface CompletedUpload {
+  id: number;
+  s3Key: string;
+  sizeBytes: number;
+  kind: string;
+  sort: number;
+  status: string;
+}
+
+/** Photographer reserves a row + opens the S3 multipart upload. */
+export function initUpload(
+  projectId: number,
+  file: { filename: string; contentType: string; sizeBytes: number }
+): Promise<UploadInit> {
+  return request(`/projects/${projectId}/media/init`, {
+    method: "POST",
+    body: JSON.stringify({
+      filename: file.filename,
+      contentType: file.contentType,
+      sizeBytes: file.sizeBytes,
+    }),
+  });
+}
+
+/** Photographer gets a presigned URL for one part. */
+export function uploadPartUrl(mediaId: number, partNumber: number): Promise<UploadPart> {
+  return request(`/media/${mediaId}/parts`, {
+    method: "POST",
+    body: JSON.stringify({ partNumber }),
+  });
+}
+
+/** Photographer closes the upload with browser-collected part ETags. */
+export function completeUpload(
+  mediaId: number,
+  parts: Array<{ partNumber: number; etag: string }>
+): Promise<CompletedUpload> {
+  return request(`/media/${mediaId}/complete`, {
+    method: "POST",
+    body: JSON.stringify({ parts }),
+  });
+}
+
+/** Photographer abandons an open upload (aborts MPU, drops the row). */
+export function abortUpload(mediaId: number): Promise<void> {
+  return request(`/media/${mediaId}/abort`, { method: "POST" });
+}
+
+/** Photographer removes a finished photo (Task 21). Blocked while uploading. */
+export function deleteMedia(mediaId: number): Promise<void> {
+  return request(`/media/${mediaId}`, { method: "DELETE" });
+}
+
+/** Kind guess matching the API (image/* photo, video/* video). */
+export function kindForFile(file: File): "photo" | "video" | null {
+  if (file.type.startsWith("image/")) {
+    return "photo";
+  }
+  if (file.type.startsWith("video/")) {
+    return "video";
+  }
+  const lower = file.name.toLowerCase();
+  if (/\.(jpg|jpeg|png|webp|gif|heic|heif|avif|tif|tiff|bmp)$/.test(lower)) {
+    return "photo";
+  }
+  if (/\.(mp4|mov|m4v|webm|mkv)$/.test(lower)) {
+    return "video";
+  }
+  return null;
 }

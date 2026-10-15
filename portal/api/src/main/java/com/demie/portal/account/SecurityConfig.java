@@ -65,6 +65,8 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.PATCH, "/projects/**").hasRole("ADMIN")
                         // Upload mutations are photographer-only (Task 6).
                         .requestMatchers(HttpMethod.POST, "/media/**").hasRole("ADMIN")
+                        // Photo removal is photographer-only (Task 21).
+                        .requestMatchers(HttpMethod.DELETE, "/media/**").hasRole("ADMIN")
                         .requestMatchers("/auth/me", "/auth/logout").authenticated()
                         .anyRequest().authenticated())
                 .sessionManagement(session ->

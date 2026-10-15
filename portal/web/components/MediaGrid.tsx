@@ -3,7 +3,14 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import Lightbox from "@/components/Lightbox";
 import ZipPanel from "@/components/ZipPanel";
-import { fetchMediaPage, type MediaAccess, type MediaView } from "@/lib/api";
+import { ConfirmDialog, ToastStack, useToasts } from "@/components/console-ui";
+import {
+  deleteMedia,
+  fetchMediaPage,
+  isAbort,
+  type MediaAccess,
+  type MediaView,
+} from "@/lib/api";
 
 const PAGE_SIZE = 60;
 
@@ -28,7 +35,20 @@ function withQueryParam(key: string, value: string): string {
  * (no full-list fetch); thumbs are native lazy images. Selection deep-links
  * through `?item=<id>` so back/forward and shared links work.
  */
-export default function MediaGrid({ access }: { access: MediaAccess }) {
+export default function MediaGrid({
+  access,
+  isAdmin,
+  refreshKey,
+  onRemove,
+}: {
+  access: MediaAccess;
+  /** Photographer sees per-photo Remove (Task 21). */
+  isAdmin?: boolean;
+  /** Bump to reload from the first page (after uploads). */
+  refreshKey?: number;
+  /** Fired after a photo is removed (parent clears lightbox state). */
+  onRemove?: (id: number) => void;
+}) {
   const [items, setItems] = useState<MediaView[]>([]);
   const [exhausted, setExhausted] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -45,6 +65,9 @@ export default function MediaGrid({ access }: { access: MediaAccess }) {
   // Pagination cursor lives in a ref: it is only read/written inside the
   // async loader, never during render.
   const cursorRef = useRef<string | null | undefined>(undefined);
+  const { toasts, push, dismiss } = useToasts();
+  const [confirmRemove, setConfirmRemove] = useState<MediaView | null>(null);
+  const [removing, setRemoving] = useState(false);
 
   const loadMore = useCallback(async () => {
     if (loadingRef.current || cursorRef.current === null) {
@@ -97,6 +120,59 @@ export default function MediaGrid({ access }: { access: MediaAccess }) {
     window.addEventListener("popstate", onPopState);
     return () => window.removeEventListener("popstate", onPopState);
   }, []);
+
+  // External refresh (after uploads): reset to the first page and reload.
+  // State updates are sequenced through the loader, not set during render.
+  const refreshSeq = useRef(refreshKey);
+  useEffect(() => {
+    if (refreshSeq.current === refreshKey) {
+      return;
+    }
+    refreshSeq.current = refreshKey;
+    cursorRef.current = undefined;
+    loadingRef.current = false;
+    setItems([]);
+    setExhausted(false);
+  }, [refreshKey]);
+
+  const doRemove = useCallback(async () => {
+    if (!confirmRemove) {
+      return;
+    }
+    setRemoving(true);
+    try {
+      await deleteMedia(confirmRemove.id);
+      setItems((prev) => prev.filter((item) => item.id !== confirmRemove.id));
+      setSelectedIds((prev) => {
+        if (!prev.has(confirmRemove.id)) {
+          return prev;
+        }
+        const next = new Set(prev);
+        next.delete(confirmRemove.id);
+        return next;
+      });
+      if (selectedId === confirmRemove.id && typeof window !== "undefined") {
+        const params = new URLSearchParams(window.location.search);
+        params.delete("item");
+        const query = params.toString();
+        window.history.replaceState(
+          null,
+          "",
+          query ? `?${query}` : window.location.pathname
+        );
+        setSelectedId(null);
+      }
+      onRemove?.(confirmRemove.id);
+      setConfirmRemove(null);
+      push("Photo removed.");
+    } catch (e) {
+      if (!isAbort(e)) {
+        push(e instanceof Error ? e.message : "Could not remove the photo.");
+      }
+    } finally {
+      setRemoving(false);
+    }
+  }, [confirmRemove, selectedId, onRemove, push]);
 
   const found = selectedId === null
     ? -1
@@ -182,13 +258,18 @@ export default function MediaGrid({ access }: { access: MediaAccess }) {
       <div className="columns-2 gap-3 sm:columns-3 [&>*]:mb-3">
         {items.map((item, index) => {
           const checked = selectMode && selectedIds.has(item.id);
+          const removable =
+            isAdmin && !selectMode && item.status !== "uploading";
           return (
-            <button
+            <div
               key={item.id}
+              className="relative break-inside-avoid"
+            >
+            <button
               type="button"
               onClick={() => open(index)}
               aria-pressed={selectMode ? checked : undefined}
-              className={`relative block w-full break-inside-avoid overflow-hidden rounded-lg border bg-surface-2 transition hover:border-accent ${
+              className={`relative block w-full overflow-hidden rounded-lg border bg-surface-2 transition hover:border-accent ${
                 checked
                   ? "cursor-pointer border-accent ring-1 ring-accent"
                   : "cursor-pointer border-border"
@@ -233,6 +314,21 @@ export default function MediaGrid({ access }: { access: MediaAccess }) {
                 </div>
               )}
             </button>
+            {removable && (
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setConfirmRemove(item);
+                }}
+                aria-label={`Remove photo ${index + 1}`}
+                title="Remove photo"
+                className="absolute right-2 top-2 rounded-full border border-border bg-black/70 px-2.5 py-1 text-xs text-foreground opacity-0 transition hover:bg-red-500 focus:opacity-100 hover:opacity-100 [div:hover>&]:opacity-100"
+              >
+                Remove
+              </button>
+            )}
+            </div>
           );
         })}
       </div>
@@ -253,8 +349,21 @@ export default function MediaGrid({ access }: { access: MediaAccess }) {
           access={access}
           onClose={close}
           onIndex={goTo}
+          isAdmin={isAdmin}
+          onRemove={(item) => setConfirmRemove(item)}
         />
       )}
+
+      <ConfirmDialog
+        open={confirmRemove !== null}
+        title="Remove this photo?"
+        body="The original and its previews are deleted immediately. Downloads already saved by the client keep working — this cannot be undone."
+        confirmLabel="Remove photo"
+        busy={removing}
+        onCancel={() => setConfirmRemove(null)}
+        onConfirm={() => void doRemove()}
+      />
+      <ToastStack toasts={toasts} onDismiss={dismiss} />
     </>
   );
 }

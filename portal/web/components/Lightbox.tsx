@@ -15,12 +15,16 @@ export default function Lightbox({
   access,
   onClose,
   onIndex,
+  isAdmin,
+  onRemove,
 }: {
   items: MediaView[];
   index: number;
   access: MediaAccess;
   onClose: () => void;
   onIndex: (index: number) => void;
+  isAdmin?: boolean;
+  onRemove?: (item: MediaView) => void;
 }) {
   const item = items[index];
   const hasPrev = index > 0;
@@ -85,6 +89,15 @@ export default function Lightbox({
           >
             Download
           </a>
+          {isAdmin && item.status !== "uploading" && (
+            <button
+              type="button"
+              onClick={() => onRemove?.(item)}
+              className="rounded-lg border border-border px-3 py-2 text-red-300 transition hover:bg-surface-2"
+            >
+              Remove
+            </button>
+          )}
           <button
             type="button"
             onClick={onClose}

@@ -3,9 +3,12 @@
 import { use, useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import InvitePanel from "@/components/InvitePanel";
 import MediaGrid from "@/components/MediaGrid";
+import ProjectSettings from "@/components/ProjectSettings";
 import SharePanel from "@/components/SharePanel";
 import SiteHeader from "@/components/SiteHeader";
+import UploadPanel from "@/components/UploadPanel";
 import {
   accountAccess,
   ApiError,
@@ -13,6 +16,7 @@ import {
   fetchProject,
   isAbort,
   logout,
+  type Me,
   type Project,
 } from "@/lib/api";
 
@@ -24,10 +28,14 @@ export default function ProjectDetailPage({
   const { id } = use(params);
   const projectId = Number(id);
   const router = useRouter();
+  const [me, setMe] = useState<Me | null>(null);
   const [project, setProject] = useState<Project | null>(null);
+  const [refreshKey, setRefreshKey] = useState(0);
   const [error, setError] = useState<string | null>(() =>
     !Number.isInteger(projectId) || projectId <= 0 ? "That project link looks broken." : null
   );
+
+  const isAdmin = me?.role === "admin";
 
   useEffect(() => {
     if (error) {
@@ -36,7 +44,7 @@ export default function ProjectDetailPage({
     const controller = new AbortController();
     (async () => {
       try {
-        await fetchMe(controller.signal);
+        setMe(await fetchMe(controller.signal));
       } catch (e: unknown) {
         if (!isAbort(e)) {
           router.replace("/login");
@@ -66,6 +74,11 @@ export default function ProjectDetailPage({
     }
   }, [router]);
 
+  const onUploaded = useCallback(() => {
+    // Reload the grid from the first page so new uploads stream in.
+    setRefreshKey((key) => key + 1);
+  }, []);
+
   return (
     <div className="flex min-h-screen flex-col">
       <SiteHeader signedIn onSignOut={onSignOut} />
@@ -91,15 +104,31 @@ export default function ProjectDetailPage({
           <>
             <div className="mb-8">
               <Link href="/projects" className="text-sm text-muted hover:text-foreground">
-                ← My projects
+                ← {isAdmin ? "Shoots" : "My projects"}
               </Link>
-              <h1 className="mt-2 text-2xl font-semibold">{project.name}</h1>
+              <div className="mt-2 flex flex-wrap items-center gap-3">
+                <h1 className="text-2xl font-semibold">{project.name}</h1>
+                {project.status === "archived" && (
+                  <span className="rounded-full border border-border bg-surface-2 px-2.5 py-0.5 text-xs text-muted">
+                    Archived
+                  </span>
+                )}
+              </div>
               {project.clientName && (
                 <p className="mt-1 text-sm text-muted">{project.clientName}</p>
               )}
             </div>
-            <SharePanel projectId={project.id} />
-            <MediaGrid access={accountAccess(project.id)} />
+            {isAdmin && (
+              <ProjectSettings project={project} onChange={setProject} />
+            )}
+            {isAdmin && <UploadPanel projectId={project.id} onUploaded={onUploaded} />}
+            {isAdmin && <InvitePanel projectId={project.id} />}
+            {isAdmin && <SharePanel projectId={project.id} />}
+            <MediaGrid
+              access={accountAccess(project.id)}
+              isAdmin={isAdmin}
+              refreshKey={refreshKey}
+            />
           </>
         )}
       </main>

@@ -118,3 +118,33 @@ Order is by dependency. No task touches more than ~5 files. Check a task off onl
   - Acceptance: full invite→upload→browse→select→ZIP→share→revoke passes on staging; 2,000-item listing p95 < 500ms; access-matrix + ZIP tests green; throttled-4G grid usable.
   - Verify: `Playwright e2e`, `./mvnw verify`, k6/locust listing run attached to PR
   - Files: `portal/web/e2e/**`, perf script + results note
+
+## Phase 6 — Photographer web console (grilled 2026-10-15)
+
+Photographer manages everything from the web with no curl. All management UI is admin-only; clients keep the read-only list + token pages. No delete anywhere (archive is removal); no email sending (one-time links copied out-of-band); no reorder/captions/cover v1; Playwright stays deferred to Task 17.
+
+UI bar (applies to Tasks 18–21, free rein inside the Demie dark theme): cover-led project cards with skeletons, not text rows; New-project and other forms as proper dialogs with focus handling; confirm dialogs on destructive acts (rotate, revoke, archive, remove); copy buttons with "Copied" feedback and toast-style errors instead of bare red text; drag-and-drop upload dropzone with file previews, per-file progress, retry-in-place, thumbs streaming in as derivatives finish; consistent per-role empty states; mid-range-Android + 4G usable with no layout shift on refresh.
+
+- [x] Task 18: Admin project controls
+  - Acceptance: role-aware `/projects` (cover-led cards with thumb/name/client/counts; New-project dialog: name + client name; Active/Archived segmented filter; admin empty-state "Create your first shoot"); rename + archive/unarchive (with confirm) on the detail page beside `SharePanel`; clients see today's copy and no forms; skeletons while loading.
+  - Verify: `npm --prefix web run build`; manual create→rename→archive→list as admin vs client, desktop + mid-range Android
+  - Files: `portal/web/app/projects/**`, `portal/web/app/projects/[id]/page.tsx`, `portal/web/lib/api.ts` (`fetchMe` surfaces `role`)
+  - Done 2026-10-15: role-aware list (cover cards w/ first-thumb, segmented filter, New-project dialog, per-role empty states, skeletons, toasts) + `ProjectSettings` (rename + archive/unarchive w/ confirm) gated on `role === "admin"`; clients unchanged. `next build` green, eslint 0 errors.
+
+- [x] Task 19: Invite-to-project UI
+  - Acceptance: "Invite client to this project" dialog (email + name → invite + auto-assign); one-time accept link with copy + "Copied" feedback; toast-style errors.
+  - Verify: manual invite → accept at `/login/accept` → login → project visible in list
+  - Files: web invite component + `lib/api.ts` invite client (≤3 files, named in PR)
+  - Done 2026-10-15: `components/InvitePanel.tsx` (dialog, invite + auto-assign, one-time accept link w/ copy, existing-account link path) + `lib/api.ts` (`inviteClient`, `assignMember`, `acceptUrl`). `next build` green.
+
+- [x] Task 20: Upload picker
+  - Acceptance: drag-and-drop dropzone with file previews on the project page (admin-only); sequential init → direct-S3 PUT → complete with per-file progress + retry-in-place; kind by extension (video passthrough, poster only); upload order is display order; thumbs stream in as derivatives finish.
+  - Verify: 50-file photo/video mix via UI incl. one failure → retry; thumbs appear as derivatives drain
+  - Files: web upload component + `lib/api.ts` upload client (≤5 files, named in PR)
+  - Done 2026-10-15: `components/UploadPanel.tsx` (dropzone + previews, 8MB-chunk sequential MPU via init/part/complete, progress bars, retry-in-place, stop-after-file, grid refresh per completion) + `lib/api.ts` upload clients. `next build` green; API flow unchanged (covered by `MediaUploadTest`).
+
+- [x] Task 21: Media Remove API + UI
+  - Acceptance: photographer-only per-photo Remove with confirm dialog (new admin-only `DELETE /media/{id}`: original + derivatives + row); hidden/disabled while the row is still uploading (abort covers that case); toast on success/failure.
+  - Verify: `./mvnw test -Dtest=MediaDeleteTest` (admin ok / client 403 / stranger 404 / uploading blocked); manual remove round-trip
+  - Files: `portal/api/.../MediaController.java`, `portal/api/.../MediaService.java`, `portal/api/.../MediaDeleteTest.java`, web remove button (≤5 files)
+  - Done 2026-10-15: `DELETE /media/{id}` (admin-only matcher in `SecurityConfig`, service deletes original + thumb + preview then row, uploading blocked as 400; `download_event` survives via `ON DELETE SET NULL`) + grid-corner + lightbox Remove w/ confirm + toast. `MediaDeleteTest` 4 run/0 fail/1 skipped (S3-gated happy path); full suite 68 run/0 fail; `next build` green.

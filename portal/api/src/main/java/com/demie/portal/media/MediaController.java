@@ -10,6 +10,7 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.Authentication;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -74,6 +75,13 @@ public class MediaController {
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void abort(@PathVariable long id, Authentication authentication) {
         media.abortUpload(currentAccount(authentication), id);
+    }
+
+    /** Photographer removes a finished photo (Task 21). Blocked while uploading. */
+    @DeleteMapping("/media/{id}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void delete(@PathVariable long id, Authentication authentication) {
+        media.deleteMedia(currentAccount(authentication), id);
     }
 
     /** Cursor-paginated listing (admin or project member). */
