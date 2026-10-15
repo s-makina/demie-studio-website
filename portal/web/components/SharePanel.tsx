@@ -51,11 +51,26 @@ export default function SharePanel({ projectId }: SharePanelProps) {
     [projectId]
   );
 
+  // Mount-once by design: subscribe to the two photographer reads, then paint.
+  // setState only runs inside the promise callbacks below (external update),
+  // which keeps react-hooks/set-state-in-effect happy.
   useEffect(() => {
     const controller = new AbortController();
-    void load(controller.signal);
+    Promise.all([
+      fetchShareStatus(projectId, controller.signal),
+      fetchProjectStats(projectId, controller.signal),
+    ])
+      .then(([nextStatus, nextStats]) => {
+        setStatus(nextStatus);
+        setStats(nextStats);
+      })
+      .catch((e: unknown) => {
+        if (!isAbort(e)) {
+          setError(e instanceof Error ? e.message : "Could not load sharing.");
+        }
+      });
     return () => controller.abort();
-  }, [load]);
+  }, [projectId]);
 
   const onIssue = useCallback(async () => {
     setBusy(true);

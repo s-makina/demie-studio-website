@@ -98,10 +98,11 @@ Order is by dependency. No task touches more than ~5 files. Check a task off onl
 
 ## Phase 5 — Share, WP link, ops, hardening
 
-- [ ] Task 14: Share + analytics UI for photographer
+- [x] Task 14: Share + analytics UI for photographer
   - Acceptance: copy link, rotate, revoke (instant deny proven); per-project views + downloads displayed.
   - Verify: manual rotate/revoke round-trip; revoked token 403s in test
   - Files: web project-settings components, API counts endpoint
+  - Done 2026-10-15: `GET /projects/{id}/share/status` (admin-only, never leaks raw token) + `GET /projects/{id}/stats` (views/downloads from `download_event`) in `ShareController.java` with `DownloadService.countsForProject` + `ShareTokenService.status`; `ShareStatsTest` 4 run / 0 failures / 1 skipped (S3-gated counts test) + `ShareTokenTest`/`ProjectAccessTest`/`AuthTest` 28/28 green; web `components/SharePanel.tsx` (create/copy/rotate/revoke + counts + refresh) wired into `app/projects/[id]/page.tsx`, `lib/api.ts` share clients; revoked token denies instantly as 404 (no oracle, existing Task 5 behavior — task text says 403). Lint 0 errors, `next build` green.
 
 - [ ] Task 15: WP portfolio link-out
   - Acceptance: mapped portfolio cards point to the `portal.` URL; unmapped cards unchanged; no WP data migration.
