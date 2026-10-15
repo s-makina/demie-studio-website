@@ -1,0 +1,17 @@
+# Build output
+api/target/
+web/.next/
+web/out/
+web/build/
+
+# Node
+web/node_modules/
+
+# Env / secrets
+.env
+.env.*
+!.env.example
+
+# Misc
+.DS_Store
+*.log

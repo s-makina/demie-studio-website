@@ -1,0 +1,55 @@
+#!/bin/sh
+# Maven wrapper for the Portal project.
+# On first use it downloads the wrapper jar + Maven distribution defined in
+# .mvn/wrapper/maven-wrapper.properties. If a system `mvn` is available and
+# the wrapper distribution has not been unpacked yet, this script falls back to
+# the system binary so `./mvnw` works in restricted network environments.
+
+set -e
+
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+PROJECT_DIR="$SCRIPT_DIR"
+MVNW_PROPERTIES="$PROJECT_DIR/.mvn/wrapper/maven-wrapper.properties"
+
+if [ ! -f "$MVNW_PROPERTIES" ]; then
+  echo "ERROR: $MVNW_PROPERTIES not found. Run from the portal/ directory." >&2
+  exit 1
+fi
+
+# Resolve distribution and wrapper jar URLs from properties.
+get_prop() {
+  grep -E "^${1}=" "$MVNW_PROPERTIES" | head -n 1 | sed 's/^[^=]*=//; s/\r$//'
+}
+
+WRAPPER_JAR_URL="$(get_prop wrapperUrl)"
+DISTRIBUTION_URL="$(get_prop distributionUrl)"
+
+if [ -z "$WRAPPER_JAR_URL" ] || [ -z "$DISTRIBUTION_URL" ]; then
+  echo "ERROR: wrapperUrl and distributionUrl must be set in .mvn/wrapper/maven-wrapper.properties" >&2
+  exit 1
+fi
+
+WRAPPER_JAR="$PROJECT_DIR/.mvn/wrapper/maven-wrapper.jar"
+WRAPPER_DISTR_DIR="$PROJECT_DIR/.mvn/wrapper/dists"
+export MAVEN_OPTS="${MAVEN_OPTS:-}"
+
+# If the wrapper jar is present, delegate to it.
+if [ -f "$WRAPPER_JAR" ]; then
+  exec java -jar "$WRAPPER_JAR" "$@"
+fi
+
+# No wrapper jar yet. If a system mvn exists, prefer it to avoid network use.
+if command -v mvn >/dev/null 2>&1; then
+  exec mvn "$@"
+fi
+
+# Otherwise bootstrap the wrapper (needs network).
+mkdir -p "$WRAPPER_DISTR_DIR"
+echo "Downloading Maven wrapper jar from $WRAPPER_JAR_URL" >&2
+
+curl -sS -L -o "$WRAPPER_JAR" "$WRAPPER_JAR_URL" || {
+  echo "ERROR: failed to download maven-wrapper.jar from $WRAPPER_JAR_URL" >&2
+  exit 1
+}
+
+exec java -jar "$WRAPPER_JAR" "$@"

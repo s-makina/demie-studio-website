@@ -1,0 +1,24 @@
+# Test profile used by API tests against a manually-run local Postgres
+# (portal_test). Flyway is enabled so tests run against the real schema.
+spring:
+  datasource:
+    url: jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5432}/${TEST_DB_NAME:portal_test}
+    username: ${DB_USERNAME:postgres}
+    password: ${DB_PASSWORD:Forcode123!}
+    driver-class-name: org.postgresql.Driver
+  flyway:
+    enabled: true
+    clean-disabled: false
+    locations: classpath:db/migration
+
+logging:
+  level:
+    root: warn
+
+# Tests drive workers directly; background sweeps would steal claims.
+zip:
+  worker:
+    enabled: false
+derivative:
+  worker:
+    enabled: false
