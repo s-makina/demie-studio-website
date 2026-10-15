@@ -206,6 +206,24 @@ public class S3Service {
         }
     }
 
+    /**
+     * Server-side upload of one part (workers streaming builds like ZIPs).
+     * The byte array must be exactly the part's content; returns its ETag.
+     * Non-final parts need ≥5MB — the caller buffers accordingly.
+     */
+    public String uploadPart(String bucket, String key, String uploadId, int partNumber,
+                             byte[] bytes) {
+        var response = s3.uploadPart(UploadPartRequest.builder()
+                        .bucket(bucket)
+                        .key(key)
+                        .uploadId(uploadId)
+                        .partNumber(partNumber)
+                        .contentLength((long) bytes.length)
+                        .build(),
+                software.amazon.awssdk.core.sync.RequestBody.fromBytes(bytes));
+        return response.eTag();
+    }
+
     // ---- server-side object access (workers; never the browser path) ----
 
     /** Streams an object's bytes (caller must close). Used by workers. */

@@ -56,6 +56,9 @@ public class SecurityConfig {
                         // Public health probe.
                         .requestMatchers("/actuator/health").permitAll()
                         .requestMatchers("/auth/invite").hasRole("ADMIN")
+                        // ZIP requests are client-initiated (Task 11): any
+                        // project member may ask, the service scopes access.
+                        .requestMatchers(HttpMethod.POST, "/projects/*/zip").authenticated()
                         // Project mutations are photographer-only (Task 4);
                         // reads stay authenticated and are scoped per caller.
                         .requestMatchers(HttpMethod.POST, "/projects", "/projects/**").hasRole("ADMIN")

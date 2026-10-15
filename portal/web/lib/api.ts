@@ -108,12 +108,15 @@ export interface MediaAccess {
   listPath: string;
   /** Prefix for the per-file download endpoint. */
   downloadPrefix: string;
+  /** ZIP request/poll endpoint, e.g. `/projects/7/zip` or `/p/abc/zip`. */
+  zipPath: string;
 }
 
 export function accountAccess(projectId: number): MediaAccess {
   return {
     listPath: `/projects/${projectId}/media`,
     downloadPrefix: "/media",
+    zipPath: `/projects/${projectId}/zip`,
   };
 }
 
@@ -121,6 +124,7 @@ export function tokenAccess(token: string): MediaAccess {
   return {
     listPath: `/p/${token}/media`,
     downloadPrefix: `/p/${token}/media`,
+    zipPath: `/p/${token}/zip`,
   };
 }
 
@@ -141,4 +145,45 @@ export function fetchMediaPage(
 /** Direct API URL for a per-file download (browser follows the 302 to S3). */
 export function downloadUrl(access: MediaAccess, mediaId: number): string {
   return `${API_URL}${access.downloadPrefix}/${mediaId}/download`;
+}
+
+export interface ZipJob {
+  id: number;
+  projectId: number;
+  status: "pending" | "running" | "ready" | "expired" | "failed" | string;
+  mediaCount: number;
+  sizeBytes: number | null;
+  error: string | null;
+  expiresAt: string | null;
+}
+
+export interface ZipRequest {
+  job_id: number;
+  status: string;
+}
+
+/**
+ * ZIP request (Task 13). Omitted/empty `mediaIds` means all uploaded media;
+ * otherwise exactly those files. Idempotent per selection — a live job for
+ * the same files is resumed, never duplicated.
+ */
+export function requestZip(access: MediaAccess, mediaIds?: number[]): Promise<ZipRequest> {
+  return request(`${access.zipPath}`, {
+    method: "POST",
+    body: JSON.stringify(mediaIds && mediaIds.length > 0 ? { media_ids: mediaIds } : {}),
+  });
+}
+
+/** Poll one ZIP job (close the tab, come back, keep polling the same id). */
+export function fetchZipJob(
+  access: MediaAccess,
+  jobId: number,
+  signal?: AbortSignal
+): Promise<ZipJob> {
+  return request(`${access.zipPath}/${jobId}`, { signal });
+}
+
+/** Direct API URL for a finished ZIP (browser follows the 302 to S3). */
+export function zipDownloadUrl(access: MediaAccess, jobId: number): string {
+  return `${API_URL}${access.zipPath}/${jobId}/download`;
 }
