@@ -78,20 +78,23 @@ Order is by dependency. No task touches more than ~5 files. Check a task off onl
 
 ## Phase 4 — ZIP (close-and-return)
 
-- [ ] Task 11: ZIP request API + job state machine
+- [x] Task 11: ZIP request API + job state machine
   - Acceptance: `POST /projects/:id/zip {media_ids?}` → `202 + job_id` (`pending→running→ready→expired`); `GET job` polls; same token URL resumes after tab close; subset ZIP contains exactly the selected files.
   - Verify: `./mvnw test -Dtest=ZipJobTest` (all/selected/resume/expired)
   - Files: `portal/api/.../ZipController.java`, `portal/api/.../ZipJobService.java`, migration delta if needed
+  - Done 2026-10-15: `zip/` package — POST `/projects/{id}/zip` + `/p/{token}/zip` → 202 `{job_id,status}` (absent/empty = all uploaded; else each id must be an uploaded row of the project, 404 unknown/cross-project, 400 still-uploading); idempotent per selection (live job resumed, never duplicated); GET polls `ZipJobView` with lazy ready→expired flip; `…/download` 302s to presigned save-as + `download_event` (409 while building, 404 expired → rebuild via POST). Non-admin members may POST (SecurityConfig carve-out before the ADMIN rule). No migration needed — `zip_job` shipped in V1. `ZipJobTest` 7/7.
 
-- [ ] Task 12: ZIP worker — stream S3 → ZIP → S3
+- [x] Task 12: ZIP worker — stream S3 → ZIP → S3
   - Acceptance: worker streams originals to ZIP without loading all in RAM; max 1–2 concurrent builds; output lands in `zips/` with 7-day expiry + rebuild path; 30GB-scale streams without VPS disk fill.
   - Verify: 500-file fixture ZIP byte-completes; concurrency test queues the 3rd job; expired job rebuilds
   - Files: `portal/api/.../ZipWorker.java`, `portal/infra/zips.md`
+  - Done 2026-10-15: `ZipWorker` claims pending jobs (conditional UPDATE, oldest first, ≤2 in flight) into a pool of 2; streams S3→`ZipOutputStream`→S3 multipart through one 8MB buffer (server-side `S3Service.uploadPart` added; only full parts mid-stream, tail as final part) — never disk/RAM resident. Keys `zips/<job-id>.zip`, `size_bytes` = compressed bytes, `expires_at` = ready+7d; missing/changed media fails loudly (names ids); scheduler sweep also retires past-expiry jobs. `ZipWorkerTest` 5/5 incl. 500-file byte-complete against live MinIO; `ZipPartStreamTest` 3/3 unit-verifies part boundaries (incl. empty archive). Doc: `portal/infra/zips.md`. Test hardening: schedulers disabled in test profile (`zip/derivative.worker.enabled=false` — derivative flag was documented but never set, caused a steal-flake), per-test worker pools + no identity restart so stalled builds can't pollute later tests. Full suite 60/60.
 
-- [ ] Task 13: Selection + ZIP progress UI
+- [x] Task 13: Selection + ZIP progress UI
   - Acceptance: client selects thumbs (select-all visible/none), requests ZIP, sees progress, closes tab, returns to same URL for ready download link.
   - Verify: Playwright `zip.spec` incl. kill-tab-reopen
   - Files: web selection store, ZIP progress components (≤5 files)
+  - Done 2026-10-15: `components/ZipPanel.tsx` (toolbar: Download-all / Select + All-visible / None / Download-selected(N); progress: queued→building→ready(Save link + size)→failed(retry)→expired(rebuild); polls every 2s) + `MediaGrid` select mode (checkbox badges, ring highlight, thumb clicks toggle; `?item=` deep-links preserve `?zip=`). Job id lives in `?zip=` so tab-close + same URL resumes (API idempotency is the second net). Same component on both `/projects/[id]` and `/p/[token]`; `lib/api.ts` gained `zipPath` + request/poll/download-URL client. Verified headless against live API+MinIO (login→grid→all→ready→save-link; select-2→subset ready with exactly 2; reload `?zip=` resumes; token URL builds with no login; downloaded ZIP byte-identical to originals). No Playwright infra in repo — CDP walkthrough script stands in; full `zip.spec` deferred to Task 17. Lint 0 errors, `next build` green.
 
 ## Phase 5 — Share, WP link, ops, hardening
 
