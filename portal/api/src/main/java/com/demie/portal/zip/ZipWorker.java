@@ -91,6 +91,11 @@ public class ZipWorker {
                 "WHERE status = 'ready' AND expires_at < now()");
     }
 
+    /** Stops the build pool (tests: each method owns its worker, see ZipWorkerTest). */
+    public void shutdown() {
+        pool.shutdownNow();
+    }
+
     private void build(long jobId) {
         try {
             ZipJob job = jobs.findById(jobId).orElse(null);

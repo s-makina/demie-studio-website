@@ -15,7 +15,10 @@ logging:
   level:
     root: warn
 
-# Tests drive ZipWorker directly; the background sweep would steal claims.
+# Tests drive workers directly; background sweeps would steal claims.
 zip:
+  worker:
+    enabled: false
+derivative:
   worker:
     enabled: false

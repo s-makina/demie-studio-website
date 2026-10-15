@@ -4,6 +4,7 @@ import com.demie.portal.account.Account;
 import com.demie.portal.account.AccountService;
 import com.demie.portal.project.ProjectService;
 import com.demie.portal.s3.S3Service;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -49,11 +50,12 @@ class ZipWorkerTest {
     private ZipJobService jobs;
 
     @Autowired
-    private ZipWorker worker;
+    private com.demie.portal.media.MediaService media;
 
     @Autowired
     private S3Service s3;
 
+    private ZipWorker worker;
     private Account admin;
     private long projectId;
 
@@ -61,11 +63,23 @@ class ZipWorkerTest {
     void reset() {
         org.junit.jupiter.api.Assumptions.assumeTrue(s3Available(),
                 "S3_ENDPOINT, S3_ACCESS_KEY and S3_SECRET_KEY must be set (live MinIO)");
+        // Plain TRUNCATE (no identity restart): a build thread stalled on a
+        // slow S3 may outlive its test and must then write to an id no later
+        // test reuses. Each method also owns a fresh worker pool so a stuck
+        // build never occupies another test's build slots.
         jdbc.execute("TRUNCATE account, project, project_member, media, share_token, " +
-                "download_event, zip_job RESTART IDENTITY CASCADE");
+                "download_event, zip_job CASCADE");
         accounts.createAdmin("photographer@demie.test", "s3cret-pass", "Demie");
         admin = accounts.findByEmail("photographer@demie.test").orElseThrow();
         projectId = projects.create(admin.id(), "Zip Build", "Client").id();
+        worker = new ZipWorker(jdbc, jobs, media, s3);
+    }
+
+    @AfterEach
+    void stopWorker() {
+        if (worker != null) {
+            worker.shutdown();
+        }
     }
 
     @Test
@@ -165,16 +179,19 @@ class ZipWorkerTest {
 
     @Test
     void missingMediaFailsJob() {
+        // An id beyond any reused sequence (no identity restart in this class).
+        long ghostId = jdbc.queryForObject("SELECT COALESCE(MAX(id), 0) + 1000000 FROM media",
+                Long.class);
         long jobId = jdbc.queryForObject(
                 "INSERT INTO zip_job (project_id, status, media_ids) " +
-                        "VALUES (?, 'pending', '{99999}') RETURNING id",
+                        "VALUES (?, 'pending', '{" + ghostId + "}') RETURNING id",
                 Long.class, projectId);
 
         worker.buildNext();
         ZipJob failed = awaitTerminal(jobId, Duration.ofSeconds(30));
         assertEquals("failed", failed.status());
         assertNotNull(failed.errorSummary());
-        assertTrue(failed.errorSummary().contains("99999"),
+        assertTrue(failed.errorSummary().contains(String.valueOf(ghostId)),
                 "failure names the missing file, got: " + failed.errorSummary());
     }
 
