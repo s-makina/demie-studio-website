@@ -4,6 +4,7 @@ import { use, useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import MediaGrid from "@/components/MediaGrid";
+import SharePanel from "@/components/SharePanel";
 import SiteHeader from "@/components/SiteHeader";
 import {
   accountAccess,
@@ -97,6 +98,7 @@ export default function ProjectDetailPage({
                 <p className="mt-1 text-sm text-muted">{project.clientName}</p>
               )}
             </div>
+            <SharePanel projectId={project.id} />
             <MediaGrid access={accountAccess(project.id)} />
           </>
         )}

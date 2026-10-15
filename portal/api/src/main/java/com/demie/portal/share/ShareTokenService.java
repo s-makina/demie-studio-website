@@ -86,6 +86,16 @@ public class ShareTokenService {
 
     // --------------------------------------------------------------- resolve
 
+    /** Share-link state for the photographer panel (Task 14): no raw token. */
+    public ShareStatus status(long projectId) {
+        projects.findById(projectId).orElseThrow(ProjectService.NotFoundException::new);
+        List<TokenRow> rows = rowsByProject(projectId);
+        if (rows.isEmpty()) {
+            return new ShareStatus(false, false);
+        }
+        return new ShareStatus(true, rows.get(0).revokedAt() != null);
+    }
+
     /** Resolves a presented raw token to its grant, or empty when unknown/revoked. */
     public Optional<TokenGrant> resolve(String rawToken) {
         if (rawToken == null || rawToken.isBlank()) {
@@ -143,6 +153,10 @@ public class ShareTokenService {
 
     /** A validated token presentation. */
     public record TokenGrant(long tokenId, long projectId) {
+    }
+
+    /** Whether a project has a share link and whether it is revoked. */
+    public record ShareStatus(boolean issued, boolean revoked) {
     }
 
     /** Thrown when issuing while an active token already exists. */

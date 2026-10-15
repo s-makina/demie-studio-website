@@ -187,3 +187,53 @@ export function fetchZipJob(
 export function zipDownloadUrl(access: MediaAccess, jobId: number): string {
   return `${API_URL}${access.zipPath}/${jobId}/download`;
 }
+
+export interface ShareStatus {
+  projectId: number;
+  issued: boolean;
+  revoked: boolean;
+}
+
+export interface ProjectStats {
+  projectId: number;
+  views: number;
+  downloads: number;
+}
+
+export interface IssuedShare {
+  projectId: number;
+  token: string;
+}
+
+/** Photographer-only share-link state (never includes the raw token). */
+export function fetchShareStatus(projectId: number, signal?: AbortSignal): Promise<ShareStatus> {
+  return request(`/projects/${projectId}/share/status`, { signal });
+}
+
+/** Photographer-only per-project view/download totals. */
+export function fetchProjectStats(projectId: number, signal?: AbortSignal): Promise<ProjectStats> {
+  return request(`/projects/${projectId}/stats`, { signal });
+}
+
+/** Create the project's share link (returned once). 409 = already issued, rotate instead. */
+export function issueShare(projectId: number): Promise<IssuedShare> {
+  return request(`/projects/${projectId}/share`, { method: "POST" });
+}
+
+/** Rotate the share link: old stops working instantly, new is returned once. */
+export function rotateShare(projectId: number): Promise<IssuedShare> {
+  return request(`/projects/${projectId}/share/rotate`, { method: "POST" });
+}
+
+/** Revoke the share link: denied instantly. Idempotent. */
+export function revokeShare(projectId: number): Promise<void> {
+  return request(`/projects/${projectId}/share/revoke`, { method: "POST" });
+}
+
+/** Full client-facing share URL for a raw token (same web origin, `/p/<token>`). */
+export function shareUrl(token: string): string {
+  if (typeof window !== "undefined") {
+    return `${window.location.origin}/p/${token}`;
+  }
+  return `/p/${token}`;
+}

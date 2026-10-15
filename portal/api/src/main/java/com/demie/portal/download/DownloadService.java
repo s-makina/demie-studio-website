@@ -94,7 +94,25 @@ public class DownloadService {
         return name.isBlank() ? "download" : name;
     }
 
+    /** Per-project view/download totals for the photographer stats UI (Task 14). */
+    public ProjectStats countsForProject(long projectId) {
+        long views = countByType(projectId, "view");
+        long downloads = countByType(projectId, "download");
+        return new ProjectStats(views, downloads);
+    }
+
+    private long countByType(long projectId, String eventType) {
+        Long count = jdbc.queryForObject(
+                "SELECT COUNT(*) FROM download_event WHERE project_id = ? AND event_type = ?",
+                Long.class, projectId, eventType);
+        return count == null ? 0 : count;
+    }
+
     /** Presigned original URL plus the filename the browser should save as. */
     public record DownloadTarget(String url, String filename) {
+    }
+
+    /** View/download totals for one project. */
+    public record ProjectStats(long views, long downloads) {
     }
 }
