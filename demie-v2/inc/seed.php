@@ -227,6 +227,7 @@ function demie_seed_pages() {
     $blog     = demie_seed_page('blog', __('Blog', 'demie-photography'), 'page-blog.php');
     $contact  = demie_seed_page('contact', __('Contact', 'demie-photography'), 'page-contact.php');
     $portfolio = demie_seed_page('portfolio', __('Portfolio', 'demie-photography'), 'page-portfolio.php');
+    $booking = demie_seed_page('booking', __('Booking', 'demie-photography'));
 
     if ($front_id) {
         update_option('show_on_front', 'page');
@@ -238,37 +239,49 @@ function demie_seed_pages() {
 }
 
 /**
- * Primary menu matching local: Home, Services, Portfolio assigned to primary.
- * Idempotent: if primary location already has a menu, do nothing. If
- * Primary Menu exists but is empty, fill missing items only.
+ * Primary + footer menus. Idempotent: assigned locations are never
+ * overwritten; existing menus are only topped up with missing items.
  */
 function demie_seed_menus() {
+    demie_seed_menu_to_location('Primary Menu', 'primary', [
+        'home'      => null,
+        'services'  => null,
+        'portfolio' => null,
+    ]);
+    demie_seed_menu_to_location('Footer Menu', 'footer', [
+        'services'  => 'Services',
+        'portfolio' => 'Portfolio',
+        'booking'   => 'Booking',
+        'contact'   => 'Contact Us',
+    ]);
+}
+
+function demie_seed_menu_to_location($menu_name, $location, $wanted) {
     $locations = get_theme_mod('nav_menu_locations');
     if (!is_array($locations)) {
         $locations = [];
     }
-    if (!empty($locations['primary'])) {
-        $assigned = wp_get_nav_menu_object($locations['primary']);
+    if (!empty($locations[$location])) {
+        $assigned = wp_get_nav_menu_object($locations[$location]);
         if ($assigned) {
             return;
         }
     }
 
-    $menu = wp_get_nav_menu_object('Primary Menu');
+    $menu = wp_get_nav_menu_object($menu_name);
     if ($menu) {
         $menu_id = (int) $menu->term_id;
     } else {
-        $menu_id = wp_create_nav_menu('Primary Menu');
+        $menu_id = wp_create_nav_menu($menu_name);
         if (is_wp_error($menu_id) || !$menu_id) {
             return;
         }
     }
 
-    $wanted = [
-        'home'      => demie_seed_page_id('home'),
-        'services'  => demie_seed_page_id('services'),
-        'portfolio' => demie_seed_page_id('portfolio'),
-    ];
+    $page_ids = [];
+    foreach ($wanted as $slug => $label) {
+        $page_ids[$slug] = demie_seed_page_id($slug);
+    }
 
     $existing_ids = [];
     $items = wp_get_nav_menu_items($menu_id);
@@ -282,13 +295,14 @@ function demie_seed_menus() {
     }
 
     $order = 1;
-    foreach ($wanted as $slug => $page_id) {
+    foreach ($wanted as $slug => $label) {
+        $page_id = $page_ids[$slug];
         if (!$page_id || isset($existing_ids[$page_id])) {
             $order++;
             continue;
         }
         wp_update_nav_menu_item($menu_id, 0, [
-            'menu-item-title'     => get_the_title($page_id),
+            'menu-item-title'     => $label ?: get_the_title($page_id),
             'menu-item-object'    => 'page',
             'menu-item-object-id' => $page_id,
             'menu-item-type'      => 'post_type',
@@ -298,7 +312,7 @@ function demie_seed_menus() {
         $order++;
     }
 
-    $locations['primary'] = $menu_id;
+    $locations[$location] = $menu_id;
     set_theme_mod('nav_menu_locations', $locations);
 }
 

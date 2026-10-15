@@ -8,15 +8,20 @@
           <div class="footer-col footer-col--left">
             <div class="footer-widget">
               <div class="footer-nav">
-                <?php if (has_nav_menu('footer')) : ?>
-                  <?php wp_nav_menu(['theme_location' => 'footer', 'container' => false, 'fallback_cb' => false]); ?>
-                <?php else : ?>
+                <?php if (has_nav_menu('footer')) :
+                    $demie_f_items = wp_get_nav_menu_items(get_nav_menu_locations()['footer']);
+                    $demie_f_left = is_array($demie_f_items) ? array_slice($demie_f_items, 0, 2) : [];
+                    if ($demie_f_left) : ?>
+                      <ul>
+                        <?php foreach ($demie_f_left as $demie_f_item) : ?>
+                          <li class="menu-item"><a href="<?php echo esc_url($demie_f_item->url); ?>"><?php echo esc_html($demie_f_item->title); ?></a></li>
+                        <?php endforeach; ?>
+                      </ul>
+                    <?php endif;
+                else : ?>
                   <ul>
-                    <li class="menu-item"><a href="<?php echo esc_url(demie_page_url('about-us')); ?>"><?php esc_html_e('About Us', 'demie-v2'); ?></a></li>
-                    <li class="menu-item"><a href="<?php echo esc_url(demie_page_url('services')); ?>"><?php esc_html_e('Our Services', 'demie-v2'); ?></a></li>
-                    <li class="menu-item"><a href="<?php echo esc_url(demie_page_url('gallery')); ?>"><?php esc_html_e('Gallery', 'demie-v2'); ?></a></li>
-                    <li class="menu-item"><a href="<?php echo esc_url(demie_page_url('blog')); ?>"><?php esc_html_e('Blog', 'demie-v2'); ?></a></li>
-                    <li class="menu-item"><a href="<?php echo esc_url(demie_page_url('contact')); ?>"><?php esc_html_e('Contact Us', 'demie-v2'); ?></a></li>
+                    <li class="menu-item"><a href="<?php echo esc_url(demie_page_url('services')); ?>"><?php esc_html_e('Services', 'demie-v2'); ?></a></li>
+                    <li class="menu-item"><a href="<?php echo esc_url(demie_page_url('portfolio')); ?>"><?php esc_html_e('Portfolio', 'demie-v2'); ?></a></li>
                   </ul>
                 <?php endif; ?>
               </div>
@@ -47,13 +52,22 @@
           <div class="footer-col footer-col--right">
             <div class="footer-widget text-md-end">
               <div class="footer-nav">
+                <?php if (has_nav_menu('footer')) :
+                    $demie_f_items = wp_get_nav_menu_items(get_nav_menu_locations()['footer']);
+                    $demie_f_right = is_array($demie_f_items) ? array_slice($demie_f_items, 2) : [];
+                    if ($demie_f_right) : ?>
+                      <ul>
+                        <?php foreach ($demie_f_right as $demie_f_item) : ?>
+                          <li class="menu-item"><a href="<?php echo esc_url($demie_f_item->url); ?>"><?php echo esc_html($demie_f_item->title); ?></a></li>
+                        <?php endforeach; ?>
+                      </ul>
+                    <?php endif;
+                else : ?>
                 <ul>
-                  <li class="menu-item"><a href="<?php echo esc_url(demie_page_url('contact')); ?>"><?php esc_html_e('Booking', 'demie-v2'); ?></a></li>
-                  <li class="menu-item"><a href="#"><?php esc_html_e('Products', 'demie-v2'); ?></a></li>
-                  <li class="menu-item"><a href="<?php echo esc_url(demie_page_url('blog')); ?>"><?php esc_html_e('Recent Posts', 'demie-v2'); ?></a></li>
-                  <li class="menu-item"><a href="<?php echo esc_url(demie_page_url('blog')); ?>"><?php esc_html_e('Latest News', 'demie-v2'); ?></a></li>
+                  <li class="menu-item"><a href="<?php echo esc_url(demie_page_url('booking')); ?>"><?php esc_html_e('Booking', 'demie-v2'); ?></a></li>
                   <li class="menu-item"><a href="<?php echo esc_url(demie_page_url('contact')); ?>"><?php esc_html_e('Contact Us', 'demie-v2'); ?></a></li>
                 </ul>
+                <?php endif; ?>
               </div>
             </div>
           </div>
