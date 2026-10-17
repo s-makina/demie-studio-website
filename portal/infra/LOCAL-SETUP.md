@@ -65,6 +65,19 @@ cd portal
 ./mvnw spring-boot:run -pl api
 ```
 
+Spring Boot does **not** read `.env` files, so exporting these variables (or
+passing them some other way) is required — editing `infra/.env` on its own has
+no effect, and the API will now refuse to start rather than send uploads to
+AWS. On Windows `scripts/run-api.ps1` does the exporting for you:
+
+```powershell
+.\scripts\run-api.ps1
+```
+
+It imports the `S3_*` lines from `infra/.env` only, for the same reason
+`scripts/upload-fixture.sh` does: the file also carries DB values that must not
+override the `application.yml` defaults.
+
 ### Flyway (schema)
 
 The Maven Flyway plugin reads host/port/db/user from Maven properties
