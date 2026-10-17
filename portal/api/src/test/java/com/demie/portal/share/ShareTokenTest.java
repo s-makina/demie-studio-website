@@ -151,6 +151,33 @@ class ShareTokenTest {
     }
 
     @Test
+    void tokenMediaItemStaysInsideItsProject() throws Exception {
+        MockHttpSession admin = login(ADMIN_EMAIL, ADMIN_PASSWORD);
+        long projectA = createProject(admin, "Project A");
+        long projectB = createProject(admin, "Project B");
+        String tokenB = issueToken(admin, projectB);
+
+        long mine = insertMedia(projectB);
+        long foreign = insertMedia(projectA);
+
+        // The token URL serves a fresh, browser-safe view of its own media...
+        mvc.perform(get("/p/" + tokenB + "/media/" + mine))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value(mine))
+                .andExpect(jsonPath("$.thumbWidth").value(400));
+
+        // ...and never reaches media belonging to another project.
+        mvc.perform(get("/p/" + tokenB + "/media/" + foreign))
+                .andExpect(status().isNotFound());
+
+        // Revoking the token closes the single-item route too.
+        mvc.perform(post("/projects/" + projectB + "/share/revoke").session(admin))
+                .andExpect(status().isNoContent());
+        mvc.perform(get("/p/" + tokenB + "/media/" + mine))
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
     void clientCannotManageShareTokens() throws Exception {
         accounts.inviteClient("client@example.com", "Client");
         String token = accounts.inviteClient("client@example.com", "Client").rawToken();
@@ -203,6 +230,16 @@ class ShareTokenTest {
                 .andExpect(status().isCreated())
                 .andReturn();
         return json.readTree(result.getResponse().getContentAsString()).get("token").asText();
+    }
+
+    /** Derivative-pending row, so listing stays free of S3 presigning. */
+    private long insertMedia(long projectId) {
+        return jdbc.queryForObject(
+                "INSERT INTO media (project_id, s3_key, size_bytes, kind, sort, status, " +
+                        "derivative_status, thumb_width, thumb_height) " +
+                        "VALUES (?, ?, 10, 'photo', 1, 'uploaded', 'pending', 400, 300) " +
+                        "RETURNING id",
+                Long.class, projectId, "originals/" + projectId + "/1");
     }
 
     private MockHttpSession login(String email, String password) throws Exception {
