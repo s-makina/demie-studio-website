@@ -71,56 +71,112 @@ export default function Lightbox({
       role="dialog"
       aria-modal="true"
       aria-label={`Photo ${index + 1} of ${items.length}`}
-      className="fixed inset-0 z-50 flex flex-col bg-black/90"
+      className="fixed inset-0 z-50 flex flex-col bg-black/95 backdrop-blur-xl animate-in fade-in duration-200"
       onClick={onClose}
     >
+      {/* Top floating bar: Counter & Actions */}
       <div
-        className="flex items-center justify-between px-4 py-3 text-sm text-foreground"
+        className="pointer-events-none absolute inset-x-0 top-0 z-30 flex items-center justify-between p-4 sm:p-6"
         onClick={(e) => e.stopPropagation()}
       >
-        <span className="text-muted">
-          {index + 1} / {items.length}
-          {item.kind === "video" ? " · video" : ""}
-        </span>
-        <div className="flex items-center gap-3">
+        {/* Slide counter badge */}
+        <div className="pointer-events-auto flex items-center gap-2 rounded-full border border-white/10 bg-surface-glass px-4 py-1.5 text-xs font-medium text-foreground backdrop-blur-xl shadow-lg">
+          <span className="font-serif text-sm font-semibold italic text-accent">
+            {index + 1}
+          </span>
+          <span className="text-white/20">/</span>
+          <span className="text-muted">{items.length}</span>
+          {item.kind === "video" && (
+            <span className="ml-1.5 rounded-full bg-accent/20 px-2 py-0.5 text-[9px] font-semibold uppercase tracking-widest text-accent">
+              Film
+            </span>
+          )}
+        </div>
+
+        {/* Action buttons */}
+        <div className="pointer-events-auto flex items-center gap-3">
           <a
             href={downloadUrl(access, item.id)}
-            className="rounded-lg bg-accent px-4 py-2 font-medium text-background transition hover:bg-accent-hover"
+            className="inline-flex items-center gap-1.5 rounded-full bg-accent px-4 py-2 text-xs font-medium text-background transition hover:bg-accent-hover shadow-lg"
           >
-            Download
+            <svg
+              width="14"
+              height="14"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              aria-hidden="true"
+            >
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+              <polyline points="7 10 12 15 17 10" />
+              <line x1="12" y1="15" x2="12" y2="3" />
+            </svg>
+            <span>Download</span>
           </a>
+
           {isAdmin && item.status !== "uploading" && (
             <button
               type="button"
               onClick={() => onRemove?.(item)}
-              className="rounded-lg border border-border px-3 py-2 text-red-300 transition hover:bg-surface-2"
+              className="rounded-full border border-red-500/30 bg-red-500/10 px-3.5 py-2 text-xs font-medium text-red-300 backdrop-blur-xl transition hover:bg-red-500/20 hover:border-red-500/50"
             >
               Remove
             </button>
           )}
+
           <button
             type="button"
             onClick={onClose}
             aria-label="Close"
-            className="rounded-lg border border-border px-3 py-2 text-foreground transition hover:bg-surface-2"
+            className="flex h-8 w-8 items-center justify-center rounded-full border border-white/10 bg-surface-glass text-muted transition hover:border-accent/40 hover:text-foreground backdrop-blur-xl"
           >
-            ✕
+            <svg
+              width="14"
+              height="14"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              aria-hidden="true"
+            >
+              <line x1="18" y1="6" x2="6" y2="18" />
+              <line x1="6" y1="6" x2="18" y2="18" />
+            </svg>
           </button>
         </div>
       </div>
 
+      {/* Main image / media stage with generous breathing room */}
       <div
-        className="relative flex flex-1 items-center justify-center px-4 pb-4"
+        className="relative flex flex-1 items-center justify-center p-6 sm:p-14 md:p-20"
         onClick={(e) => e.stopPropagation()}
       >
+        {/* Previous navigation button */}
         {hasPrev && (
           <button
             type="button"
             onClick={prev}
             aria-label="Previous photo"
-            className="absolute left-2 z-10 rounded-full border border-border bg-surface/80 px-3 py-2 text-foreground transition hover:bg-surface-2 sm:left-4"
+            className="absolute left-4 sm:left-6 z-20 flex h-11 w-11 sm:h-12 sm:w-12 items-center justify-center rounded-full border border-white/10 bg-surface-glass text-foreground backdrop-blur-xl transition hover:border-accent/50 hover:bg-surface-glass/90 hover:scale-105 active:scale-95 shadow-xl"
           >
-            ‹
+            <svg
+              width="20"
+              height="20"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="1.75"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              aria-hidden="true"
+            >
+              <polyline points="15 18 9 12 15 6" />
+            </svg>
           </button>
         )}
 
@@ -128,26 +184,92 @@ export default function Lightbox({
           <img
             src={fullSrc}
             alt=""
-            className="max-h-full max-w-full rounded-lg object-contain"
+            className="max-h-[82vh] max-w-[88vw] rounded-xl object-contain shadow-2xl transition duration-300 select-none"
           />
         ) : (
-          <p className="text-muted">
-            {item.derivativeStatus === "failed"
-              ? "Preview failed — use Download for the original."
-              : "Preview still processing — use Download for the original."}
-          </p>
+          <div className="flex flex-col items-center justify-center p-8 text-center">
+            <p className="font-serif text-lg italic text-muted">
+              {item.derivativeStatus === "failed"
+                ? "Preview failed — use Download for the original."
+                : "Preview still processing — use Download for the original."}
+            </p>
+            <a
+              href={downloadUrl(access, item.id)}
+              className="mt-4 rounded-full bg-accent px-4 py-2 text-xs font-medium text-background transition hover:bg-accent-hover"
+            >
+              Download Original
+            </a>
+          </div>
         )}
 
+        {/* Next navigation button */}
         {hasNext && (
           <button
             type="button"
             onClick={next}
             aria-label="Next photo"
-            className="absolute right-2 z-10 rounded-full border border-border bg-surface/80 px-3 py-2 text-foreground transition hover:bg-surface-2 sm:right-4"
+            className="absolute right-4 sm:right-6 z-20 flex h-11 w-11 sm:h-12 sm:w-12 items-center justify-center rounded-full border border-white/10 bg-surface-glass text-foreground backdrop-blur-xl transition hover:border-accent/50 hover:bg-surface-glass/90 hover:scale-105 active:scale-95 shadow-xl"
           >
-            ›
+            <svg
+              width="20"
+              height="20"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="1.75"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              aria-hidden="true"
+            >
+              <polyline points="9 18 15 12 9 6" />
+            </svg>
           </button>
         )}
+      </div>
+
+      {/* Centered floating bottom pill */}
+      <div
+        className="pointer-events-none absolute inset-x-0 bottom-6 z-30 flex justify-center"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="pointer-events-auto flex items-center gap-4 rounded-full border border-white/10 bg-surface-glass/90 px-4 py-2 shadow-2xl backdrop-blur-xl">
+          <button
+            type="button"
+            onClick={prev}
+            disabled={!hasPrev}
+            aria-label="Previous photo"
+            className="flex h-7 w-7 items-center justify-center rounded-full text-foreground transition hover:text-accent disabled:opacity-30 disabled:hover:text-foreground"
+          >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <polyline points="15 18 9 12 15 6" />
+            </svg>
+          </button>
+
+          <span className="text-xs font-medium text-muted">
+            {index + 1} of {items.length}
+          </span>
+
+          <button
+            type="button"
+            onClick={next}
+            disabled={!hasNext}
+            aria-label="Next photo"
+            className="flex h-7 w-7 items-center justify-center rounded-full text-foreground transition hover:text-accent disabled:opacity-30 disabled:hover:text-foreground"
+          >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <polyline points="9 18 15 12 9 6" />
+            </svg>
+          </button>
+
+          <span className="h-3 w-px bg-white/15" />
+
+          <a
+            href={downloadUrl(access, item.id)}
+            className="text-xs font-medium text-accent transition hover:text-accent-hover"
+          >
+            Save High-Res
+          </a>
+        </div>
       </div>
     </div>
   );

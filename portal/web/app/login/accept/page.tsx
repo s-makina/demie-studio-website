@@ -1,8 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
+import SiteHeader from "@/components/SiteHeader";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "";
 
@@ -66,29 +66,24 @@ export default function AcceptInvitePage() {
 
   return (
     <div className="flex min-h-screen flex-col">
-      <header className="border-b border-border bg-surface">
-        <div className="mx-auto flex max-w-4xl items-center justify-between px-6 py-4">
-          <Link href="/" className="font-semibold tracking-tight text-foreground">
-            Demie Photography
-          </Link>
-          <nav className="flex gap-6 text-sm text-muted">
-            <Link href="/login" className="hover:text-foreground">
-              Sign in
-            </Link>
-          </nav>
-        </div>
-      </header>
+      <SiteHeader signedIn={false} />
 
-      <main className="flex flex-1 items-center justify-center px-6 py-12">
-        <div className="w-full max-w-sm">
-          <h1 className="mb-1 text-2xl font-semibold">Set your password</h1>
-          <p className="mb-8 text-muted">
-            Welcome — choose a password to activate your account.
+      <main className="flex flex-1 items-center justify-center px-4 py-12 sm:px-6">
+        <div className="w-full max-w-md rounded-2xl border border-white/[0.08] bg-surface/80 p-8 shadow-2xl backdrop-blur-xl sm:p-10">
+          <div className="mx-auto mb-6 flex h-14 w-14 items-center justify-center rounded-full border border-accent/40 bg-accent/10 shadow-lg shadow-accent/5">
+            <span className="font-serif text-2xl italic text-accent">D</span>
+          </div>
+
+          <h1 className="text-center font-serif text-3xl italic tracking-wide text-foreground">
+            Set Your Password
+          </h1>
+          <p className="mt-2 text-center text-xs leading-relaxed text-muted">
+            Welcome to Demie Photography — choose a secure password to activate your client account.
           </p>
 
-          <form className="space-y-5" onSubmit={onSubmit}>
+          <form className="mt-8 space-y-5" onSubmit={onSubmit}>
             <div>
-              <label htmlFor="password" className="mb-1.5 block text-sm font-medium text-foreground">
+              <label htmlFor="password" className="mb-1.5 block text-xs font-medium uppercase tracking-wider text-muted">
                 New password
               </label>
               <input
@@ -99,13 +94,13 @@ export default function AcceptInvitePage() {
                 required
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="w-full rounded-lg border border-border bg-surface-2 px-3 py-2 text-foreground placeholder:text-muted focus:outline-none focus:ring-2 focus:ring-accent"
+                className="w-full rounded-xl border border-white/[0.08] bg-surface-2/90 px-4 py-2.5 text-sm text-foreground placeholder:text-muted-dim focus:border-accent/40 focus:outline-none focus:ring-2 focus:ring-accent/50"
                 placeholder="At least 8 characters"
               />
             </div>
 
             <div>
-              <label htmlFor="confirm" className="mb-1.5 block text-sm font-medium text-foreground">
+              <label htmlFor="confirm" className="mb-1.5 block text-xs font-medium uppercase tracking-wider text-muted">
                 Confirm password
               </label>
               <input
@@ -116,13 +111,13 @@ export default function AcceptInvitePage() {
                 required
                 value={confirm}
                 onChange={(e) => setConfirm(e.target.value)}
-                className="w-full rounded-lg border border-border bg-surface-2 px-3 py-2 text-foreground placeholder:text-muted focus:outline-none focus:ring-2 focus:ring-accent"
+                className="w-full rounded-xl border border-white/[0.08] bg-surface-2/90 px-4 py-2.5 text-sm text-foreground placeholder:text-muted-dim focus:border-accent/40 focus:outline-none focus:ring-2 focus:ring-accent/50"
                 placeholder="Repeat password"
               />
             </div>
 
             {error && (
-              <p role="alert" className="text-sm text-red-400">
+              <p role="alert" className="rounded-xl border border-rose-500/20 bg-rose-500/10 px-4 py-2.5 text-xs text-rose-300">
                 {error}
               </p>
             )}
@@ -130,7 +125,7 @@ export default function AcceptInvitePage() {
             <button
               type="submit"
               disabled={submitting}
-              className="w-full rounded-lg bg-accent px-4 py-2.5 font-medium text-background transition hover:bg-accent-hover disabled:opacity-60"
+              className="w-full rounded-full bg-accent px-5 py-3 text-xs font-medium uppercase tracking-wider text-background shadow-lg shadow-accent/10 transition hover:bg-accent-hover disabled:opacity-60"
             >
               {submitting ? "Saving…" : "Set password"}
             </button>

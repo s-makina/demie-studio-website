@@ -221,13 +221,16 @@ export default function UploadPanel({
   return (
     <section
       aria-label="Upload photos"
-      className="mb-6 rounded-xl border border-border bg-surface-2 p-5"
+      className="mb-6 rounded-2xl border border-white/[0.08] bg-surface p-6 shadow-xl"
     >
-      <div className="flex flex-wrap items-baseline justify-between gap-2">
-        <h2 className="text-sm font-semibold">Upload</h2>
+      <div className="flex flex-wrap items-baseline justify-between gap-3">
+        <div>
+          <h2 className="font-serif text-xl tracking-wide text-foreground">Upload Media</h2>
+          <p className="mt-0.5 text-xs text-muted">Add photos or videos to this shoot gallery</p>
+        </div>
         {files.length > 0 && (
-          <p className="text-xs text-muted" aria-live="polite">
-            {done}/{files.length} done
+          <p className="rounded-full border border-white/10 bg-surface-2 px-3 py-1 text-xs font-medium text-muted" aria-live="polite">
+            <span className="font-semibold text-accent">{done}</span> of {files.length} done
           </p>
         )}
       </div>
@@ -254,14 +257,36 @@ export default function UploadPanel({
             addFiles(e.dataTransfer.files);
           }
         }}
-        className={`mt-3 flex cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed px-4 py-8 text-center transition ${
-          dragOver ? "border-accent bg-surface" : "border-border hover:border-accent/60"
+        className={`group mt-5 flex cursor-pointer flex-col items-center justify-center rounded-2xl border-2 border-dashed px-6 py-10 text-center transition-all duration-300 ${
+          dragOver
+            ? "border-accent bg-accent/5 ring-4 ring-accent/10"
+            : "border-accent/30 bg-surface-2/40 hover:border-accent/60 hover:bg-surface-2/70"
         }`}
       >
-        <p className="font-medium">Drag photos or videos here</p>
-        <p className="mt-1 text-sm text-muted">
-          or <span className="text-accent">browse files</span> — uploads one by
-          one, in order
+        <div className="flex h-12 w-12 items-center justify-center rounded-full border border-accent/30 bg-accent/10 text-accent transition duration-300 group-hover:scale-110 group-hover:border-accent/60 group-hover:bg-accent/20">
+          <svg
+            className="h-6 w-6"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+            strokeWidth={1.5}
+            aria-hidden="true"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              d="M6.827 6.175A2.31 2.31 0 015.186 7.23c-.38.054-.757.112-1.134.175C2.999 7.58 2.25 8.507 2.25 9.574V18a2.25 2.25 0 002.25 2.25h15A2.25 2.25 0 0021.75 18V9.574c0-1.067-.75-1.994-1.802-2.169a47.865 47.865 0 00-1.134-.175 2.31 2.31 0 01-1.64-1.055l-.822-1.316a2.192 2.192 0 00-1.736-1.039 48.774 48.774 0 00-5.232 0 2.192 2.192 0 00-1.736 1.039l-.821 1.316z"
+            />
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              d="M16.5 12.75a4.5 4.5 0 11-9 0 4.5 4.5 0 019 0zM18.75 10.5h.008v.008h-.008V10.5z"
+            />
+          </svg>
+        </div>
+        <p className="mt-4 font-serif text-lg tracking-wide text-foreground">Drag photos or videos here</p>
+        <p className="mt-1 text-xs text-muted">
+          or <span className="font-medium text-accent underline decoration-accent/40 underline-offset-4 transition group-hover:decoration-accent">browse files</span> — uploads sequentially in display order
         </p>
         <input
           ref={inputRef}
@@ -279,14 +304,14 @@ export default function UploadPanel({
       </div>
 
       {files.length > 0 && (
-        <div className="mt-4">
-          <ul className="grid grid-cols-3 gap-2 sm:grid-cols-4">
+        <div className="mt-6">
+          <ul className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
             {files.map((entry) => (
               <li
                 key={entry.id}
-                className="overflow-hidden rounded-lg border border-border bg-surface"
+                className="overflow-hidden rounded-xl border border-white/[0.06] bg-surface-2 transition hover:border-white/10"
               >
-                <div className="relative aspect-square">
+                <div className="relative aspect-square bg-surface-3">
                   {entry.preview ? (
                     <img
                       src={entry.preview}
@@ -294,25 +319,41 @@ export default function UploadPanel({
                       className="h-full w-full object-cover"
                     />
                   ) : (
-                    <div className="flex h-full w-full items-center justify-center text-xs text-muted">
-                      {entry.file.type.startsWith("video/")
-                        ? "video"
-                        : entry.file.name.slice(-12)}
+                    <div className="flex h-full w-full flex-col items-center justify-center p-3 text-center text-xs text-muted">
+                      <svg
+                        className="mb-1.5 h-6 w-6 text-muted-dim"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                        aria-hidden="true"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={1.5}
+                          d="M15.75 10.5l4.72-4.72a.75.75 0 011.28.53v11.38a.75.75 0 01-1.28.53l-4.72-4.72M4.5 18.75h9a2.25 2.25 0 002.25-2.25v-9a2.25 2.25 0 00-2.25-2.25h-9A2.25 2.25 0 002.25 7.5v9a2.25 2.25 0 002.25 2.25z"
+                        />
+                      </svg>
+                      <span className="truncate max-w-full font-mono text-[10px]">
+                        {entry.file.type.startsWith("video/")
+                          ? "video"
+                          : entry.file.name.slice(-12)}
+                      </span>
                     </div>
                   )}
                   {entry.status === "done" && (
-                    <span className="absolute right-1.5 top-1.5 rounded-full bg-green-500 px-2 py-0.5 text-[11px] font-medium text-white">
+                    <span className="absolute right-2 top-2 rounded-full bg-emerald-500/90 px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-white shadow-lg backdrop-blur-sm">
                       Done
                     </span>
                   )}
                   {entry.status === "error" && (
-                    <span className="absolute right-1.5 top-1.5 rounded-full bg-red-500 px-2 py-0.5 text-[11px] font-medium text-white">
+                    <span className="absolute right-2 top-2 rounded-full bg-rose-500/90 px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-white shadow-lg backdrop-blur-sm">
                       Failed
                     </span>
                   )}
                 </div>
-                <div className="p-2">
-                  <p className="truncate text-[11px] text-muted" title={entry.file.name}>
+                <div className="p-3">
+                  <p className="truncate text-[10px] font-medium text-muted" title={entry.file.name}>
                     {entry.file.name}
                   </p>
                   <div
@@ -321,16 +362,16 @@ export default function UploadPanel({
                     aria-valuemin={0}
                     aria-valuemax={100}
                     aria-label={`Upload progress for ${entry.file.name}`}
-                    className="mt-1.5 h-1.5 overflow-hidden rounded-full bg-surface-2"
+                    className="mt-2 h-1 overflow-hidden rounded-full bg-surface-3"
                   >
                     <div
-                      className={`h-full rounded-full transition-all ${
-                        entry.status === "error" ? "bg-red-400" : "bg-accent"
+                      className={`h-full rounded-full transition-all duration-300 ${
+                        entry.status === "error" ? "bg-rose-500" : "bg-accent"
                       }`}
                       style={{ width: `${Math.round(entry.progress * 100)}%` }}
                     />
                   </div>
-                  <div className="mt-1.5 flex justify-between text-[11px]">
+                  <div className="mt-2 flex items-center justify-between text-[11px]">
                     {entry.status === "error" ? (
                       <>
                         <button
@@ -344,29 +385,29 @@ export default function UploadPanel({
                         <button
                           type="button"
                           onClick={() => removeOne(entry.id)}
-                          className="text-muted hover:text-foreground"
+                          className="text-muted transition hover:text-foreground"
                         >
                           Remove
                         </button>
                       </>
                     ) : entry.status === "done" ? (
-                      <span className="text-muted">Uploaded in order</span>
+                      <span className="text-[10px] text-muted">Uploaded in order</span>
                     ) : entry.status === "uploading" ? (
-                      <span className="text-muted">
+                      <span className="text-[10px] font-medium tabular-nums text-accent">
                         {Math.round(entry.progress * 100)}%
                       </span>
                     ) : (
                       <button
                         type="button"
                         onClick={() => removeOne(entry.id)}
-                        className="text-muted hover:text-foreground"
+                        className="text-muted transition hover:text-foreground"
                       >
                         Remove
                       </button>
                     )}
                   </div>
                   {entry.status === "error" && entry.error && (
-                    <p role="alert" className="mt-1 text-[11px] text-red-400">
+                    <p role="alert" className="mt-1 text-[10px] text-rose-400">
                       {entry.error}
                     </p>
                   )}
@@ -375,12 +416,12 @@ export default function UploadPanel({
             ))}
           </ul>
 
-          <div className="mt-4 flex flex-wrap items-center gap-2">
+          <div className="mt-5 flex flex-wrap items-center gap-3">
             <button
               type="button"
               onClick={() => void startAll()}
               disabled={running || queued === 0}
-              className="rounded-lg bg-accent px-4 py-2 text-sm font-medium text-white transition hover:brightness-110 disabled:opacity-50"
+              className="rounded-full bg-accent px-5 py-2 text-xs font-medium text-background transition hover:bg-accent-hover disabled:opacity-50"
             >
               {running
                 ? "Uploading…"
@@ -394,7 +435,7 @@ export default function UploadPanel({
                 onClick={() => {
                   cancelRef.current = true;
                 }}
-                className="rounded-lg border border-border bg-surface px-4 py-2 text-sm transition hover:bg-surface-2"
+                className="rounded-full border border-white/10 bg-surface-2 px-4 py-2 text-xs font-medium text-foreground transition hover:border-accent/40"
               >
                 Stop after this file
               </button>
@@ -403,7 +444,7 @@ export default function UploadPanel({
               <button
                 type="button"
                 onClick={clearDone}
-                className="text-sm text-muted hover:text-foreground"
+                className="text-xs text-muted transition hover:text-foreground"
               >
                 Clear finished
               </button>

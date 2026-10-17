@@ -57,31 +57,34 @@ export default function ProjectSettings({
   return (
     <section
       aria-label="Project settings"
-      className="mb-6 rounded-xl border border-border bg-surface-2 p-5"
+      className="mb-6 rounded-2xl border border-white/[0.08] bg-surface p-6 shadow-xl"
     >
-      <div className="flex flex-wrap items-baseline justify-between gap-2">
-        <h2 className="text-sm font-semibold">Project settings</h2>
+      <div className="flex flex-wrap items-baseline justify-between gap-3">
+        <div>
+          <h2 className="font-serif text-xl tracking-wide text-foreground">Shoot Settings</h2>
+          <p className="mt-0.5 text-xs text-muted">Project configuration and visibility</p>
+        </div>
         {archived && (
-          <span className="rounded-full border border-border bg-surface px-2.5 py-0.5 text-xs text-muted">
-            Archived — hidden from the client
+          <span className="rounded-full border border-white/10 bg-surface-2 px-3 py-1 text-xs font-medium text-muted">
+            Archived — hidden from client
           </span>
         )}
       </div>
 
       {editing ? (
-        <div className="mt-3 flex flex-wrap items-center gap-2">
+        <div className="mt-4 flex flex-wrap items-center gap-2.5">
           <input
             autoFocus
             value={name}
             onChange={(e) => setName(e.target.value)}
             aria-label="Project name"
-            className="min-w-0 flex-1 rounded-lg border border-border bg-surface px-3 py-2 focus:outline-none focus:ring-2 focus:ring-accent"
+            className="min-w-0 flex-1 rounded-xl border border-white/[0.08] bg-surface-2 px-4 py-2 text-sm text-foreground placeholder:text-muted-dim focus:border-accent/40 focus:outline-none focus:ring-2 focus:ring-accent/50"
           />
           <button
             type="button"
             onClick={() => void onRename()}
             disabled={saving}
-            className="rounded-lg bg-accent px-4 py-2 text-sm font-medium text-white transition hover:brightness-110 disabled:opacity-50"
+            className="rounded-full bg-accent px-5 py-2 text-xs font-medium text-background transition hover:bg-accent-hover disabled:opacity-50"
           >
             {saving ? "Saving…" : "Save"}
           </button>
@@ -91,27 +94,27 @@ export default function ProjectSettings({
               setName(project.name);
               setEditing(false);
             }}
-            className="text-sm text-muted hover:text-foreground"
+            className="text-xs text-muted transition hover:text-foreground"
           >
             Cancel
           </button>
         </div>
       ) : (
-        <div className="mt-3 flex flex-wrap items-center gap-2">
+        <div className="mt-4 flex flex-wrap items-center gap-2.5">
           <button
             type="button"
             onClick={() => {
               setName(project.name);
               setEditing(true);
             }}
-            className="rounded-lg border border-border bg-surface px-4 py-2 text-sm transition hover:bg-surface-2"
+            className="rounded-full border border-white/10 bg-surface-2 px-4 py-2 text-xs font-medium text-foreground transition hover:border-accent/40 hover:text-accent"
           >
             Rename
           </button>
           <button
             type="button"
             onClick={() => setConfirmArchive(true)}
-            className="rounded-lg border border-border bg-surface px-4 py-2 text-sm transition hover:bg-surface-2"
+            className="rounded-full border border-white/10 bg-surface-2 px-4 py-2 text-xs font-medium text-foreground transition hover:border-accent/40 hover:text-accent"
           >
             {archived ? "Unarchive" : "Archive"}
           </button>
@@ -123,8 +126,8 @@ export default function ProjectSettings({
         title={archived ? "Unarchive this shoot?" : "Archive this shoot?"}
         body={
           archived
-            ? "The client will see it in their list again."
-            : "The client stops seeing it immediately. Photos, links and counts are kept — nothing is deleted."
+            ? "The client will see it in their shoot list again."
+            : "The client stops seeing it immediately. Photos, links, and analytics are preserved — nothing is deleted."
         }
         confirmLabel={archived ? "Unarchive" : "Archive"}
         busy={saving}

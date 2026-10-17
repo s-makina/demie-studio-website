@@ -139,56 +139,82 @@ export default function SharePanel({ projectId }: SharePanelProps) {
   return (
     <section
       aria-label="Sharing and analytics"
-      className="mb-6 rounded-lg border border-border bg-surface-2 p-4"
+      className="mb-6 rounded-2xl border border-white/[0.08] bg-surface p-6 shadow-xl"
     >
-      <div className="flex flex-wrap items-baseline justify-between gap-2">
-        <h2 className="text-sm font-semibold">Client link + views</h2>
-        {stats && (
-          <p className="text-sm text-muted" aria-live="polite">
-            {stats.views} view{stats.views === 1 ? "" : "s"} · {stats.downloads} download
-            {stats.downloads === 1 ? "" : "s"}
-          </p>
-        )}
+      <div className="flex flex-wrap items-baseline justify-between gap-3">
+        <div>
+          <h2 className="font-serif text-xl tracking-wide text-foreground">Client Delivery</h2>
+          <p className="mt-0.5 text-xs text-muted">Direct viewing link and access tracking</p>
+        </div>
       </div>
 
+      {stats && (
+        <div className="mt-4 grid grid-cols-2 gap-3" aria-live="polite">
+          <div className="rounded-xl border border-white/[0.06] bg-surface-2 p-4">
+            <div className="font-serif text-2xl tabular-nums text-accent">
+              {stats.views}
+            </div>
+            <div className="mt-1 text-xs text-muted">
+              {stats.views === 1 ? "Gallery View" : "Gallery Views"}
+            </div>
+          </div>
+          <div className="rounded-xl border border-white/[0.06] bg-surface-2 p-4">
+            <div className="font-serif text-2xl tabular-nums text-accent">
+              {stats.downloads}
+            </div>
+            <div className="mt-1 text-xs text-muted">
+              {stats.downloads === 1 ? "Download" : "Downloads"}
+            </div>
+          </div>
+        </div>
+      )}
+
       {error && (
-        <p role="alert" className="mt-3 text-sm text-red-400">
+        <p role="alert" className="mt-3 text-xs text-rose-400">
           {error}
         </p>
       )}
 
       {!status ? (
-        <p className="mt-3 text-sm text-muted">Loading sharing…</p>
+        <p className="mt-4 text-xs text-muted">Loading sharing…</p>
       ) : !status.issued ? (
-        <div className="mt-3 flex flex-wrap items-center gap-2">
-          <p className="text-sm text-muted">No client link yet.</p>
+        <div className="mt-4 flex flex-wrap items-center gap-3">
+          <p className="text-xs text-muted">No client link yet.</p>
           <button
             type="button"
             onClick={() => void onIssue()}
             disabled={busy}
-            className="rounded-lg bg-accent px-4 py-2 text-sm font-medium text-white transition hover:brightness-110 disabled:opacity-50"
+            className="rounded-full bg-accent px-5 py-2 text-xs font-medium text-background transition hover:bg-accent-hover disabled:opacity-50"
           >
             {busy ? "Working…" : "Create client link"}
           </button>
         </div>
       ) : (
-        <div className="mt-3 flex flex-col gap-3">
-          <p className="text-sm">
+        <div className="mt-4 flex flex-col gap-3.5">
+          <div className="flex items-center gap-2 text-xs">
             <span
-              className={`mr-2 inline-block h-2 w-2 rounded-full ${status.revoked ? "bg-red-400" : "bg-green-400"}`}
+              className={`inline-block h-2 w-2 rounded-full ring-4 ${
+                status.revoked
+                  ? "bg-rose-400 ring-rose-400/20"
+                  : "bg-emerald-400 ring-emerald-400/20"
+              }`}
             />
-            {status.revoked ? "Link revoked — visitors see an invalid-link notice." : "Link active — anyone with it can view and download."}
-          </p>
+            <span className={status.revoked ? "font-medium text-rose-300" : "font-medium text-muted"}>
+              {status.revoked
+                ? "Link revoked — visitors see an invalid-link notice."
+                : "Link active — anyone with the link can view and download."}
+            </span>
+          </div>
 
           {link ? (
             <div className="flex flex-wrap items-center gap-2">
-              <code className="min-w-0 flex-1 break-all rounded border border-border bg-surface px-3 py-2 text-xs">
+              <code className="min-w-0 flex-1 break-all rounded-xl border border-white/[0.06] bg-surface-2 px-3.5 py-2.5 font-mono text-xs text-foreground/90 selection:bg-accent/20">
                 {link}
               </code>
               <button
                 type="button"
                 onClick={() => void onCopy()}
-                className="rounded-lg border border-border bg-surface px-4 py-2 text-sm text-foreground transition hover:bg-surface-2"
+                className="shrink-0 rounded-full bg-accent px-4 py-2 text-xs font-medium text-background transition hover:bg-accent-hover"
               >
                 {copied ? "Copied" : "Copy link"}
               </button>
@@ -202,12 +228,12 @@ export default function SharePanel({ projectId }: SharePanelProps) {
             )
           )}
 
-          <div className="flex flex-wrap items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2.5 pt-1">
             <button
               type="button"
               onClick={() => void onRotate()}
               disabled={busy}
-              className="rounded-lg border border-border bg-surface px-4 py-2 text-sm text-foreground transition hover:bg-surface-2 disabled:opacity-50"
+              className="rounded-full border border-white/10 bg-surface-2 px-4 py-2 text-xs font-medium text-foreground transition hover:border-accent/40 disabled:opacity-50"
             >
               {busy ? "Working…" : "Rotate link"}
             </button>
@@ -216,7 +242,7 @@ export default function SharePanel({ projectId }: SharePanelProps) {
                 type="button"
                 onClick={() => void onRevoke()}
                 disabled={busy}
-                className="rounded-lg border border-border bg-surface px-4 py-2 text-sm text-red-300 transition hover:bg-surface disabled:opacity-50"
+                className="rounded-full border border-rose-500/20 bg-rose-500/5 px-4 py-2 text-xs font-medium text-rose-300 transition hover:border-rose-500/40 hover:bg-rose-500/10 disabled:opacity-50"
               >
                 {busy ? "Working…" : "Revoke link"}
               </button>
@@ -225,7 +251,7 @@ export default function SharePanel({ projectId }: SharePanelProps) {
               type="button"
               onClick={() => void load()}
               disabled={busy}
-              className="text-sm text-muted hover:text-foreground disabled:opacity-50"
+              className="ml-auto text-xs text-muted transition hover:text-foreground disabled:opacity-50"
             >
               Refresh counts
             </button>

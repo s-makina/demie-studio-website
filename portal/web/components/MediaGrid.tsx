@@ -237,25 +237,66 @@ export default function MediaGrid({
       />
 
       {items.length === 0 && !loading && !error && (
-        <p className="text-muted">No photos in this project yet.</p>
+        <div className="mx-auto my-16 max-w-md rounded-2xl border border-white/[0.08] bg-surface-2/60 p-10 text-center backdrop-blur-xl">
+          <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full border border-white/10 bg-surface-3 text-muted">
+            <svg
+              width="22"
+              height="22"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="1.5"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              aria-hidden="true"
+            >
+              <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
+              <circle cx="8.5" cy="8.5" r="1.5" />
+              <polyline points="21 15 16 10 5 21" />
+            </svg>
+          </div>
+          <h3 className="font-serif text-2xl font-light italic text-foreground">
+            Awaiting Photographs
+          </h3>
+          <p className="mt-2 text-xs tracking-wider uppercase text-muted">
+            No photos in this project yet.
+          </p>
+        </div>
       )}
 
       {error && items.length === 0 && (
-        <div className="rounded-lg border border-border bg-surface-2 p-6 text-center">
+        <div className="mx-auto my-12 max-w-lg rounded-2xl border border-red-500/20 bg-surface-2/90 p-8 text-center shadow-2xl backdrop-blur-xl">
+          <div className="mx-auto mb-4 flex h-11 w-11 items-center justify-center rounded-full border border-red-500/20 bg-red-500/10 text-red-400">
+            <svg
+              width="20"
+              height="20"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="1.5"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              aria-hidden="true"
+            >
+              <circle cx="12" cy="12" r="10" />
+              <line x1="12" y1="8" x2="12" y2="12" />
+              <line x1="12" y1="16" x2="12.01" y2="16" />
+            </svg>
+          </div>
           <p role="alert" className="text-sm text-red-400">
             {error}
           </p>
           <button
             type="button"
             onClick={loadMore}
-            className="mt-4 rounded-lg border border-border bg-surface px-4 py-2 text-sm text-foreground transition hover:bg-surface-2"
+            className="mt-5 rounded-full border border-white/10 bg-surface-3 px-5 py-2 text-xs font-medium text-foreground transition hover:border-accent/40 hover:bg-surface-2"
           >
             Try again
           </button>
         </div>
       )}
 
-      <div className="columns-2 gap-3 sm:columns-3 [&>*]:mb-3">
+      <div className="columns-2 gap-4 sm:columns-3 lg:columns-4 [&>*]:mb-4">
         {items.map((item, index) => {
           const checked = selectMode && selectedIds.has(item.id);
           const removable =
@@ -263,71 +304,93 @@ export default function MediaGrid({
           return (
             <div
               key={item.id}
-              className="relative break-inside-avoid"
+              className="group relative break-inside-avoid"
             >
-            <button
-              type="button"
-              onClick={() => open(index)}
-              aria-pressed={selectMode ? checked : undefined}
-              className={`relative block w-full overflow-hidden rounded-lg border bg-surface-2 transition hover:border-accent ${
-                checked
-                  ? "cursor-pointer border-accent ring-1 ring-accent"
-                  : "cursor-pointer border-border"
-              }`}
-              aria-label={
-                selectMode ? `Select photo ${index + 1}` : `Open photo ${index + 1}`
-              }
-            >
-              {selectMode && (
-                <span
-                  aria-hidden="true"
-                  className={`absolute left-2 top-2 flex h-6 w-6 items-center justify-center rounded-full border ${
-                    checked
-                      ? "border-accent bg-accent text-white"
-                      : "border-border bg-surface text-transparent"
-                  }`}
-                >
-                  <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
-                    <path
-                      d="M2 6.5 4.8 9 10 3.5"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    />
-                  </svg>
-                </span>
-              )}
-              {item.thumbUrl ? (
-                // Plain <img> (not next/image): thumbs are short-lived presigned
-                // URLs on another origin; native lazy-loading keeps 4G cheap.
-                <img
-                  src={item.thumbUrl}
-                  alt=""
-                  loading="lazy"
-                  decoding="async"
-                  className="w-full object-cover"
-                />
-              ) : (
-                <div className="flex aspect-square w-full items-center justify-center text-sm text-muted">
-                  {item.derivativeStatus === "failed" ? "Preview failed" : "Processing…"}
-                </div>
-              )}
-            </button>
-            {removable && (
               <button
                 type="button"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setConfirmRemove(item);
-                }}
-                aria-label={`Remove photo ${index + 1}`}
-                title="Remove photo"
-                className="absolute right-2 top-2 rounded-full border border-border bg-black/70 px-2.5 py-1 text-xs text-foreground opacity-0 transition hover:bg-red-500 focus:opacity-100 hover:opacity-100 [div:hover>&]:opacity-100"
+                onClick={() => open(index)}
+                aria-pressed={selectMode ? checked : undefined}
+                className={`relative block w-full overflow-hidden rounded-xl border bg-surface-2 transition-all duration-300 ${
+                  checked
+                    ? "cursor-pointer border-accent ring-2 ring-accent/60 shadow-lg shadow-accent/10"
+                    : "cursor-pointer border-white/[0.08] hover:border-accent/50 hover:shadow-xl"
+                }`}
+                aria-label={
+                  selectMode ? `Select photo ${index + 1}` : `Open photo ${index + 1}`
+                }
               >
-                Remove
+                {selectMode && (
+                  <span
+                    aria-hidden="true"
+                    className={`absolute left-3 top-3 z-10 flex h-6 w-6 items-center justify-center rounded-full border shadow-md backdrop-blur-md transition-all duration-200 ${
+                      checked
+                        ? "border-accent bg-accent text-background scale-105"
+                        : "border-white/30 bg-surface/80 text-transparent hover:border-accent"
+                    }`}
+                  >
+                    <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+                      <path
+                        d="M2 6.5 4.8 9 10 3.5"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      />
+                    </svg>
+                  </span>
+                )}
+
+                {item.kind === "video" && (
+                  <span className="absolute right-3 top-3 z-10 rounded-full bg-accent/90 px-2.5 py-0.5 text-[9px] font-semibold uppercase tracking-widest text-background shadow-md backdrop-blur-md">
+                    Film
+                  </span>
+                )}
+
+                {item.thumbUrl ? (
+                  // Plain <img> (not next/image): thumbs are short-lived presigned
+                  // URLs on another origin; native lazy-loading keeps 4G cheap.
+                  <img
+                    src={item.thumbUrl}
+                    alt=""
+                    loading="lazy"
+                    decoding="async"
+                    className="w-full object-cover transition-transform duration-500 will-change-transform group-hover:scale-[1.03]"
+                  />
+                ) : (
+                  <div className="flex aspect-square w-full items-center justify-center font-serif text-sm italic text-muted">
+                    {item.derivativeStatus === "failed" ? "Preview failed" : "Processing…"}
+                  </div>
+                )}
               </button>
-            )}
+
+              {removable && (
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setConfirmRemove(item);
+                  }}
+                  aria-label={`Remove photo ${index + 1}`}
+                  title="Remove photo"
+                  className="absolute right-2.5 top-2.5 z-10 flex items-center gap-1 rounded-full border border-white/10 bg-black/60 px-2.5 py-1 text-[11px] font-medium text-white/80 opacity-0 shadow-lg backdrop-blur-md transition hover:border-red-500/50 hover:bg-red-500 hover:text-white focus:opacity-100 group-hover:opacity-100"
+                >
+                  <svg
+                    width="12"
+                    height="12"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    aria-hidden="true"
+                  >
+                    <polyline points="3 6 5 6 21 6" />
+                    <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+                  </svg>
+                  <span>Remove</span>
+                </button>
+              )}
             </div>
           );
         })}
@@ -335,11 +398,24 @@ export default function MediaGrid({
 
       <div ref={sentinelRef} aria-hidden="true" />
 
-      {loading && <p className="mt-4 text-sm text-muted">Loading more…</p>}
+      {loading && (
+        <div className="mt-8 flex items-center justify-center gap-2.5 py-4 text-xs font-medium tracking-wider uppercase text-muted">
+          <span className="h-2 w-2 rounded-full bg-accent animate-ping" />
+          <span>Loading more memories…</span>
+        </div>
+      )}
+
       {!loading && exhausted && items.length > 0 && (
-        <p className="mt-4 text-sm text-muted">
-          {items.length} photo{items.length === 1 ? "" : "s"} — end of gallery.
-        </p>
+        <div className="mt-12 mb-8 flex flex-col items-center">
+          <div className="flex items-center gap-4 w-full max-w-xs justify-center">
+            <span className="h-px flex-1 bg-white/[0.08]" />
+            <span className="font-serif text-sm italic text-accent">✦</span>
+            <span className="h-px flex-1 bg-white/[0.08]" />
+          </div>
+          <p className="mt-3 text-xs tracking-widest2 uppercase text-muted font-medium">
+            {items.length} photograph{items.length === 1 ? "" : "s"} · End of gallery
+          </p>
+        </div>
       )}
 
       {selectedIndex !== null && (

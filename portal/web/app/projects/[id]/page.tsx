@@ -20,6 +20,13 @@ import {
   type Project,
 } from "@/lib/api";
 
+const TABS = [
+  { id: "gallery", label: "Gallery" },
+  { id: "delivery", label: "Delivery" },
+  { id: "clients", label: "Clients" },
+  { id: "settings", label: "Settings" },
+] as const;
+
 export default function ProjectDetailPage({
   params,
 }: {
@@ -31,6 +38,7 @@ export default function ProjectDetailPage({
   const [me, setMe] = useState<Me | null>(null);
   const [project, setProject] = useState<Project | null>(null);
   const [refreshKey, setRefreshKey] = useState(0);
+  const [activeTab, setActiveTab] = useState<string>("gallery");
   const [error, setError] = useState<string | null>(() =>
     !Number.isInteger(projectId) || projectId <= 0 ? "That project link looks broken." : null
   );
@@ -80,36 +88,58 @@ export default function ProjectDetailPage({
   }, []);
 
   return (
-    <div className="flex min-h-screen flex-col">
+    <div className="flex min-h-screen flex-col bg-background text-foreground">
       <SiteHeader signedIn onSignOut={onSignOut} />
 
-      <main className="mx-auto w-full max-w-5xl flex-1 px-6 py-12">
+      <main className="mx-auto w-full max-w-7xl flex-1 px-4 sm:px-8 py-10 sm:py-12">
         {error && (
-          <div className="rounded-lg border border-border bg-surface-2 p-6 text-center">
-            <p role="alert" className="text-sm text-red-400">
+          <div className="mx-auto max-w-lg rounded-2xl border border-white/[0.08] bg-surface-2/80 p-8 text-center shadow-2xl backdrop-blur-md">
+            <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full border border-red-500/20 bg-red-500/10 text-red-400">
+              <span className="font-serif text-xl italic">!</span>
+            </div>
+            <h2 className="font-serif text-2xl italic text-foreground">
+              Project Not Found
+            </h2>
+            <p role="alert" className="mt-2 text-sm text-muted">
               {error}
             </p>
             <Link
               href="/projects"
-              className="mt-4 inline-block rounded-lg border border-border bg-surface px-4 py-2 text-sm text-foreground transition hover:bg-surface-2"
+              className="mt-6 inline-flex items-center gap-1.5 rounded-full border border-white/10 bg-surface px-5 py-2 text-xs font-medium text-foreground transition hover:border-accent/40 hover:text-accent"
             >
-              Back to my projects
+              ← Back to {isAdmin ? "Shoots" : "My Projects"}
             </Link>
           </div>
         )}
 
-        {!error && project === null && <p className="text-muted">Loading gallery…</p>}
+        {!error && project === null && (
+          <div className="flex flex-col items-center justify-center py-28 text-center">
+            <div className="flex h-10 w-10 animate-pulse items-center justify-center rounded-full border border-accent/30 bg-accent/10">
+              <span className="font-serif text-sm italic text-accent">D</span>
+            </div>
+            <p className="mt-4 animate-pulse font-serif text-lg italic text-muted">
+              Loading gallery…
+            </p>
+          </div>
+        )}
 
         {project && (
           <>
-            <div className="mb-8">
-              <Link href="/projects" className="text-sm text-muted hover:text-foreground">
-                ← {isAdmin ? "Shoots" : "My projects"}
+            <div className="border-b border-white/[0.08] pb-6">
+              <Link
+                href="/projects"
+                className="inline-flex items-center gap-1.5 text-xs font-medium uppercase tracking-luxury text-muted transition hover:text-foreground"
+              >
+                <span>←</span>
+                <span>{isAdmin ? "Shoots" : "My Projects"}</span>
               </Link>
-              <div className="mt-2 flex flex-wrap items-center gap-3">
-                <h1 className="text-2xl font-semibold">{project.name}</h1>
+
+              <div className="mt-3 flex flex-wrap items-center gap-3">
+                <h1 className="font-serif text-3xl sm:text-4xl italic text-foreground">
+                  {project.name}
+                </h1>
                 {project.status === "archived" && (
-                  <span className="rounded-full border border-border bg-surface-2 px-2.5 py-0.5 text-xs text-muted">
+                  <span className="rounded-full border border-white/[0.08] bg-surface-2 px-3 py-0.5 text-xs text-muted">
                     Archived
                   </span>
                 )}
@@ -117,18 +147,94 @@ export default function ProjectDetailPage({
               {project.clientName && (
                 <p className="mt-1 text-sm text-muted">{project.clientName}</p>
               )}
+
+              {isAdmin && (
+                <div className="mt-6 flex items-center">
+                  <div
+                    role="tablist"
+                    aria-label="Shoot sections"
+                    className="inline-flex rounded-full border border-white/[0.08] bg-surface-2 p-1 text-xs font-medium uppercase tracking-wider"
+                  >
+                    {TABS.map((tab) => {
+                      const isActive = activeTab === tab.id;
+                      return (
+                        <button
+                          key={tab.id}
+                          role="tab"
+                          type="button"
+                          id={`tab-${tab.id}`}
+                          aria-controls={`panel-${tab.id}`}
+                          aria-selected={isActive}
+                          onClick={() => setActiveTab(tab.id)}
+                          className={`rounded-full px-4 py-2 transition duration-200 ${
+                            isActive
+                              ? "bg-accent text-background font-semibold shadow-sm"
+                              : "text-muted hover:text-foreground"
+                          }`}
+                        >
+                          {tab.label}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
             </div>
+
             {isAdmin && (
-              <ProjectSettings project={project} onChange={setProject} />
+              <div className="mt-8">
+                <div
+                  role="tabpanel"
+                  id="panel-gallery"
+                  aria-labelledby="tab-gallery"
+                  className={activeTab === "gallery" ? "block space-y-6" : "hidden"}
+                >
+                  <UploadPanel projectId={project.id} onUploaded={onUploaded} />
+                  <MediaGrid
+                    access={accountAccess(project.id)}
+                    isAdmin={isAdmin}
+                    refreshKey={refreshKey}
+                  />
+                </div>
+
+                <div
+                  role="tabpanel"
+                  id="panel-delivery"
+                  aria-labelledby="tab-delivery"
+                  className={activeTab === "delivery" ? "block" : "hidden"}
+                >
+                  <SharePanel projectId={project.id} />
+                </div>
+
+                <div
+                  role="tabpanel"
+                  id="panel-clients"
+                  aria-labelledby="tab-clients"
+                  className={activeTab === "clients" ? "block" : "hidden"}
+                >
+                  <InvitePanel projectId={project.id} />
+                </div>
+
+                <div
+                  role="tabpanel"
+                  id="panel-settings"
+                  aria-labelledby="tab-settings"
+                  className={activeTab === "settings" ? "block" : "hidden"}
+                >
+                  <ProjectSettings project={project} onChange={setProject} />
+                </div>
+              </div>
             )}
-            {isAdmin && <UploadPanel projectId={project.id} onUploaded={onUploaded} />}
-            {isAdmin && <InvitePanel projectId={project.id} />}
-            {isAdmin && <SharePanel projectId={project.id} />}
-            <MediaGrid
-              access={accountAccess(project.id)}
-              isAdmin={isAdmin}
-              refreshKey={refreshKey}
-            />
+
+            {!isAdmin && (
+              <div className="mt-8">
+                <MediaGrid
+                  access={accountAccess(project.id)}
+                  isAdmin={isAdmin}
+                  refreshKey={refreshKey}
+                />
+              </div>
+            )}
           </>
         )}
       </main>
