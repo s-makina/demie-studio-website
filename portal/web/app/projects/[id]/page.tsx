@@ -14,10 +14,12 @@ import {
   ApiError,
   fetchMe,
   fetchProject,
+  fetchProjectStats,
   isAbort,
   logout,
   type Me,
   type Project,
+  type ProjectStats,
 } from "@/lib/api";
 
 const TABS = [
@@ -42,6 +44,7 @@ export default function ProjectDetailPage({
   const [error, setError] = useState<string | null>(() =>
     !Number.isInteger(projectId) || projectId <= 0 ? "That project link looks broken." : null
   );
+  const [stats, setStats] = useState<ProjectStats | null>(null);
 
   const isAdmin = me?.role === "admin";
 
@@ -69,6 +72,13 @@ export default function ProjectDetailPage({
           }
           setError(e instanceof Error ? e.message : "Could not load this project.");
         }
+        return;
+      }
+      // Stats are non-critical — display "—" if this fails.
+      try {
+        setStats(await fetchProjectStats(projectId, controller.signal));
+      } catch {
+        // Swallow: the sidebar just shows "—" for stats.
       }
     })();
     return () => controller.abort();
@@ -187,14 +197,51 @@ export default function ProjectDetailPage({
                   role="tabpanel"
                   id="panel-gallery"
                   aria-labelledby="tab-gallery"
-                  className={activeTab === "gallery" ? "block space-y-6" : "hidden"}
+                  className={activeTab === "gallery" ? "block" : "hidden"}
                 >
-                  <UploadPanel projectId={project.id} onUploaded={onUploaded} />
-                  <MediaGrid
-                    access={accountAccess(project.id)}
-                    isAdmin={isAdmin}
-                    refreshKey={refreshKey}
-                  />
+                  <div className="flex flex-col-reverse xl:flex-row xl:items-start gap-6">
+                    {/* Gallery — left, 75% on xl+ */}
+                    <div className="min-w-0 flex-1 xl:w-3/4">
+                      <MediaGrid
+                        access={accountAccess(project.id)}
+                        isAdmin={isAdmin}
+                        refreshKey={refreshKey}
+                      />
+                    </div>
+
+                    {/* Upload + stats sidebar — right, 25% on xl+ */}
+                    <aside className="w-full xl:w-1/4 xl:sticky xl:top-6 xl:self-start shrink-0 space-y-5">
+                      {/* Quick stats */}
+                      <div className="grid grid-cols-3 gap-3">
+                        <div className="rounded-xl border border-white/[0.08] bg-surface-2/60 p-4 text-center">
+                          <p className="text-2xl font-semibold tabular-nums text-accent">
+                            {stats ? stats.views.toLocaleString() : "—"}
+                          </p>
+                          <p className="mt-1 text-[10px] font-medium uppercase tracking-wider text-muted">
+                            Views
+                          </p>
+                        </div>
+                        <div className="rounded-xl border border-white/[0.08] bg-surface-2/60 p-4 text-center">
+                          <p className="text-2xl font-semibold tabular-nums text-accent">
+                            {stats ? stats.downloads.toLocaleString() : "—"}
+                          </p>
+                          <p className="mt-1 text-[10px] font-medium uppercase tracking-wider text-muted">
+                            Downloads
+                          </p>
+                        </div>
+                        <div className="rounded-xl border border-white/[0.08] bg-surface-2/60 p-4 text-center">
+                          <p className={`text-lg font-semibold ${project.status === "active" ? "text-emerald-400" : "text-muted"}`}>
+                            {project.status === "active" ? "Active" : "Archived"}
+                          </p>
+                          <p className="mt-1 text-[10px] font-medium uppercase tracking-wider text-muted">
+                            Status
+                          </p>
+                        </div>
+                      </div>
+
+                      <UploadPanel projectId={project.id} onUploaded={onUploaded} />
+                    </aside>
+                  </div>
                 </div>
 
                 <div
