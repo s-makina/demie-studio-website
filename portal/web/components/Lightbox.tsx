@@ -4,10 +4,14 @@ import { useCallback, useEffect } from "react";
 import { downloadUrl, type MediaAccess, type MediaView } from "@/lib/api";
 
 /**
- * Lightbox (Tasks 9 + 10). Photo shows the preview derivative; video shows
+ * Lightbox (Tasks 9 + 10 + 22). Photo shows the preview derivative; video shows
  * its poster frame (the original streams only as a download — plain media
- * elements can't send the session cookie cross-origin). Download = plain
- * link to the 302 endpoint, which forces save-as via Content-Disposition.
+ * elements can't send the session cookie cross-origin). Download = plain link to
+ * the 302 endpoint, which forces save-as via Content-Disposition.
+ *
+ * Navigation crosses the loaded-window edge: at the last loaded item "next"
+ * asks the grid for another page and the grid advances once it lands, so a
+ * client can page through a 50,000-photo shoot without closing the lightbox.
  */
 export default function Lightbox({
   items,
@@ -17,6 +21,11 @@ export default function Lightbox({
   onIndex,
   isAdmin,
   onRemove,
+  position,
+  total,
+  hasMore,
+  loading,
+  onNeedMore,
 }: {
   items: MediaView[];
   index: number;
@@ -25,10 +34,23 @@ export default function Lightbox({
   onIndex: (index: number) => void;
   isAdmin?: boolean;
   onRemove?: (item: MediaView) => void;
+  /** Absolute 1-based position of the current item across the whole project. */
+  position?: number;
+  /** Absolute total across the whole project. */
+  total?: number;
+  /** More pages can still be fetched forward. */
+  hasMore?: boolean;
+  /** A page fetch is in flight. */
+  loading?: boolean;
+  /** Ask the grid to fetch the next page so "next" can cross the edge. */
+  onNeedMore?: () => void;
 }) {
   const item = items[index];
+  const shown = position ?? index + 1;
+  const count = total && total > 0 ? total : items.length;
   const hasPrev = index > 0;
   const hasNext = index < items.length - 1;
+  const canNext = hasNext || (hasMore ?? false);
 
   const prev = useCallback(() => {
     if (hasPrev) {
@@ -39,8 +61,10 @@ export default function Lightbox({
   const next = useCallback(() => {
     if (hasNext) {
       onIndex(index + 1);
+    } else if (hasMore) {
+      onNeedMore?.();
     }
-  }, [hasNext, onIndex, index]);
+  }, [hasNext, hasMore, onNeedMore, onIndex, index]);
 
   useEffect(() => {
     function onKey(event: KeyboardEvent) {
@@ -70,7 +94,7 @@ export default function Lightbox({
     <div
       role="dialog"
       aria-modal="true"
-      aria-label={`Photo ${index + 1} of ${items.length}`}
+      aria-label={`Photo ${shown} of ${count}`}
       className="fixed inset-0 z-50 flex flex-col bg-black/95 backdrop-blur-xl animate-in fade-in duration-200"
       onClick={onClose}
     >
@@ -82,10 +106,10 @@ export default function Lightbox({
         {/* Slide counter badge */}
         <div className="pointer-events-auto flex items-center gap-2 rounded-full border border-white/10 bg-surface-glass px-4 py-1.5 text-xs font-medium text-foreground backdrop-blur-xl shadow-lg">
           <span className="font-serif text-sm font-semibold italic text-accent">
-            {index + 1}
+            {shown.toLocaleString()}
           </span>
           <span className="text-white/20">/</span>
-          <span className="text-muted">{items.length}</span>
+          <span className="text-muted">{count.toLocaleString()}</span>
           {item.kind === "video" && (
             <span className="ml-1.5 rounded-full bg-accent/20 px-2 py-0.5 text-[9px] font-semibold uppercase tracking-widest text-accent">
               Film
@@ -203,7 +227,7 @@ export default function Lightbox({
         )}
 
         {/* Next navigation button */}
-        {hasNext && (
+        {canNext && (
           <button
             type="button"
             onClick={next}
@@ -246,13 +270,13 @@ export default function Lightbox({
           </button>
 
           <span className="text-xs font-medium text-muted">
-            {index + 1} of {items.length}
+            {shown.toLocaleString()} of {count.toLocaleString()}
           </span>
 
           <button
             type="button"
             onClick={next}
-            disabled={!hasNext}
+            disabled={!canNext}
             aria-label="Next photo"
             className="flex h-7 w-7 items-center justify-center rounded-full text-foreground transition hover:text-accent disabled:opacity-30 disabled:hover:text-foreground"
           >
@@ -260,6 +284,16 @@ export default function Lightbox({
               <polyline points="9 18 15 12 9 6" />
             </svg>
           </button>
+
+          {loading && (
+            <>
+              <span className="h-3 w-px bg-white/15" />
+              <span className="flex items-center gap-1.5 text-[11px] text-muted">
+                <span className="h-1.5 w-1.5 animate-ping rounded-full bg-accent" />
+                Loading
+              </span>
+            </>
+          )}
 
           <span className="h-3 w-px bg-white/15" />
 

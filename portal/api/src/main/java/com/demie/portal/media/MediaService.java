@@ -32,7 +32,7 @@ public class MediaService {
 
     private static final String COLUMNS =
             "id, project_id, s3_key, size_bytes, kind, sort, status, s3_upload_id, " +
-                    "derivative_status, derivative_attempts, created_at";
+                    "derivative_status, derivative_attempts, thumb_width, thumb_height, created_at";
 
     private static final int DEFAULT_LIMIT = 50;
     private static final int MAX_LIMIT = 200;
@@ -182,34 +182,75 @@ public class MediaService {
      * Items carry presigned thumb/preview URLs (Task 8/9); the internal S3
      * key is never exposed to browsers.
      */
-    public MediaPage list(Account caller, long projectId, String cursor, int limit) {
+    public MediaPage list(Account caller, long projectId, String cursor, int limit, Integer offset) {
         projects.getForAccount(projectId, caller);
-        return page(projectId, cursor, limit);
+        return page(projectId, cursor, limit, offset);
     }
 
     /** Token-URL listing: unknown/revoked tokens read as not-found (no oracle). */
-    public MediaPage listByToken(String rawToken, String cursor, int limit) {
+    public MediaPage listByToken(String rawToken, String cursor, int limit, Integer offset) {
         ShareTokenService.TokenGrant grant = tokens.resolve(rawToken)
                 .orElseThrow(ProjectService.NotFoundException::new);
-        return page(grant.projectId(), cursor, limit);
+        return page(grant.projectId(), cursor, limit, offset);
     }
 
-    private MediaPage page(long projectId, String cursor, int limit) {
+    /**
+     * @param offset when non-null and positive, jumps straight to that position
+     *               in {@code (sort, id)} order (a "seek"). Otherwise the keyset
+     *               {@code cursor} drives the page. Either way {@code total} is
+     *               reported so clients can size a timeline scrubber.
+     */
+    private MediaPage page(long projectId, String cursor, int limit, Integer offset) {
         int pageSize = limit < 1 ? DEFAULT_LIMIT : Math.min(limit, MAX_LIMIT);
-        int[] after = decodeCursor(cursor);
+        int total = count(projectId);
 
-        List<Media> rows = jdbc.query(
-                "SELECT " + COLUMNS + " FROM media " +
-                        "WHERE project_id = ? AND (sort > ? OR (sort = ? AND id > ?)) " +
-                        "ORDER BY sort, id LIMIT ?",
-                MAPPER, projectId, after[0], after[0], after[1], pageSize + 1);
+        List<Media> rows;
+        if (offset != null && offset > 0) {
+            rows = jdbc.query(
+                    "SELECT " + COLUMNS + " FROM media " +
+                            "WHERE project_id = ? ORDER BY sort, id LIMIT ? OFFSET ?",
+                    MAPPER, projectId, pageSize + 1, offset);
+        } else {
+            int[] after = decodeCursor(cursor);
+            rows = jdbc.query(
+                    "SELECT " + COLUMNS + " FROM media " +
+                            "WHERE project_id = ? AND (sort > ? OR (sort = ? AND id > ?)) " +
+                            "ORDER BY sort, id LIMIT ?",
+                    MAPPER, projectId, after[0], after[0], after[1], pageSize + 1);
+        }
 
         boolean hasNext = rows.size() > pageSize;
         List<Media> page = hasNext ? rows.subList(0, pageSize) : rows;
-        String nextCursor = hasNext
-                ? encodeCursor(page.get(page.size() - 1).sort(), page.get(page.size() - 1).id())
-                : null;
-        return new MediaPage(page.stream().map(this::viewOf).toList(), nextCursor);
+        // `endCursor` points past the last row of this page even when it is the
+        // final page — clients resume from it after new uploads land.
+        String endCursor = page.isEmpty() ? null
+                : encodeCursor(page.get(page.size() - 1).sort(), page.get(page.size() - 1).id());
+        String nextCursor = hasNext ? endCursor : null;
+        return new MediaPage(page.stream().map(this::viewOf).toList(), nextCursor, endCursor, total);
+    }
+
+    private int count(long projectId) {
+        Integer total = jdbc.queryForObject(
+                "SELECT COUNT(*) FROM media WHERE project_id = ?", Integer.class, projectId);
+        return total == null ? 0 : total;
+    }
+
+    /** Fresh single-item view (admin or project member): recovers expired URLs. */
+    public MediaView view(Account caller, long mediaId) {
+        Media media = findById(mediaId).orElseThrow(ProjectService.NotFoundException::new);
+        projects.getForAccount(media.projectId(), caller);
+        return viewOf(media);
+    }
+
+    /** Token-URL single-item view; media outside the token's project reads as missing. */
+    public MediaView viewByToken(String rawToken, long mediaId) {
+        ShareTokenService.TokenGrant grant = tokens.resolve(rawToken)
+                .orElseThrow(ProjectService.NotFoundException::new);
+        Media media = findById(mediaId).orElseThrow(ProjectService.NotFoundException::new);
+        if (media.projectId() != grant.projectId()) {
+            throw new ProjectService.NotFoundException();
+        }
+        return viewOf(media);
     }
 
     /**
@@ -228,7 +269,8 @@ public class MediaService {
                     VIEW_URL_TTL).url;
         }
         return new MediaView(media.id(), media.kind(), media.sort(), media.status(),
-                media.derivativeStatus(), thumbUrl, previewUrl);
+                media.derivativeStatus(), media.thumbWidth(), media.thumbHeight(),
+                media.createdAt().toString(), thumbUrl, previewUrl);
     }
 
     // ------------------------------------------------------------------ reads
@@ -310,6 +352,8 @@ public class MediaService {
                 rs.getString("s3_upload_id"),
                 rs.getString("derivative_status"),
                 rs.getInt("derivative_attempts"),
+                rs.getObject("thumb_width", Integer.class),
+                rs.getObject("thumb_height", Integer.class),
                 rs.getTimestamp("created_at").toInstant());
     }
 
@@ -326,12 +370,22 @@ public class MediaService {
                             String status) {
     }
 
-    /** Listing view of a media row (browser-safe: URLs, no raw keys). */
+    /**
+     * Listing view of a media row (browser-safe: URLs, no raw keys).
+     * {@code thumbWidth}/{@code thumbHeight} drive client-side masonry layout;
+     * {@code createdAt} (ISO-8601) drives the upload-day timeline.
+     */
     public record MediaView(long id, String kind, int sort, String status,
-                            String derivativeStatus, String thumbUrl, String previewUrl) {
+                            String derivativeStatus, Integer thumbWidth, Integer thumbHeight,
+                            String createdAt, String thumbUrl, String previewUrl) {
     }
 
-    /** One listing page plus the cursor for the next (null when last). */
-    public record MediaPage(List<MediaView> items, String nextCursor) {
+    /**
+     * One listing page. {@code nextCursor} is null when the page ran out;
+     * {@code endCursor} always points past the last row (resume anchor after
+     * uploads); {@code total} sizes the timeline scrubber.
+     */
+    public record MediaPage(List<MediaView> items, String nextCursor, String endCursor,
+                            int total) {
     }
 }

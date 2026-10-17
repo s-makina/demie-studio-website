@@ -16,15 +16,21 @@ public class DerivativeScheduler {
 
     private final DerivativeWorker worker;
     private final int batchSize;
+    private final int backfillBatchSize;
 
     public DerivativeScheduler(DerivativeWorker worker,
-                               @Value("${DERIVATIVE_BATCH_SIZE:10}") int batchSize) {
+                               @Value("${DERIVATIVE_BATCH_SIZE:10}") int batchSize,
+                               @Value("${DERIVATIVE_BACKFILL_BATCH:200}") int backfillBatchSize) {
         this.worker = worker;
         this.batchSize = batchSize;
+        this.backfillBatchSize = backfillBatchSize;
     }
 
     @Scheduled(fixedDelayString = "${DERIVATIVE_POLL_MILLIS:30000}")
     public void sweep() {
         worker.processPendingBatch(batchSize);
+        // Legacy rows (derivative-ready before thumb dimensions existed) get
+        // their aspect ratio filled in so the client masonry lays out exactly.
+        worker.backfillDimensions(backfillBatchSize);
     }
 }

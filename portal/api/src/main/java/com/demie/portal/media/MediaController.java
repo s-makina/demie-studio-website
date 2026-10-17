@@ -88,10 +88,21 @@ public class MediaController {
     @GetMapping("/projects/{id}/media")
     public Map<String, Object> list(@PathVariable long id,
                                     @RequestParam(required = false) String cursor,
+                                    @RequestParam(required = false) Integer offset,
                                     @RequestParam(required = false, defaultValue = "50") int limit,
                                     Authentication authentication) {
-        MediaService.MediaPage page = media.list(currentAccount(authentication), id, cursor, limit);
-        return Map.of("items", page.items(), "nextCursor", page.nextCursor() == null ? "" : page.nextCursor());
+        MediaService.MediaPage page =
+                media.list(currentAccount(authentication), id, cursor, limit, offset);
+        return Map.of("items", page.items(),
+                "nextCursor", page.nextCursor() == null ? "" : page.nextCursor(),
+                "endCursor", page.endCursor() == null ? "" : page.endCursor(),
+                "total", page.total());
+    }
+
+    /** One photo's fresh view (admin or project member); recovers expired URLs. */
+    @GetMapping("/media/{id}")
+    public MediaService.MediaView view(@PathVariable long id, Authentication authentication) {
+        return media.view(currentAccount(authentication), id);
     }
 
     private Account currentAccount(Authentication authentication) {

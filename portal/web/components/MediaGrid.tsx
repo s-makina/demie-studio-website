@@ -1,11 +1,15 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Lightbox from "@/components/Lightbox";
+import MasonryGallery, {
+  type MasonryGalleryHandle,
+} from "@/components/MasonryGallery";
 import ZipPanel from "@/components/ZipPanel";
 import { ConfirmDialog, ToastStack, useToasts } from "@/components/console-ui";
 import {
   deleteMedia,
+  fetchMediaItem,
   fetchMediaPage,
   isAbort,
   type MediaAccess,
@@ -30,10 +34,25 @@ function withQueryParam(key: string, value: string): string {
   return `?${params.toString()}`;
 }
 
+function clearItemParam(): void {
+  const params = new URLSearchParams(window.location.search);
+  params.delete("item");
+  const query = params.toString();
+  window.history.replaceState(null, "", query ? `?${query}` : window.location.pathname);
+}
+
 /**
- * Cursor-paginated grid (Task 9). Pages append via an intersection sentinel
- * (no full-list fetch); thumbs are native lazy images. Selection deep-links
- * through `?item=<id>` so back/forward and shared links work.
+ * Cursor-paginated, windowed gallery (Tasks 9 + 22).
+ *
+ * The grid keeps a *window* of items (`originOffset`..`originOffset + length`)
+ * instead of the whole shoot: the API is keyset-paged forward from wherever the
+ * window starts, and {@link MasonryGallery} only mounts the tiles on screen. A
+ * 50,000-photo project therefore costs the same as a 50-photo one, and the
+ * timeline rail can seek straight to any position.
+ *
+ * Selection deep-links through `?item=<id>` so back/forward and shared links
+ * work, and it survives a seek so a client can ZIP photos from different regions
+ * of a shoot.
  */
 export default function MediaGrid({
   access,
@@ -44,14 +63,17 @@ export default function MediaGrid({
   access: MediaAccess;
   /** Photographer sees per-photo Remove (Task 21). */
   isAdmin?: boolean;
-  /** Bump to reload from the first page (after uploads). */
+  /** Bump after uploads: new files land at the end of the shoot. */
   refreshKey?: number;
   /** Fired after a photo is removed (parent clears lightbox state). */
   onRemove?: (id: number) => void;
 }) {
   const [items, setItems] = useState<MediaView[]>([]);
+  const [originOffset, setOriginOffset] = useState(0);
+  const [total, setTotal] = useState(0);
   const [exhausted, setExhausted] = useState(false);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [seeking, setSeeking] = useState(false);
   const [error, setError] = useState<string | null>(null);
   // Deep-link selection (?item=<id>). Initialized from the URL; back/forward
   // sync through popstate — no render-loop effects involved.
@@ -60,59 +82,190 @@ export default function MediaGrid({
   // opening the lightbox; ZipPanel owns the request + progress below.
   const [selectMode, setSelectMode] = useState(false);
   const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
-  const sentinelRef = useRef<HTMLDivElement>(null);
-  const loadingRef = useRef(false);
-  // Pagination cursor lives in a ref: it is only read/written inside the
-  // async loader, never during render.
-  const cursorRef = useRef<string | null | undefined>(undefined);
   const { toasts, push, dismiss } = useToasts();
   const [confirmRemove, setConfirmRemove] = useState<MediaView | null>(null);
   const [removing, setRemoving] = useState(false);
 
-  const loadMore = useCallback(async () => {
-    if (loadingRef.current || cursorRef.current === null) {
+  const masonryRef = useRef<MasonryGalleryHandle>(null);
+  // Pagination state lives in refs: it is only read/written inside async
+  // loaders, effects and handlers — never during render. `null` means "already
+  // at the end"; `undefined` means "start from the top of the shoot".
+  const cursorRef = useRef<string | null | undefined>(undefined);
+  const tailCursorRef = useRef<string | null>(null);
+  const loadingRef = useRef(false);
+  const seekingRef = useRef(false);
+  const exhaustedRef = useRef(false);
+  // Discards responses belonging to a window that has since been replaced.
+  const genRef = useRef(0);
+  // Lightbox "next" past the window edge: step forward once the page lands.
+  const advanceRef = useRef(false);
+  // One URL refresh per photo — a second failure is left alone (no retry loop).
+  const retriedRef = useRef<Set<number>>(new Set());
+
+  // Callers rebuild `access` on most renders; keep the latest object in a ref so
+  // the loaders stay identity-stable, and key resets on its stable path.
+  const accessRef = useRef(access);
+  const accessKey = access.listPath;
+  useEffect(() => {
+    accessRef.current = access;
+  }, [access]);
+
+  const itemsRef = useRef(items);
+  useEffect(() => {
+    itemsRef.current = items;
+  }, [items]);
+
+  // --------------------------------------------------------------- pagination
+
+  const loadForward = useCallback(async () => {
+    if (loadingRef.current || exhaustedRef.current || cursorRef.current === null) {
       return;
     }
     const cursor = cursorRef.current === undefined ? undefined : cursorRef.current;
+    const gen = genRef.current;
     loadingRef.current = true;
     setLoading(true);
     setError(null);
     try {
-      const page = await fetchMediaPage(access, cursor, PAGE_SIZE);
-      setItems((prev) => [...prev, ...page.items]);
+      const page = await fetchMediaPage(accessRef.current, { cursor, limit: PAGE_SIZE });
+      if (gen !== genRef.current) {
+        return;
+      }
+      tailCursorRef.current = page.endCursor === "" ? null : page.endCursor;
       if (page.nextCursor === "") {
         cursorRef.current = null;
+        exhaustedRef.current = true;
         setExhausted(true);
       } else {
         cursorRef.current = page.nextCursor;
       }
+      setTotal(page.total);
+      setItems((prev) => [...prev, ...page.items]);
+      // The lightbox asked for "the next photo" while sitting on the last loaded
+      // one, so that photo is the first of this page.
+      if (advanceRef.current) {
+        advanceRef.current = false;
+        const next = page.items[0];
+        if (next && typeof window !== "undefined") {
+          window.history.replaceState(
+            null,
+            "",
+            withQueryParam("item", String(next.id))
+          );
+          setSelectedId(next.id);
+        }
+      }
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Could not load photos.");
+      if (gen === genRef.current && !isAbort(e)) {
+        setError(e instanceof Error ? e.message : "Could not load photos.");
+      }
     } finally {
       loadingRef.current = false;
       setLoading(false);
     }
-  }, [access]);
+  }, []);
 
-  // First page + infinite scroll both flow through the sentinel: it is
-  // visible on an empty grid, so the observer fires on mount. Event and
-  // observer callbacks (never the effect body) trigger the fetches.
+  const seek = useCallback(
+    async (offset: number) => {
+      if (seekingRef.current) {
+        return;
+      }
+      const target = Math.max(0, Math.floor(offset));
+      const gen = genRef.current + 1;
+      genRef.current = gen;
+      seekingRef.current = true;
+      loadingRef.current = true;
+      advanceRef.current = false;
+      setSeeking(true);
+      setError(null);
+      // The lightbox target is not part of the new window.
+      if (typeof window !== "undefined") {
+        clearItemParam();
+      }
+      setSelectedId(null);
+      try {
+        const page = await fetchMediaPage(accessRef.current, {
+          offset: target,
+          limit: PAGE_SIZE,
+        });
+        if (gen !== genRef.current) {
+          return;
+        }
+        tailCursorRef.current = page.endCursor === "" ? null : page.endCursor;
+        cursorRef.current = page.nextCursor === "" ? null : page.nextCursor;
+        exhaustedRef.current = page.nextCursor === "";
+        setExhausted(exhaustedRef.current);
+        setItems(page.items);
+        setOriginOffset(target);
+        setTotal(page.total);
+        masonryRef.current?.scrollToTop();
+      } catch (e) {
+        if (gen === genRef.current && !isAbort(e)) {
+          push(e instanceof Error ? e.message : "Could not jump to that photo.");
+        }
+      } finally {
+        if (gen === genRef.current) {
+          seekingRef.current = false;
+          loadingRef.current = false;
+          setSeeking(false);
+        }
+      }
+    },
+    [push]
+  );
+
+  const approachEnd = useCallback(() => {
+    void loadForward();
+  }, [loadForward]);
+
+  const handleSeek = useCallback(
+    (offset: number) => {
+      void seek(offset);
+    },
+    [seek]
+  );
+
+  // New uploads land at the end (sort grows), so resume forward from the tail
+  // anchor instead of discarding the window — no scroll jump, no re-download.
+  const refreshSeq = useRef(refreshKey);
   useEffect(() => {
-    const sentinel = sentinelRef.current;
-    if (!sentinel) {
+    if (refreshSeq.current === refreshKey) {
       return;
     }
-    const observer = new IntersectionObserver(
-      (entries) => {
-        if (entries.some((entry) => entry.isIntersecting)) {
-          void loadMore();
-        }
-      },
-      { rootMargin: "800px" }
-    );
-    observer.observe(sentinel);
-    return () => observer.disconnect();
-  }, [loadMore]);
+    refreshSeq.current = refreshKey;
+    exhaustedRef.current = false;
+    setExhausted(false);
+    if (cursorRef.current === null) {
+      cursorRef.current = tailCursorRef.current ?? undefined;
+    }
+    // Hand the fetch to the next microtask: the effect body only re-arms the
+    // refs the loader reads, so nothing cascades out of this render.
+    queueMicrotask(() => void loadForward());
+  }, [refreshKey, loadForward]);
+
+  // Different project (same component instance): rebuild the window from zero.
+  const accessSeq = useRef(accessKey);
+  useEffect(() => {
+    if (accessSeq.current === accessKey) {
+      return;
+    }
+    accessSeq.current = accessKey;
+    genRef.current += 1;
+    cursorRef.current = undefined;
+    tailCursorRef.current = null;
+    loadingRef.current = false;
+    seekingRef.current = false;
+    exhaustedRef.current = false;
+    retriedRef.current = new Set();
+    setItems([]);
+    setOriginOffset(0);
+    setTotal(0);
+    setExhausted(false);
+    setSeeking(false);
+    setSelectedId(null);
+    setSelectedIds(new Set());
+    queueMicrotask(() => void loadForward());
+  }, [accessKey, loadForward]);
 
   // Follow back/forward through ?item=<id>.
   useEffect(() => {
@@ -121,63 +274,7 @@ export default function MediaGrid({
     return () => window.removeEventListener("popstate", onPopState);
   }, []);
 
-  // External refresh (after uploads): reset to the first page and reload.
-  // State updates are sequenced through the loader, not set during render.
-  const refreshSeq = useRef(refreshKey);
-  useEffect(() => {
-    if (refreshSeq.current === refreshKey) {
-      return;
-    }
-    refreshSeq.current = refreshKey;
-    cursorRef.current = undefined;
-    loadingRef.current = false;
-    setItems([]);
-    setExhausted(false);
-  }, [refreshKey]);
-
-  const doRemove = useCallback(async () => {
-    if (!confirmRemove) {
-      return;
-    }
-    setRemoving(true);
-    try {
-      await deleteMedia(confirmRemove.id);
-      setItems((prev) => prev.filter((item) => item.id !== confirmRemove.id));
-      setSelectedIds((prev) => {
-        if (!prev.has(confirmRemove.id)) {
-          return prev;
-        }
-        const next = new Set(prev);
-        next.delete(confirmRemove.id);
-        return next;
-      });
-      if (selectedId === confirmRemove.id && typeof window !== "undefined") {
-        const params = new URLSearchParams(window.location.search);
-        params.delete("item");
-        const query = params.toString();
-        window.history.replaceState(
-          null,
-          "",
-          query ? `?${query}` : window.location.pathname
-        );
-        setSelectedId(null);
-      }
-      onRemove?.(confirmRemove.id);
-      setConfirmRemove(null);
-      push("Photo removed.");
-    } catch (e) {
-      if (!isAbort(e)) {
-        push(e instanceof Error ? e.message : "Could not remove the photo.");
-      }
-    } finally {
-      setRemoving(false);
-    }
-  }, [confirmRemove, selectedId, onRemove, push]);
-
-  const found = selectedId === null
-    ? -1
-    : items.findIndex((item) => item.id === selectedId);
-  const selectedIndex = found >= 0 ? found : null;
+  // ------------------------------------------------------------- interaction
 
   const toggle = useCallback((id: number) => {
     setSelectedIds((prev) => {
@@ -207,36 +304,111 @@ export default function MediaGrid({
     [items, selectMode, toggle]
   );
 
-  const close = useCallback(() => {
-    // We pushed an entry on open, so Back semantics close the lightbox.
-    window.history.back();
-  }, []);
-
   const goTo = useCallback(
     (index: number) => {
-      const item = items[index];
+      const item = itemsRef.current[index];
       if (!item) {
         return;
       }
       window.history.replaceState(null, "", withQueryParam("item", String(item.id)));
       setSelectedId(item.id);
     },
-    [items]
+    []
   );
+
+  const close = useCallback(() => {
+    // We pushed an entry on open, so Back semantics close the lightbox.
+    window.history.back();
+  }, []);
+
+  const requestRemove = useCallback((item: MediaView) => {
+    setConfirmRemove(item);
+  }, []);
+
+  // Presigned thumb URLs expire (15 min). Refreshing one item keeps a long
+  // browsing session from showing broken tiles deep in the window.
+  const onThumbError = useCallback((item: MediaView) => {
+    if (retriedRef.current.has(item.id)) {
+      return;
+    }
+    retriedRef.current.add(item.id);
+    fetchMediaItem(accessRef.current, item.id)
+      .then((fresh) => {
+        setItems((prev) =>
+          prev.map((current) => (current.id === fresh.id ? fresh : current))
+        );
+      })
+      .catch(() => {
+        // Leave the tile as-is; a transient failure is not worth a toast.
+      });
+  }, []);
+
+  const needMoreForLightbox = useCallback(() => {
+    if (exhaustedRef.current) {
+      return;
+    }
+    advanceRef.current = true;
+    void loadForward();
+  }, [loadForward]);
+
+  const loadedIds = useMemo(() => items.map((item) => item.id), [items]);
+
+  const found = selectedId === null
+    ? -1
+    : items.findIndex((item) => item.id === selectedId);
+  const selectedIndex = found >= 0 ? found : null;
+
+  const doRemove = useCallback(async () => {
+    if (!confirmRemove) {
+      return;
+    }
+    setRemoving(true);
+    try {
+      await deleteMedia(confirmRemove.id);
+      setItems((prev) => prev.filter((item) => item.id !== confirmRemove.id));
+      setTotal((value) => Math.max(0, value - 1));
+      setSelectedIds((prev) => {
+        if (!prev.has(confirmRemove.id)) {
+          return prev;
+        }
+        const next = new Set(prev);
+        next.delete(confirmRemove.id);
+        return next;
+      });
+      if (selectedId === confirmRemove.id && typeof window !== "undefined") {
+        clearItemParam();
+        setSelectedId(null);
+      }
+      onRemove?.(confirmRemove.id);
+      setConfirmRemove(null);
+      push("Photo removed.");
+    } catch (e) {
+      if (!isAbort(e)) {
+        push(e instanceof Error ? e.message : "Could not remove the photo.");
+      }
+    } finally {
+      setRemoving(false);
+    }
+  }, [confirmRemove, selectedId, onRemove, push]);
 
   return (
     <>
       <ZipPanel
         access={access}
-        loadedIds={items.map((item) => item.id)}
+        loadedIds={loadedIds}
         selectedIds={selectedIds}
         selectMode={selectMode}
         onSelectModeChange={setSelectMode}
-        onSelectAllVisible={() => setSelectedIds(new Set(items.map((item) => item.id)))}
+        onSelectAllVisible={() => {
+          const onScreen = masonryRef.current?.visibleIds() ?? [];
+          setSelectedIds(
+            new Set(onScreen.length > 0 ? onScreen : items.map((item) => item.id))
+          );
+        }}
         onClearSelection={() => setSelectedIds(new Set())}
       />
 
-      {items.length === 0 && !loading && !error && (
+      {items.length === 0 && originOffset === 0 && !loading && !seeking && !error && (
         <div className="mx-auto my-16 max-w-md rounded-2xl border border-white/[0.08] bg-surface-2/60 p-10 text-center backdrop-blur-xl">
           <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full border border-white/10 bg-surface-3 text-muted">
             <svg
@@ -288,7 +460,7 @@ export default function MediaGrid({
           </p>
           <button
             type="button"
-            onClick={loadMore}
+            onClick={() => void loadForward()}
             className="mt-5 rounded-full border border-white/10 bg-surface-3 px-5 py-2 text-xs font-medium text-foreground transition hover:border-accent/40 hover:bg-surface-2"
           >
             Try again
@@ -296,107 +468,22 @@ export default function MediaGrid({
         </div>
       )}
 
-      <div className="columns-2 gap-4 sm:columns-3 lg:columns-4 [&>*]:mb-4">
-        {items.map((item, index) => {
-          const checked = selectMode && selectedIds.has(item.id);
-          const removable =
-            isAdmin && !selectMode && item.status !== "uploading";
-          return (
-            <div
-              key={item.id}
-              className="group relative break-inside-avoid"
-            >
-              <button
-                type="button"
-                onClick={() => open(index)}
-                aria-pressed={selectMode ? checked : undefined}
-                className={`relative block w-full overflow-hidden rounded-xl border bg-surface-2 transition-all duration-300 ${
-                  checked
-                    ? "cursor-pointer border-accent ring-2 ring-accent/60 shadow-lg shadow-accent/10"
-                    : "cursor-pointer border-white/[0.08] hover:border-accent/50 hover:shadow-xl"
-                }`}
-                aria-label={
-                  selectMode ? `Select photo ${index + 1}` : `Open photo ${index + 1}`
-                }
-              >
-                {selectMode && (
-                  <span
-                    aria-hidden="true"
-                    className={`absolute left-3 top-3 z-10 flex h-6 w-6 items-center justify-center rounded-full border shadow-md backdrop-blur-md transition-all duration-200 ${
-                      checked
-                        ? "border-accent bg-accent text-background scale-105"
-                        : "border-white/30 bg-surface/80 text-transparent hover:border-accent"
-                    }`}
-                  >
-                    <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
-                      <path
-                        d="M2 6.5 4.8 9 10 3.5"
-                        stroke="currentColor"
-                        strokeWidth="2"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                      />
-                    </svg>
-                  </span>
-                )}
-
-                {item.kind === "video" && (
-                  <span className="absolute right-3 top-3 z-10 rounded-full bg-accent/90 px-2.5 py-0.5 text-[9px] font-semibold uppercase tracking-widest text-background shadow-md backdrop-blur-md">
-                    Film
-                  </span>
-                )}
-
-                {item.thumbUrl ? (
-                  // Plain <img> (not next/image): thumbs are short-lived presigned
-                  // URLs on another origin; native lazy-loading keeps 4G cheap.
-                  <img
-                    src={item.thumbUrl}
-                    alt=""
-                    loading="lazy"
-                    decoding="async"
-                    className="w-full object-cover transition-transform duration-500 will-change-transform group-hover:scale-[1.03]"
-                  />
-                ) : (
-                  <div className="flex aspect-square w-full items-center justify-center font-serif text-sm italic text-muted">
-                    {item.derivativeStatus === "failed" ? "Preview failed" : "Processing…"}
-                  </div>
-                )}
-              </button>
-
-              {removable && (
-                <button
-                  type="button"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setConfirmRemove(item);
-                  }}
-                  aria-label={`Remove photo ${index + 1}`}
-                  title="Remove photo"
-                  className="absolute right-2.5 top-2.5 z-10 flex items-center gap-1 rounded-full border border-white/10 bg-black/60 px-2.5 py-1 text-[11px] font-medium text-white/80 opacity-0 shadow-lg backdrop-blur-md transition hover:border-red-500/50 hover:bg-red-500 hover:text-white focus:opacity-100 group-hover:opacity-100"
-                >
-                  <svg
-                    width="12"
-                    height="12"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    aria-hidden="true"
-                  >
-                    <polyline points="3 6 5 6 21 6" />
-                    <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
-                  </svg>
-                  <span>Remove</span>
-                </button>
-              )}
-            </div>
-          );
-        })}
-      </div>
-
-      <div ref={sentinelRef} aria-hidden="true" />
+      {/* Always mounted: its bottom sentinel also drives the first fetch. */}
+      <MasonryGallery
+        ref={masonryRef}
+        items={items}
+        originOffset={originOffset}
+        total={total}
+        seeking={seeking}
+        selectMode={selectMode}
+        selectedIds={selectedIds}
+        isAdmin={Boolean(isAdmin)}
+        onOpen={open}
+        onRemove={requestRemove}
+        onApproachEnd={approachEnd}
+        onSeek={handleSeek}
+        onThumbError={onThumbError}
+      />
 
       {loading && (
         <div className="mt-8 flex items-center justify-center gap-2.5 py-4 text-xs font-medium tracking-wider uppercase text-muted">
@@ -413,7 +500,7 @@ export default function MediaGrid({
             <span className="h-px flex-1 bg-white/[0.08]" />
           </div>
           <p className="mt-3 text-xs tracking-widest2 uppercase text-muted font-medium">
-            {items.length} photograph{items.length === 1 ? "" : "s"} · End of gallery
+            {total.toLocaleString()} photograph{total === 1 ? "" : "s"} · End of gallery
           </p>
         </div>
       )}
@@ -426,7 +513,12 @@ export default function MediaGrid({
           onClose={close}
           onIndex={goTo}
           isAdmin={isAdmin}
-          onRemove={(item) => setConfirmRemove(item)}
+          onRemove={requestRemove}
+          position={originOffset + selectedIndex + 1}
+          total={total}
+          hasMore={!exhausted}
+          loading={loading}
+          onNeedMore={needMoreForLightbox}
         />
       )}
 

@@ -44,13 +44,30 @@ export interface MediaView {
   sort: number;
   status: string;
   derivativeStatus: string;
+  /**
+   * Thumb pixel size, used to lay out the masonry before anything decodes.
+   * `null` = not recorded yet (row is still being processed), `0` = thumb
+   * exists but its size could not be read. Both mean "use the fallback aspect".
+   */
+  thumbWidth: number | null;
+  thumbHeight: number | null;
+  /** Upload instant, ISO-8601; drives the upload-day timeline. */
+  createdAt: string;
   thumbUrl: string | null;
   previewUrl: string | null;
 }
 
 export interface MediaPage {
   items: MediaView[];
+  /** Next keyset cursor; empty string when the page ran out. */
   nextCursor: string;
+  /**
+   * Cursor past this page's last row even on the final page, so a client can
+   * resume loading forward after new uploads land.
+   */
+  endCursor: string;
+  /** Total media in the project, for the timeline scrubber. */
+  total: number;
 }
 
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
@@ -193,15 +210,35 @@ export function tokenAccess(token: string): MediaAccess {
 /** Cursor page of media; pass the previous `nextCursor` (or omit to start). */
 export function fetchMediaPage(
   access: MediaAccess,
-  cursor?: string,
-  limit = 60,
-  signal?: AbortSignal
+  options: {
+    cursor?: string;
+    /** Seek straight to this position in display order. */
+    offset?: number;
+    limit?: number;
+    signal?: AbortSignal;
+  } = {}
 ): Promise<MediaPage> {
-  const params = new URLSearchParams({ limit: String(limit) });
-  if (cursor) {
-    params.set("cursor", cursor);
+  const params = new URLSearchParams({ limit: String(options.limit ?? 60) });
+  if (options.cursor) {
+    params.set("cursor", options.cursor);
   }
-  return request(`${access.listPath}?${params}`, { signal });
+  if (options.offset !== undefined && options.offset > 0) {
+    params.set("offset", String(Math.floor(options.offset)));
+  }
+  return request(`${access.listPath}?${params}`, { signal: options.signal });
+}
+
+/**
+ * Fresh single-item view. Listing URLs are presigned and expire (15 min), so a
+ * tile whose image fails to load refreshes itself through this instead of
+ * showing a broken thumb.
+ */
+export function fetchMediaItem(
+  access: MediaAccess,
+  mediaId: number,
+  signal?: AbortSignal
+): Promise<MediaView> {
+  return request(`${access.downloadPrefix}/${mediaId}`, { signal });
 }
 
 /** Direct API URL for a per-file download (browser follows the 302 to S3). */

@@ -114,10 +114,20 @@ public class ShareController {
     @GetMapping("/p/{token}/media")
     public Map<String, Object> listByToken(@PathVariable String token,
                                            @RequestParam(required = false) String cursor,
+                                           @RequestParam(required = false) Integer offset,
                                            @RequestParam(required = false, defaultValue = "50") int limit) {
-        MediaService.MediaPage page = media.listByToken(token, cursor, limit);
+        MediaService.MediaPage page = media.listByToken(token, cursor, limit, offset);
         return Map.of("items", page.items(),
-                "nextCursor", page.nextCursor() == null ? "" : page.nextCursor());
+                "nextCursor", page.nextCursor() == null ? "" : page.nextCursor(),
+                "endCursor", page.endCursor() == null ? "" : page.endCursor(),
+                "total", page.total());
+    }
+
+    /** Token-URL single photo (recovers expired presigned URLs for one item). */
+    @GetMapping("/p/{token}/media/{id}")
+    public MediaService.MediaView mediaByToken(@PathVariable String token,
+                                               @PathVariable long id) {
+        return media.viewByToken(token, id);
     }
 
     // ------------------------------------------------------------- error mapping

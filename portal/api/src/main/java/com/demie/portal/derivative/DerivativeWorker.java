@@ -9,6 +9,8 @@ import org.slf4j.LoggerFactory;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 
+import javax.imageio.ImageIO;
+import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -35,6 +37,11 @@ import java.util.concurrent.TimeUnit;
  *   <li>Videos: one poster frame via ffmpeg (no transcode), then the same
  *   preview + thumb pair from that frame.</li>
  * </ul>
+ *
+ * <p>Both paths also record the thumb's pixel size on the row (Task 22), which
+ * browsers use to lay out a virtualized masonry without measuring images.
+ * {@link #backfillDimensions(int)} tops up rows that became ready before those
+ * columns existed.
  *
  * Originals are streamed to temp files (never fully buffered) and cleaned up.
  */
@@ -107,10 +114,11 @@ public class DerivativeWorker {
                         job.mediaId());
                 return;
             }
-            makeDerivatives(row);
+            int[] dims = makeDerivatives(row);
             jdbc.update("UPDATE media SET derivative_status = 'ready', " +
-                            "derivative_error = NULL WHERE id = ?",
-                    job.mediaId());
+                            "derivative_error = NULL, thumb_width = ?, thumb_height = ? " +
+                            "WHERE id = ?",
+                    dims[0], dims[1], job.mediaId());
             log.info("derivatives ready for media {} (attempt {})", job.mediaId(), job.attempt());
         } catch (Exception e) {
             String error = e.getMessage() == null ? e.getClass().getSimpleName()
@@ -130,7 +138,14 @@ public class DerivativeWorker {
         }
     }
 
-    private void makeDerivatives(Media row) throws Exception {
+    /**
+     * Builds the preview + thumb pair and returns the thumb's pixel size
+     * ({@code [width, height]}) so the listing can hand browsers an exact
+     * aspect ratio for masonry layout. The size is read back from the JPEG we
+     * just wrote, which is why video posters and formats the JVM cannot decode
+     * directly (HEIC) still report correct dimensions.
+     */
+    private int[] makeDerivatives(Media row) throws Exception {
         Path workdir = Files.createTempDirectory("deriv-" + row.id());
         try {
             Path original = workdir.resolve("original");
@@ -157,8 +172,52 @@ public class DerivativeWorker {
                 s3.putObject(s3.thumbsBucket(), thumbKeyFor(row), "image/jpeg",
                         Files.size(thumb), thumbIn);
             }
+            return readSize(thumb);
         } finally {
             deleteTree(workdir);
+        }
+    }
+
+    /**
+     * Fills in {@code thumb_width}/{@code thumb_height} for rows that were
+     * derivative-ready before those columns existed. Bounded per sweep and
+     * idempotent: a row whose thumb cannot be read is stamped {@code 0/0} so it
+     * leaves the queue and the client falls back to a default aspect.
+     */
+    public int backfillDimensions(int batchSize) {
+        List<Long> ids = jdbc.queryForList(
+                "SELECT id FROM media WHERE derivative_status = 'ready' " +
+                        "AND thumb_width IS NULL AND status = 'uploaded' ORDER BY id LIMIT ?",
+                Long.class, Math.max(1, batchSize));
+
+        int settled = 0;
+        for (Long id : ids) {
+            Media row = media.findById(id).orElse(null);
+            if (row == null) {
+                continue;
+            }
+            int[] dims = {0, 0};
+            try (InputStream in = s3.getObject(s3.thumbsBucket(), thumbKeyFor(row))) {
+                dims = readSize(in);
+            } catch (Exception e) {
+                log.info("thumb dimensions unreadable for media {}: {}", id, e.getMessage());
+            }
+            jdbc.update("UPDATE media SET thumb_width = ?, thumb_height = ? WHERE id = ?",
+                    dims[0], dims[1], id);
+            settled++;
+        }
+        return settled;
+    }
+
+    /** Pixel size of a JPEG stream/file, or {@code 0/0} when it cannot be read. */
+    private static int[] readSize(InputStream in) throws IOException {
+        BufferedImage image = ImageIO.read(in);
+        return image == null ? new int[]{0, 0} : new int[]{image.getWidth(), image.getHeight()};
+    }
+
+    private static int[] readSize(Path jpeg) throws IOException {
+        try (InputStream in = Files.newInputStream(jpeg)) {
+            return readSize(in);
         }
     }
 
