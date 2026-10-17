@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { Cormorant_Garamond, Plus_Jakarta_Sans } from "next/font/google";
 import "./globals.css";
 
 const SITE_NAME = "Demie Photography";
@@ -10,6 +11,21 @@ if (process.env.NODE_ENV !== "test" && !API_URL) {
     "NEXT_PUBLIC_API_URL is not set. Point it at the running portal API (e.g. http://localhost:8080)."
   );
 }
+
+const cormorant = Cormorant_Garamond({
+  subsets: ["latin"],
+  variable: "--font-serif",
+  weight: ["300", "400", "500", "600"],
+  style: ["normal", "italic"],
+  display: "swap",
+});
+
+const jakarta = Plus_Jakarta_Sans({
+  subsets: ["latin"],
+  variable: "--font-sans",
+  weight: ["300", "400", "500", "600", "700"],
+  display: "swap",
+});
 
 export const metadata: Metadata = {
   title: {
@@ -25,10 +41,17 @@ export const metadata: Metadata = {
 
 export default function RootLayout({
   children,
-}: LayoutProps<"/">) {
+}: {
+  children: React.ReactNode;
+}) {
   return (
-    <html lang="en" className="h-full antialiased">
-      <body className="min-h-full flex flex-col">{children}</body>
+    <html
+      lang="en"
+      className={`h-full antialiased ${cormorant.variable} ${jakarta.variable}`}
+    >
+      <body className="min-h-full flex flex-col font-sans bg-background text-foreground selection:bg-accent/20 selection:text-foreground">
+        {children}
+      </body>
     </html>
   );
 }
