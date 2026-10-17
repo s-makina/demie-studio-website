@@ -109,6 +109,21 @@ function lowerBoundByTop(nodes: MasonryNode[], target: number): number {
   return low;
 }
 
+/** First index whose `top` is > target (arrays are top-sorted). */
+function upperBoundByTop(nodes: MasonryNode[], target: number): number {
+  let low = 0;
+  let high = nodes.length;
+  while (low < high) {
+    const mid = (low + high) >> 1;
+    if (nodes[mid].top <= target) {
+      low = mid + 1;
+    } else {
+      high = mid;
+    }
+  }
+  return low;
+}
+
 export class MasonryLayout {
   private readonly columns: MasonryNode[][];
   private readonly dividers: MasonryNode[] = [];
@@ -137,25 +152,29 @@ export class MasonryLayout {
     return this.columnWidth;
   }
 
-  /** Adds newly loaded items to the end of the flow. */
+  /**
+   * Adds newly loaded items to the end of the flow.
+   *
+   * Date/day work is confined to the day boundaries: one {@link dayKeyOf} per
+   * item (unavoidable — that is what defines a boundary) and one
+   * {@link dayLabelOf} per *day*, so `Intl` formatting never runs per photo.
+   */
   append(items: MediaView[]): void {
     const { gap, dividerHeight, width } = this.metrics;
     for (const item of items) {
       const day = dayKeyOf(item.createdAt);
-      let label: string | undefined;
       if (day && day !== this.lastDay) {
-        label = dayLabelOf(item.createdAt);
         const top = Math.max(...this.columnTops);
         this.dividers.push({
           kind: "divider",
           key: `day-${day}-${this.placed}`,
-          index: -1,
+          index: this.placed,
           top,
           left: 0,
           width,
           height: dividerHeight,
           dayKey: day,
-          dayLabel: label,
+          dayLabel: dayLabelOf(item.createdAt),
         });
         this.columnTops.fill(top + dividerHeight);
         this.lastDay = day;
@@ -173,8 +192,6 @@ export class MasonryLayout {
         left: column * (this.columnWidth + gap),
         width: this.columnWidth,
         height,
-        dayKey: day || undefined,
-        dayLabel: label ?? dayLabelOf(item.createdAt),
       });
       this.columnTops[column] += height + gap;
       this.maxHeight = Math.max(this.maxHeight, height);
@@ -182,6 +199,17 @@ export class MasonryLayout {
     }
     const bottom = Math.max(...this.columnTops);
     this.height = this.placed > 0 ? Math.max(0, bottom - gap) : 0;
+  }
+
+  /** Upload-day markers in flow order (one per day; drives the rail ticks). */
+  dayMarkers(): MasonryNode[] {
+    return this.dividers;
+  }
+
+  /** The upload day covering a given `top` offset (null above the first day). */
+  dayAt(top: number): MasonryNode | null {
+    const index = upperBoundByTop(this.dividers, top) - 1;
+    return index >= 0 ? this.dividers[index] : null;
   }
 
   private shortestColumn(): number {

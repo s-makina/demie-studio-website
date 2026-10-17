@@ -16,8 +16,6 @@ import {
   DIVIDER_HEIGHT,
   MasonryLayout,
   columnCountFor,
-  dayKeyOf,
-  dayLabelOf,
   type MasonryNode,
 } from "@/lib/masonry";
 
@@ -318,28 +316,24 @@ export default function MasonryGallery({
   );
 
   // -------------------------------------------------------------- day timeline
-  // O(n) but only recomputed when the window itself changes, never on scroll.
+  // One tick per upload day, straight off the packer — no O(items) rescan and no
+  // per-photo `Intl` work, so this is cheap even at 50,000 photos.
   const marks = useMemo<TimelineMark[]>(() => {
-    const out: TimelineMark[] = [];
-    let lastDay = "";
-    for (let index = 0; index < items.length; index++) {
-      const key = dayKeyOf(items[index].createdAt);
-      if (key && key !== lastDay) {
-        out.push({
-          index: originOffset + index,
-          label: dayLabelOf(items[index].createdAt),
-        });
-        lastDay = key;
-      }
+    if (!layout) {
+      return [];
     }
-    return out;
-  }, [items, originOffset]);
+    return layout.dayMarkers().map((day) => ({
+      index: originOffset + day.index,
+      label: day.dayLabel ?? "",
+    }));
+  }, [layout, originOffset]);
 
   const topTile = visible.find(
     (node) => node.kind === "tile" && node.top + node.height > viewport.top
   );
   const currentAbsolute = originOffset + (topTile?.index ?? 0);
   const chipTop = Math.max(0, Math.min(viewport.top, Math.max(0, gridHeight - 1)));
+  const chipDay = layout?.dayAt(viewport.top) ?? null;
 
   return (
     <>
@@ -350,14 +344,14 @@ export default function MasonryGallery({
       >
         {/* Pinned upload-day chip: in-flow dividers can't be CSS-sticky inside
             an absolutely positioned virtual container. */}
-        {topTile?.dayLabel && viewport.top < gridHeight && (
+        {chipDay?.dayLabel && viewport.top < gridHeight && (
           <div
             className="pointer-events-none absolute left-0 z-20 -translate-y-1/2"
             style={{ top: chipTop }}
           >
             <span className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-surface-glass px-3 py-1 text-[10px] font-medium uppercase tracking-widest2 text-foreground shadow-lg backdrop-blur-xl">
               <span className="h-1.5 w-1.5 rounded-full bg-accent" />
-              {topTile.dayLabel}
+              {chipDay.dayLabel}
             </span>
           </div>
         )}
