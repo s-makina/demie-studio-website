@@ -38,12 +38,27 @@ in `buckets.md`. Local Phase 0 does not enforce lifecycle.
 
 ## 3. Environment
 
-Copy `infra/.env.example` to a local `.env` (or export the variables) and fill
-in the values that match your local Postgres and MinIO.
+Copy `infra/.env.example` to a local `.env` and fill in the values that match
+your local Postgres and MinIO. The API reads that file itself: `application.yml`
+sets `spring.profiles.default: local`, and `application-local.yml` imports
+`infra/.env` as properties. No export step is needed.
+
+Keep the file in plain properties syntax (`KEY=value`, no quotes) — the header of
+`infra/.env.example` explains why, and what to do when a value needs quoting.
 
 ### API
 
-The datasource is built from these env vars (defaults target local dev):
+Start the API:
+
+```bash
+cd portal
+./mvnw spring-boot:run -pl api
+```
+
+The settings below are the ones `infra/.env` supplies, with local-dev defaults.
+Exporting them still works and takes precedence over the imported file —
+environment variables beat config data — which is what `scripts/run-api.ps1`
+does on Windows:
 
 ```bash
 export DB_HOST=localhost
@@ -58,25 +73,12 @@ export S3_SECRET_KEY="<secret-key>"
 export PORT=8080
 ```
 
-Start the API:
-
-```bash
-cd portal
-./mvnw spring-boot:run -pl api
-```
-
-Spring Boot does **not** read `.env` files, so exporting these variables (or
-passing them some other way) is required — editing `infra/.env` on its own has
-no effect, and the API will now refuse to start rather than send uploads to
-AWS. On Windows `scripts/run-api.ps1` does the exporting for you:
-
 ```powershell
 .\scripts\run-api.ps1
 ```
 
-It imports the `S3_*` lines from `infra/.env` only, for the same reason
-`scripts/upload-fixture.sh` does: the file also carries DB values that must not
-override the `application.yml` defaults.
+With neither `infra/.env` nor exported variables, the API refuses to start
+rather than send uploads to AWS (`S3BucketBootstrap`).
 
 ### Flyway (schema)
 

@@ -1,0 +1,19 @@
+# Local development only. Activated by `spring.profiles.default: local` in
+# application.yml; the test profile and any deployed environment never load it.
+#
+# Spring Boot does not read .env files, but it can import one. This is what
+# makes the API pick up portal/infra/.env with no export step. Two locations are
+# listed because a `file:` location is *fixed* - resolved against the working
+# directory, which is portal/api under `mvnw spring-boot:run` and surefire, and
+# portal under `java -jar`. `optional:` keeps every environment working when no
+# .env is present.
+#
+# The imported file is parsed as Java properties, so it must stay in plain
+# `KEY=value` form: no surrounding quotes and no shell expansion, or the
+# characters land in the value verbatim. Environment variables still take
+# precedence over anything imported here.
+spring:
+  config:
+    import:
+      - optional:file:../infra/.env[.properties]
+      - optional:file:infra/.env[.properties]

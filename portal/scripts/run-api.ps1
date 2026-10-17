@@ -1,10 +1,10 @@
 <#
 Starts the API with the S3 settings from infra/.env exported into its environment.
 
-Spring Boot does not read .env files. Putting S3_ACCESS_KEY / S3_SECRET_KEY in
-infra/.env only helps if those variables are present in the environment of the
-process that runs the API -- which is why editing .env on its own changes
-nothing (S3BucketBootstrap then refuses to start, by design).
+You normally do not need this: application-local.yml imports infra/.env for you
+(see infra/LOCAL-SETUP.md). It stays useful when a tool should see the values as
+real environment variables, and it wins over the imported file, because
+environment variables take precedence over config data.
 
 Like scripts/upload-fixture.sh this imports the S3_* lines only: infra/.env also
 carries DB values that must not override the application.yml defaults.
