@@ -4,16 +4,21 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.model.AbortMultipartUploadRequest;
+import software.amazon.awssdk.services.s3.model.BucketAlreadyExistsException;
+import software.amazon.awssdk.services.s3.model.BucketAlreadyOwnedByYouException;
 import software.amazon.awssdk.services.s3.model.CompleteMultipartUploadRequest;
 import software.amazon.awssdk.services.s3.model.CompletedMultipartUpload;
 import software.amazon.awssdk.services.s3.model.CompletedPart;
 import software.amazon.awssdk.services.s3.model.CreateBucketRequest;
 import software.amazon.awssdk.services.s3.model.CreateMultipartUploadRequest;
 import software.amazon.awssdk.services.s3.model.GetObjectRequest;
+import software.amazon.awssdk.services.s3.model.HeadBucketRequest;
 import software.amazon.awssdk.services.s3.model.HeadObjectRequest;
 import software.amazon.awssdk.services.s3.model.HeadObjectResponse;
+import software.amazon.awssdk.services.s3.model.NoSuchBucketException;
 import software.amazon.awssdk.services.s3.model.NoSuchKeyException;
 import software.amazon.awssdk.services.s3.model.PutObjectRequest;
+import software.amazon.awssdk.services.s3.model.S3Exception;
 import software.amazon.awssdk.services.s3.model.UploadPartRequest;
 import software.amazon.awssdk.services.s3.presigner.S3Presigner;
 import software.amazon.awssdk.services.s3.presigner.model.GetObjectPresignRequest;
@@ -265,13 +270,40 @@ public class S3Service {
         }
     }
 
-    // ---- bucket lifecycle (used by tests + setup) ----
+    // ---- bucket lifecycle (used by start-up + tests) ----
 
+    /**
+     * Creates the bucket when it is missing and does nothing when it already
+     * exists.
+     *
+     * <p>Head-then-create rather than create-and-swallow: swallowing every
+     * {@code createBucket} failure hides bad credentials behind a start-up that
+     * looks healthy, and the upload only fails much later as a confusing
+     * {@code NoSuchBucketException}. Auth, permission and connectivity problems
+     * propagate so the caller can fail fast.
+     */
     public void ensureBucket(String bucket) {
+        if (bucketExists(bucket)) {
+            return;
+        }
         try {
             s3.createBucket(CreateBucketRequest.builder().bucket(bucket).build());
-        } catch (Exception e) {
-            // Bucket may already exist; ignore race.
+        } catch (BucketAlreadyExistsException | BucketAlreadyOwnedByYouException e) {
+            // Concurrent start-up created it first; it exists, which is all we need.
+        }
+    }
+
+    private boolean bucketExists(String bucket) {
+        try {
+            s3.headBucket(HeadBucketRequest.builder().bucket(bucket).build());
+            return true;
+        } catch (NoSuchBucketException e) {
+            return false;
+        } catch (S3Exception e) {
+            if (e.statusCode() == 404) {
+                return false;
+            }
+            throw e;
         }
     }
 

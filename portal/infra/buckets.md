@@ -26,6 +26,20 @@ Originals are **never** written to the VPS disk — they land directly in S3 via
 presigned PUT and are read back only by the ZIP worker (stream S3 → ZIP → S3)
 and by download presigns. The API never proxies bytes.
 
+## Start-up checks
+
+`S3BucketBootstrap` runs on every API start (outside the `test` profile) and:
+
+1. requires `S3_ENDPOINT`, `S3_ACCESS_KEY` and `S3_SECRET_KEY` to be set, and to
+   be more than the `change-me` placeholder copied from `.env.example`. Without
+   them `S3Config` builds an **anonymous** client with no endpoint override, so
+   requests go silently to real AWS S3 in `us-east-1` and only fail much later,
+   mid-upload, with `NoSuchBucketException`. That misconfiguration now stops the
+   API at start-up with the variable name instead.
+2. creates every configured bucket that is missing (`S3Service.ensureBucket()`),
+   and fails the start-up when storage rejects the credentials or is
+   unreachable.
+
 ## Lifecycle
 
 - `zips/` has a 7-day expiry (objects deleted 7 days after creation). In
@@ -41,10 +55,11 @@ and by download presigns. The API never proxies bytes.
   (Traefik → port 9001).
 - S3 API: `http://salvation-minio-7c8f86-102-202-45-205.sslip.io` (Traefik →
   port 9000). This is the `S3_ENDPOINT` value; never use the console domain.
-- Bucket: create `demie-studio` once (console → Buckets → Create, or
-  `mc mb alias/demie-studio`). S3 names allow only lowercase, digits, `-`
-  and `.` — underscores are rejected with `InvalidBucketName`. The API's
-  `S3Service.ensureBucket()` also creates it on first use (idempotent).
+- Bucket: `demie-studio`. The API creates it at start-up
+  (`S3BucketBootstrap` → `S3Service.ensureBucket()`), so there is no manual
+  step — `mc mb alias/demie-studio` or console → Buckets → Create work too.
+  S3 names allow only lowercase, digits, `-` and `.` — underscores are
+  rejected with `InvalidBucketName`.
 - Credentials are a MinIO service account; keep them in `infra/.env`
   (gitignored), never in committed files.
 
@@ -58,9 +73,9 @@ mc alias set local http://localhost:9000 <access-key> <secret-key>
 mc mb --ignore-existing local/demie-studio
 ```
 
-The API's `S3Service.ensureBucket()` also creates a bucket on first use (idempotent),
-so the buckets can be created lazily — but creating them up front keeps the
-round-trip test (`S3PresignIT`) deterministic.
+The API creates the bucket itself at start-up, so this step is only needed when
+you want it in place before the API runs — the round-trip test (`S3PresignIT`)
+creates its own throwaway bucket either way.
 
 ## Prod naming
 
