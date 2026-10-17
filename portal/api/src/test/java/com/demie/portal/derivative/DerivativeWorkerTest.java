@@ -85,7 +85,8 @@ class DerivativeWorkerTest {
     @Test
     void derivativeKeysFollowPrefixConvention() {
         var row = new com.demie.portal.media.Media(7L, 42L, "originals/42/7/a.png",
-                100L, "photo", 1, "uploaded", null, "pending", 0, java.time.Instant.now());
+                100L, "photo", 1, "uploaded", null, "pending", 0, 400, 300,
+                java.time.Instant.now());
         assertEquals("previews/42/7.jpg", DerivativeWorker.previewKeyFor(row));
         assertEquals("thumbs/42/7.jpg", DerivativeWorker.thumbKeyFor(row));
     }
