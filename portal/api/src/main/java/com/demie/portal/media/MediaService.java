@@ -4,17 +4,22 @@ import com.demie.portal.account.Account;
 import com.demie.portal.project.ProjectService;
 import com.demie.portal.s3.S3Service;
 import com.demie.portal.share.ShareTokenService;
+import org.springframework.dao.DuplicateKeyException;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.jdbc.core.PreparedStatementCallback;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import software.amazon.awssdk.services.s3.model.CompletedPart;
+import software.amazon.awssdk.services.s3.model.NoSuchUploadException;
 
 import java.net.URLConnection;
 import java.nio.charset.StandardCharsets;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Timestamp;
 import java.time.Duration;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Base64;
 import java.util.List;
@@ -24,8 +29,13 @@ import java.util.Optional;
  * Upload lifecycle (Task 6): the API only signs — browsers PUT part bytes
  * straight to S3. Init reserves the {@code media} row and opens the
  * multipart upload; complete closes it and records the verified size.
- * Listing is keyset-paginated on {@code (sort, id)} over the
- * {@code media_project_sort_idx} index (no full scans).
+ * Both are idempotent on the browser-supplied {@code clientUploadId}
+ * (V4__media_upload_idempotency.sql): retries, lost responses and replays
+ * inside a large batch converge to one row and one multipart upload per
+ * file instead of duplicating media.
+ * The reaper ({@link MediaUploadReaper}) bounds uploads whose browser
+ * never came back. Listing is keyset-paginated on {@code (sort, id)} over
+ * the {@code media_project_sort_idx} index (no full scans).
  */
 @Service
 public class MediaService {
@@ -56,36 +66,102 @@ public class MediaService {
     // ------------------------------------------------------------------- init
 
     /**
-     * Reserves a media row and opens the S3 multipart upload. Returns the row
-     * id, key and upload id the browser needs for part URLs / completion.
+     * Reserves a media row and opens the S3 multipart upload. Idempotent per
+     * {@code clientUploadId}: the browser generates it once per queued file
+     * and re-sends it on every retry, so lost responses inside a large batch
+     * converge to the same row and upload instead of duplicating media.
+     *
+     * <ul>
+     *   <li>row open ({@code uploading} + live upload id) → returned as-is;
+     *       the browser resumes the same upload and re-PUTs remaining parts
+     *       (same part number overwrites, already-uploaded parts persist),</li>
+     *   <li>row finalized → returned with {@code alreadyUploaded=true} and a
+     *       null upload id; the caller's complete call short-circuits.</li>
+     * </ul>
      */
     @Transactional
     public MediaInit initUpload(Account caller, long projectId, String filename,
-                                String contentType, long sizeBytes) {
+                                String contentType, long sizeBytes, String clientUploadId) {
         projects.getForAccount(projectId, caller);
+        String idempotencyKey = requireClientUploadId(clientUploadId);
+
+        MediaInit existing = findExistingByIdempotencyKey(projectId, idempotencyKey);
+        if (existing != null) {
+            return existing;
+        }
 
         String kind = kindFor(contentType);
         String safeName = sanitizeFilename(filename);
         String objectContentType = (contentType == null || contentType.isBlank())
                 ? guessContentType(safeName) : contentType;
 
-        Integer maxSort = jdbc.queryForObject(
-                "SELECT COALESCE(MAX(sort), 0) FROM media WHERE project_id = ?", Integer.class,
-                projectId);
-        int sort = (maxSort == null ? 0 : maxSort) + 1;
+        // `sort` is provisional here (batch in-flight ordering) and canonically
+        // re-assigned at complete. Two concurrent inits can race the subquery;
+        // the per-project unique index arbitrates — see the catch below.
+        try {
+            Long mediaId = jdbc.queryForObject(
+                    "INSERT INTO media (project_id, s3_key, size_bytes, kind, sort, status, client_upload_id) " +
+                            "VALUES (?, '', ?, ?, (SELECT COALESCE(MAX(sort), 0) + 1 FROM media WHERE project_id = ?), " +
+                            "'uploading', ?) RETURNING id",
+                    Long.class, projectId, Math.max(0, sizeBytes), kind, projectId, idempotencyKey);
 
-        Long mediaId = jdbc.queryForObject(
-                "INSERT INTO media (project_id, s3_key, size_bytes, kind, sort, status) " +
-                        "VALUES (?, '', ?, ?, ?, 'uploading') RETURNING id",
-                Long.class, projectId, Math.max(0, sizeBytes), kind, sort);
+            String key = "originals/" + projectId + "/" + mediaId + "/" + safeName;
+            String uploadId = s3.createMultipartUpload(
+                    s3.originalsBucket(), key, objectContentType);
+            jdbc.update("UPDATE media SET s3_key = ?, s3_upload_id = ? WHERE id = ?",
+                    key, uploadId, mediaId);
 
-        String key = "originals/" + projectId + "/" + mediaId + "/" + safeName;
-        String uploadId = s3.createMultipartUpload(
-                s3.originalsBucket(), key, objectContentType);
-        jdbc.update("UPDATE media SET s3_key = ?, s3_upload_id = ? WHERE id = ?",
-                key, uploadId, mediaId);
+            return new MediaInit(mediaId, key, uploadId, false);
+        } catch (DuplicateKeyException e) {
+            // A twin init with the same key won the insert race — serve its
+            // state instead of a second row.
+            existing = findExistingByIdempotencyKey(projectId, idempotencyKey);
+            if (existing != null) {
+                return existing;
+            }
+            throw e;
+        }
+    }
 
-        return new MediaInit(mediaId, key, uploadId);
+    /**
+     * State of a prior init with this key, or null when none existed.
+     * An {@code uploading} row with no upload id can only come from a crash
+     * between the INSERT and the multipart-open — the upload never started,
+     * so the stranded row is deleted and a fresh insert may proceed. Two
+     * attempts cover the delete-vs-takeover race with a concurrent caller.
+     */
+    private MediaInit findExistingByIdempotencyKey(long projectId, String idempotencyKey) {
+        for (int attempt = 0; attempt < 2; attempt++) {
+            List<Media> rows = jdbc.query(
+                    "SELECT " + COLUMNS + " FROM media WHERE project_id = ? AND client_upload_id = ?",
+                    MAPPER, projectId, idempotencyKey);
+            if (rows.isEmpty()) {
+                return null;
+            }
+            Media media = rows.get(0);
+            if (media.isUploading()) {
+                if (media.uploadId() != null) {
+                    return new MediaInit(media.id(), media.s3Key(), media.uploadId(), false);
+                }
+                int deleted = jdbc.update("DELETE FROM media WHERE id = ? " +
+                        "AND status = 'uploading' AND s3_upload_id IS NULL", media.id());
+                if (deleted > 0) {
+                    return null; // cleaned; caller inserts a fresh row
+                }
+                continue; // a concurrent call re-opened it; read once more
+            }
+            return new MediaInit(media.id(), media.s3Key(), null, true);
+        }
+        return null;
+    }
+
+    /** Non-blank, length-capped key the browser assigns once per queued file. */
+    private static String requireClientUploadId(String clientUploadId) {
+        if (clientUploadId == null || clientUploadId.isBlank()) {
+            throw new IllegalArgumentException("clientUploadId is required for idempotent uploads");
+        }
+        String key = clientUploadId.strip();
+        return key.length() > 200 ? key.substring(0, 200) : key;
     }
 
     /** Presigned URL for one part of an open upload. */
@@ -107,7 +183,11 @@ public class MediaService {
     /**
      * Closes the multipart upload from the browser-supplied part ETags,
      * verifies the object exists, and flips the row to {@code uploaded}
-     * (which also enqueues it for derivatives).
+     * (which also enqueues it for derivatives). Idempotent: a retry after a
+     * lost response — or an already-finalized row of any kind — returns the
+     * finished item instead of failing, and a {@code NoSuchUploadException}
+     * from S3 is treated as the crash window between the S3 complete and
+     * the DB write (the object verifies, the row finalizes).
      */
     @Transactional
     public MediaItem completeUpload(Account caller, long mediaId, List<PartETag> parts) {
@@ -116,9 +196,6 @@ public class MediaService {
         }
         Media media = findById(mediaId).orElseThrow(ProjectService.NotFoundException::new);
         projects.getForAccount(media.projectId(), caller);
-        if (!media.isUploading() || media.uploadId() == null) {
-            throw new IllegalArgumentException("upload is not open");
-        }
 
         List<CompletedPart> completed = new ArrayList<>();
         for (PartETag part : parts) {
@@ -131,26 +208,89 @@ public class MediaService {
             completed.add(CompletedPart.builder().partNumber(part.partNumber()).eTag(etag).build());
         }
 
-        s3.completeMultipartUpload(s3.originalsBucket(), media.s3Key(), media.uploadId(), completed);
+        if (!media.isUploading()) {
+            // Already finalized (retry after a lost response, twin call): the
+            // item is done — replay it as success.
+            return itemOf(media);
+        }
+        if (media.uploadId() == null) {
+            throw new IllegalArgumentException("upload is not open");
+        }
+
+        try {
+            s3.completeMultipartUpload(s3.originalsBucket(), media.s3Key(), media.uploadId(), completed);
+        } catch (NoSuchUploadException e) {
+            // MPU already completed: the crash window between the S3 call and
+            // the DB write below (or a twin complete). Recover only when the
+            // finalized object actually exists.
+            if (s3.objectSize(s3.originalsBucket(), media.s3Key()).isEmpty()) {
+                throw new IllegalStateException("multipart upload vanished before completion", e);
+            }
+        }
 
         long actualSize = s3.objectSize(s3.originalsBucket(), media.s3Key())
                 .orElseThrow(() -> new IllegalStateException("completed object not found"));
 
-        jdbc.update("UPDATE media SET status = 'uploaded', size_bytes = ?, s3_upload_id = NULL " +
-                        "WHERE id = ?",
-                actualSize, mediaId);
-        return itemOf(findById(mediaId).orElseThrow());
+        // Canonical display order is assigned at completion. An advisory lock
+        // serializes allocation per project, so two completes in one batch
+        // cannot draw the same slot (the (sort, id) keyset still breaks ties).
+        PreparedStatementCallback<Void> orderLock = ps -> {
+            ps.setLong(1, media.projectId());
+            ps.execute();
+            return null;
+        };
+        jdbc.execute("SELECT pg_advisory_xact_lock(?)", orderLock);
+
+        jdbc.update("UPDATE media SET status = 'uploaded', size_bytes = ?, s3_upload_id = NULL, " +
+                        "sort = (SELECT COALESCE(MAX(sort), 0) + 1 FROM media WHERE project_id = ?) " +
+                        "WHERE id = ? AND status = 'uploading'",
+                actualSize, media.projectId(), mediaId);
+        // Whether this call or a concurrent twin won the guarded UPDATE, the
+        // row now reads final — return its current state.
+        return itemOf(findById(mediaId).orElseThrow(ProjectService.NotFoundException::new));
     }
 
-    /** Aborts the multipart upload and drops the reserved row. Idempotent-ish. */
+    /**
+     * Aborts the multipart upload and drops the reserved row (idempotent:
+     * aborting an already-finalized upload does nothing — removal of
+     * finished media goes through {@link #deleteMedia}). Aborting a missing
+     * upload reads as not-found, so the browser cannot delete foreign rows
+     * by brute force.
+     */
     @Transactional
     public void abortUpload(Account caller, long mediaId) {
         Media media = findById(mediaId).orElseThrow(ProjectService.NotFoundException::new);
         projects.getForAccount(media.projectId(), caller);
+        if (!media.isUploading()) {
+            return; // finalized while the abort was in flight (e.g. lost response)
+        }
         if (media.uploadId() != null) {
             s3.abortMultipartUpload(s3.originalsBucket(), media.s3Key(), media.uploadId());
         }
         jdbc.update("DELETE FROM media WHERE id = ?", mediaId);
+    }
+
+    /**
+     * Reaper support: bounds uploads whose browser never returned (tab
+     * closed mid-batch, crashed laptop, abandoned retries). Stale
+     * {@code uploading} rows get their multipart upload aborted
+     * (best-effort — the S3 call swallows already-completed/missing) and
+     * the row dropped; rows whose upload never opened carry no S3 call.
+     * Rows that finalized while the sweep read them survive the guarded
+     * delete. Returns the number of rows reaped.
+     */
+    public int reapStaleUploads(Duration maxAge, int batch) {
+        List<Media> stale = jdbc.query(
+                "SELECT " + COLUMNS + " FROM media WHERE status = 'uploading' " +
+                        "AND created_at < ? LIMIT ?",
+                MAPPER, Timestamp.from(Instant.now().minus(maxAge)), batch);
+        for (Media media : stale) {
+            if (media.uploadId() != null) {
+                s3.abortMultipartUpload(s3.originalsBucket(), media.s3Key(), media.uploadId());
+            }
+            jdbc.update("DELETE FROM media WHERE id = ? AND status = 'uploading'", media.id());
+        }
+        return stale.size();
     }
 
     /**
@@ -357,8 +497,13 @@ public class MediaService {
                 rs.getTimestamp("created_at").toInstant());
     }
 
-    /** Result of {@link #initUpload}: everything the browser needs to upload. */
-    public record MediaInit(long mediaId, String key, String uploadId) {
+    /**
+     * Result of {@link #initUpload}: everything the browser needs to
+     * upload. {@code uploadId} is null once the row is finalized — the
+     * caller sees {@code alreadyUploaded=true} and skips the part/complete
+     * phase entirely.
+     */
+    public record MediaInit(long mediaId, String key, String uploadId, boolean alreadyUploaded) {
     }
 
     /** One browser-reported uploaded part. */

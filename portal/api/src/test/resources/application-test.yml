@@ -15,10 +15,14 @@ logging:
   level:
     root: warn
 
-# Tests drive workers directly; background sweeps would steal claims.
+# Tests drive workers directly; background sweeps would steal claims/reap
+# intentionally-stale fixture rows.
 zip:
   worker:
     enabled: false
 derivative:
   worker:
+    enabled: false
+media:
+  reaper:
     enabled: false

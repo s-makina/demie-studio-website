@@ -38,15 +38,15 @@ public class MediaController {
         this.accounts = accounts;
     }
 
-    /** Photographer reserves a row and opens the multipart upload. */
+    /** Photographer reserves a row and opens the multipart upload (idempotent per {@code clientUploadId}). */
     @PostMapping("/projects/{id}/media/init")
     @ResponseStatus(HttpStatus.CREATED)
-    public Map<String, Object> init(@PathVariable long id,
-                                    @Valid @RequestBody InitRequest request,
-                                    Authentication authentication) {
-        MediaService.MediaInit init = media.initUpload(currentAccount(authentication), id,
-                request.filename(), request.contentType(), request.sizeBytes());
-        return Map.of("mediaId", init.mediaId(), "key", init.key(), "uploadId", init.uploadId());
+    public MediaService.MediaInit init(@PathVariable long id,
+                                       @Valid @RequestBody InitRequest request,
+                                       Authentication authentication) {
+        return media.initUpload(currentAccount(authentication), id,
+                request.filename(), request.contentType(), request.sizeBytes(),
+                request.clientUploadId());
     }
 
     /** Photographer gets a presigned URL for one part. */
@@ -132,8 +132,14 @@ public class MediaController {
 
     // ------------------------------------------------------------- payloads
 
+    /**
+     * {@code clientUploadId} is the browser's stable key for this queued file
+     * (one UUID per file, re-sent on retry). It drives the idempotency of
+     * init and complete; omitting it fails validation.
+     */
     public record InitRequest(String filename, @NotBlank String contentType,
-                              @NotNull @Min(0) Long sizeBytes) {
+                              @NotNull @Min(0) Long sizeBytes,
+                              @NotBlank String clientUploadId) {
     }
 
     public record PartRequest(@Min(1) int partNumber) {

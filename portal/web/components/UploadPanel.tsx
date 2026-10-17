@@ -15,6 +15,8 @@ const PART_SIZE = 8 * 1024 * 1024; // 8MB chunks (S3 needs ≥5MB non-tail parts
 
 interface FileState {
   id: number;
+  /** Stable API idempotency key, generated once when the file was queued. */
+  clientKey: string;
   file: File;
   preview: string | null;
   progress: number; // 0..1
@@ -23,6 +25,16 @@ interface FileState {
 }
 
 let fileSeq = 1;
+
+/**
+ * Per-queued-file key the API dedupes on. It must survive retries — Retry
+ * re-sends the same key so init/complete converge instead of duplicating.
+ */
+function freshClientKey(): string {
+  return typeof crypto !== "undefined" && "randomUUID" in crypto
+    ? crypto.randomUUID()
+    : `${Date.now()}-${Math.random().toString(16).slice(2)}`;
+}
 
 function contentTypeFor(file: File): string {
   if (file.type) {
@@ -42,8 +54,10 @@ function contentTypeFor(file: File): string {
 /**
  * Photographer upload dropzone (Task 20): drag-and-drop with file previews,
  * sequential init → direct-S3 PUT → complete, per-file progress and
- * retry-in-place. Upload order is display order. Thumbs stream into the grid
- * below as derivatives finish (parent refreshes on each completion).
+ * retry-in-place. Upload order is display order. Each queued file gets a
+ * stable `clientKey` the API dedupes on, so retries (even after a complete
+ * whose response was lost) never duplicate media. Thumbs stream into the
+ * grid below as derivatives finish (parent refreshes on each completion).
  */
 export default function UploadPanel({
   projectId,
@@ -70,6 +84,7 @@ export default function UploadPanel({
         }
         accepted.push({
           id: fileSeq++,
+          clientKey: freshClientKey(),
           file,
           preview: file.type.startsWith("image/")
             ? URL.createObjectURL(file)
@@ -99,8 +114,16 @@ export default function UploadPanel({
           filename: file.name,
           contentType: contentTypeFor(file),
           sizeBytes: file.size,
+          clientUploadId: entry.clientKey,
         });
         mediaId = init.mediaId;
+        if (!init.uploadId) {
+          // Already finalized under this clientKey (a previous attempt's
+          // complete landed but its response was lost). Replay as success.
+          setFile(entry.id, { status: "done", progress: 1 });
+          onUploaded();
+          return;
+        }
         const totalParts = Math.max(1, Math.ceil(file.size / PART_SIZE));
         const etags: Array<{ partNumber: number; etag: string }> = [];
         let sent = 0;

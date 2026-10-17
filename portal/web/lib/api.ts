@@ -342,7 +342,13 @@ export function shareUrl(token: string): string {
 export interface UploadInit {
   mediaId: number;
   key: string;
-  uploadId: string;
+  /** Open multipart upload id; null once the row is finalized. */
+  uploadId: string | null;
+  /**
+   * This file was already completed under the same `clientUploadId` (retry
+   * after a lost response). The caller marks it done without any part PUTs.
+   */
+  alreadyUploaded: boolean;
 }
 
 export interface UploadPart {
@@ -359,10 +365,21 @@ export interface CompletedUpload {
   status: string;
 }
 
-/** Photographer reserves a row + opens the S3 multipart upload. */
+/**
+ * Photographer reserves a row + opens the S3 multipart upload. Idempotent
+ * per `clientUploadId`: the browser generates it once per queued file and
+ * re-sends it on every retry, so a lost response, double click or replay
+ * inside a large batch converges to the same row and upload instead of
+ * duplicating media.
+ */
 export function initUpload(
   projectId: number,
-  file: { filename: string; contentType: string; sizeBytes: number }
+  file: {
+    filename: string;
+    contentType: string;
+    sizeBytes: number;
+    clientUploadId: string;
+  }
 ): Promise<UploadInit> {
   return request(`/projects/${projectId}/media/init`, {
     method: "POST",
@@ -370,6 +387,7 @@ export function initUpload(
       filename: file.filename,
       contentType: file.contentType,
       sizeBytes: file.sizeBytes,
+      clientUploadId: file.clientUploadId,
     }),
   });
 }
@@ -382,7 +400,7 @@ export function uploadPartUrl(mediaId: number, partNumber: number): Promise<Uplo
   });
 }
 
-/** Photographer closes the upload with browser-collected part ETags. */
+/** Photographer closes the upload with browser-collected part ETags (idempotent: a retry returns the same finished item). */
 export function completeUpload(
   mediaId: number,
   parts: Array<{ partNumber: number; etag: string }>

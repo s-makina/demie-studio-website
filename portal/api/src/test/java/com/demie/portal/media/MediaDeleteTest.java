@@ -141,7 +141,7 @@ class MediaDeleteTest {
                         .session(admin)
                         .contentType(APPLICATION_JSON)
                         .content(body(Map.of("filename", name, "contentType", contentType,
-                                "sizeBytes", payload.length))))
+                                "sizeBytes", payload.length, "clientUploadId", "c-" + name))))
                 .andExpect(status().isCreated())
                 .andReturn();
         JsonNode init = json.readTree(initResult.getResponse().getContentAsString());
