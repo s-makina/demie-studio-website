@@ -22,12 +22,19 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  * its datasource from {@code application.yml}, whose default is the real local
  * database ({@code demie_portal}). Every integration test starts with a
  * {@code TRUNCATE}, so one class that forgot the profile deleted local accounts
- * and projects. Sliced contexts ({@code @SpringBootTest(classes = ...)}, e.g.
- * the S3-only ones) never open a datasource and are exempt.
+ * and projects.
+ *
+ * <p>Sliced contexts ({@code @SpringBootTest(classes = ...)}) are included too.
+ * They open no datasource, but they can still reach object storage — and while
+ * they were exempt they resolved the default {@code local} profile, imported
+ * {@code infra/.env} and wrote test objects into the live bucket. Activating
+ * the profile is what puts them on {@code application-test.yml}'s isolated
+ * buckets.
  *
  * <p>{@code src/test/resources/application.properties} already defaults the
- * whole test classpath to the {@code test} profile; this scan keeps the opt-in
- * explicit so the guarantee never depends on a single missed annotation.
+ * whole test classpath to the {@code test} profile, but config data is not
+ * loaded identically in a sliced context; this scan keeps the opt-in explicit
+ * so the guarantee never depends on a single missed annotation.
  */
 class TestProfileGuardTest {
 
@@ -51,7 +58,7 @@ class TestProfileGuardTest {
                 }
                 SpringBootTest boot = Class.forName(name, false, getClass().getClassLoader())
                         .getAnnotation(SpringBootTest.class);
-                if (boot == null || boot.classes().length > 0) {
+                if (boot == null) {
                     continue;
                 }
                 scanned++;
@@ -63,9 +70,10 @@ class TestProfileGuardTest {
             }
         }
 
-        assertFalse(scanned == 0, "scan found no full-context @SpringBootTest classes");
+        assertFalse(scanned == 0, "scan found no @SpringBootTest classes");
         assertTrue(offenders.isEmpty(),
                 "these @SpringBootTest classes must declare @ActiveProfiles(\"test\") "
-                        + "or they will TRUNCATE the developer database: " + offenders);
+                        + "or they will use the developer database and the live object "
+                        + "bucket: " + offenders);
     }
 }

@@ -66,6 +66,13 @@
       <artifactId>s3</artifactId>
       <version>2.25.16</version>
     </dependency>
+    <!-- Apache HTTP client: referenced directly by S3Config, which wraps it to
+         strip the "Expect: 100-continue" header the SDK adds to PutObject. -->
+    <dependency>
+      <groupId>software.amazon.awssdk</groupId>
+      <artifactId>apache-client</artifactId>
+      <version>2.25.16</version>
+    </dependency>
 
     <!-- Security helpers: password hashing, random tokens -->
     <dependency>

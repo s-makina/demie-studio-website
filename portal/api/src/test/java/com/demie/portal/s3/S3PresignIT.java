@@ -5,6 +5,7 @@ import org.junit.jupiter.api.Assumptions;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.TestPropertySource;
 
 import java.net.URI;
@@ -18,6 +19,7 @@ import java.util.Random;
 import static org.junit.jupiter.api.Assertions.*;
 
 @SpringBootTest(classes = {S3Config.class, S3Service.class})
+@ActiveProfiles("test")
 @TestPropertySource(properties = {
         // This integration test exercises only S3 presigning against a real
         // MinIO endpoint; it does not need a database or Flyway.
@@ -46,6 +48,11 @@ class S3PresignIT {
     void requireMinio() {
         Assumptions.assumeTrue(envOk(),
                 "S3_ENDPOINT, S3_ACCESS_KEY and S3_SECRET_KEY must be set to run S3PresignIT");
+        // This test writes an object. Never let it land in a bucket that also
+        // holds real media; see application-test.yml and TestS3Buckets.
+        Assumptions.assumeTrue(TestS3Buckets.isolated(s3),
+                "the test profile must use isolated '-test' buckets (got "
+                        + s3.originalsBucket() + "); refusing to write");
     }
 
     @Test

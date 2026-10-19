@@ -11,6 +11,23 @@ spring:
     clean-disabled: false
     locations: classpath:db/migration
 
+# Object storage is isolated exactly like the database above.
+#
+# S3Service falls back to `demie-studio` whenever the S3_BUCKET_* properties are
+# absent, and S3BucketBootstrap (which would make that fallback obvious) is
+# excluded from this profile. Because every integration test truncates with
+# RESTART IDENTITY, the test project id is therefore always 1 and its media ids
+# run from 1 — the same keys as real media. A fixture thumbnail written by
+# DerivativeWorkerTest.testPng() (blue rectangle, yellow circle) then replaced the
+# real gallery thumbnail of photos in project 1.
+#
+# TestS3Buckets refuses to start when any of these is not a '-test' bucket, and
+# TestS3BucketGuardTest fails if this block is ever removed.
+S3_BUCKET_ORIGINALS: demie-studio-test
+S3_BUCKET_PREVIEWS: demie-studio-test
+S3_BUCKET_THUMBS: demie-studio-test
+S3_BUCKET_ZIPS: demie-studio-test
+
 logging:
   level:
     root: warn

@@ -221,7 +221,11 @@ public class DerivativeWorker {
         }
     }
 
-    private static void resize(Path source, Path dest, int maxPx) throws IOException {
+    /**
+     * The one resize call both derivatives go through. Package-private so the
+     * transform can be tested against real inputs without standing up S3.
+     */
+    static void resize(Path source, Path dest, int maxPx) throws IOException {
         try (OutputStream out = Files.newOutputStream(dest)) {
             Thumbnails.of(source.toFile())
                     .size(maxPx, maxPx)

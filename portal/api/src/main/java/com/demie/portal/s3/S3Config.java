@@ -6,6 +6,7 @@ import org.springframework.context.annotation.Configuration;
 import software.amazon.awssdk.auth.credentials.AwsBasicCredentials;
 import software.amazon.awssdk.auth.credentials.AnonymousCredentialsProvider;
 import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider;
+import software.amazon.awssdk.http.apache.ApacheHttpClient;
 import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.S3Configuration;
@@ -29,14 +30,24 @@ public class S3Config {
     public S3Client s3Client() {
         var builder = S3Client.builder()
                 .region(Region.US_EAST_1)
-                .credentialsProvider(credentialsProvider());
+                .credentialsProvider(credentialsProvider())
+                // The SDK's internal StreamingRequestInterceptor always adds
+                // "Expect: 100-continue" to PutObject calls, and this deployment's
+                // MinIO front end mishandles that header: it replies 200 without a body
+                // and silently drops the object. Stripping the header is the only
+                // supported way to avoid it - see NoExpectContinueHttpClient.
+                .httpClient(new NoExpectContinueHttpClient(
+                        ApacheHttpClient.builder().expectContinueEnabled(false).build()))
+                // The same front end also mishandles the SDK's default "aws-chunked"
+                // streaming payload, so sign the body normally instead.
+                .serviceConfiguration(S3Configuration.builder()
+                        .pathStyleAccessEnabled(true)
+                        .chunkedEncodingEnabled(false)
+                        .build());
 
         if (endpoint != null && !endpoint.isBlank()) {
             builder.endpointOverride(URI.create(endpoint));
         }
-
-        // Force path-style access for MinIO/local S3-compatible endpoints.
-        builder.forcePathStyle(true);
 
         return builder.build();
     }
