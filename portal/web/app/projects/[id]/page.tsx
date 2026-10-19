@@ -5,10 +5,12 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import InvitePanel from "@/components/InvitePanel";
 import MediaGrid from "@/components/MediaGrid";
+import PendingUploads from "@/components/PendingUploads";
 import ProjectSettings from "@/components/ProjectSettings";
 import SharePanel from "@/components/SharePanel";
 import SiteHeader from "@/components/SiteHeader";
 import UploadPanel from "@/components/UploadPanel";
+import { ToastStack, useToasts } from "@/components/console-ui";
 import {
   accountAccess,
   ApiError,
@@ -21,6 +23,7 @@ import {
   type Project,
   type ProjectStats,
 } from "@/lib/api";
+import { useUploadQueue } from "@/lib/useUploadQueue";
 
 const TABS = [
   { id: "gallery", label: "Gallery" },
@@ -96,6 +99,19 @@ export default function ProjectDetailPage({
     // Reload the grid from the first page so new uploads stream in.
     setRefreshKey((key) => key + 1);
   }, []);
+
+  const { toasts, push, dismiss } = useToasts();
+
+  const onReject = useCallback(
+    (fileName: string) => {
+      push(`"${fileName}" is not a photo or video — skipped.`);
+    },
+    [push]
+  );
+
+  // The queue is rendered twice: as the leading tiles of the gallery column and
+  // as the dropzone controls in the sidebar. Both read this one instance.
+  const queue = useUploadQueue(projectId, { onUploaded, onReject });
 
   return (
     <div className="flex min-h-screen flex-col bg-background text-foreground">
@@ -206,6 +222,13 @@ export default function ProjectDetailPage({
                         access={accountAccess(project.id)}
                         isAdmin={isAdmin}
                         refreshKey={refreshKey}
+                        /* Only a non-null element, so MediaGrid knows whether
+                           the empty state is genuinely empty. */
+                        leading={
+                          queue.files.length > 0 ? (
+                            <PendingUploads queue={queue} />
+                          ) : null
+                        }
                       />
                     </div>
 
@@ -239,7 +262,7 @@ export default function ProjectDetailPage({
                         </div>
                       </div>
 
-                      <UploadPanel projectId={project.id} onUploaded={onUploaded} />
+                      <UploadPanel queue={queue} />
                     </aside>
                   </div>
                 </div>
@@ -285,6 +308,8 @@ export default function ProjectDetailPage({
           </>
         )}
       </main>
+
+      <ToastStack toasts={toasts} onDismiss={dismiss} />
     </div>
   );
 }

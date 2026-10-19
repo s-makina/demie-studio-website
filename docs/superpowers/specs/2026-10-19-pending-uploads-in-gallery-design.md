@@ -122,13 +122,29 @@ Renders nothing when `files` is empty.
   `columnCountFor()` and `GAP = 16` in `lib/masonry.ts`, so tile widths line up with the
   masonry below.
 - Tile states: queued (dimmed placeholder, `Remove` on hover), uploading (preview image,
-  progress bar pinned to the bottom edge, `%` readout), done (green `Done` badge,
-  full-width green bar), failed (rose border, `Failed` badge, `Retry` + `Remove` on
-  hover). Failed entries also show their `error` string.
+  progress footer with a `%` readout and bar), done (green `Done` badge plus a green
+  bottom strip, no actions), failed (rose border, error text, `Retry` + `Remove`).
 - Images use the object URLs already created in `addFiles`; videos keep the current
   `video` placeholder glyph.
 - Deliberately inert otherwise: no `onClick` on the tile body, no checkbox, not referenced
   by `selectMode`/`selectedIds`, and not passed to `ZipPanel`.
+
+Tile geometry note: at the 2-column breakpoint a tile is only ~150px wide, so the three
+status regions must not overlap. Zero-width stacking is avoided by keeping `Done` (the
+only word badge) top-right on tiles that take no actions, the actions top-left, and the
+progress footer along the bottom.
+
+Two deviations from the sketch, both to avoid losing function:
+
+- **Failed tiles keep `Retry`/`Remove` visible permanently** rather than behind hover.
+  A failed upload is the one tile that needs an answer, and hiding the answer behind a
+  hover is a poor trade.
+- **Hover-revealed controls also appear on `[@media(hover:none)]`.** Touch devices never
+  fire hover, and today's sidebar shows `Remove` unconditionally, so hover-only would
+  have been a regression there.
+
+`Running` is read from the queue to disable `Retry` while a batch is in flight, matching
+the old sidebar behaviour.
 
 ### 4. `components/MediaGrid.tsx`
 
@@ -138,14 +154,20 @@ Renders nothing when `files` is empty.
   originOffset === 0 && !loading && !seeking && !error`), the "Awaiting Photographs" panel
   is suppressed — on a brand-new shoot the pending tiles are the content, and the two
   messages would otherwise contradict each other.
+- **The caller must pass `null`, not an empty-rendering element**, when the slot has
+  nothing to show. A React element is truthy even when it renders `null`, so passing
+  `<PendingUploads …/>` unconditionally would hide the empty state on a genuinely empty
+  shoot. The project page therefore guards on `queue.files.length > 0`.
 - `MediaGrid` gains no knowledge of uploads; it only knows something sits above it.
 
 ### 5. `app/projects/[id]/page.tsx`
 
 - `const queue = useUploadQueue(project.id, { onUploaded, onReject })`.
-- `onReject` pushes through a page-level `useToasts()` instance rendered in the gallery
-  tab (so the standard "not a photo" toast no longer depends on `UploadPanel`).
-- Gallery column: `<MediaGrid … leading={<PendingUploads queue={queue} />} />`.
+- `onReject` pushes through a page-level `useToasts()` instance. The page renders a single
+  `<ToastStack>` at the root rather than inside the gallery tab, so a rejection still
+  surfaces if the photographer has switched tabs. This is the page's first toast surface;
+  the sidebar keeps none.
+- Gallery column: `<MediaGrid … leading={queue.files.length > 0 ? <PendingUploads queue={queue} /> : null} />`.
 - Sidebar: `<UploadPanel queue={queue} />`.
 - Client branch (`!isAdmin`) passes no `leading`.
 

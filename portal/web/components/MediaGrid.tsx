@@ -59,6 +59,7 @@ export default function MediaGrid({
   isAdmin,
   refreshKey,
   onRemove,
+  leading,
 }: {
   access: MediaAccess;
   /** Photographer sees per-photo Remove (Task 21). */
@@ -67,6 +68,14 @@ export default function MediaGrid({
   refreshKey?: number;
   /** Fired after a photo is removed (parent clears lightbox state). */
   onRemove?: (id: number) => void;
+  /**
+   * Rendered directly above the grid, in the same column. Used for the queued
+   * uploads so they lead the gallery; this component stays ignorant of what
+   * they are. Pass `null` when the slot has nothing to show: a present slot
+   * suppresses the "nothing here yet" panel, so a shoot whose only content is
+   * pending uploads does not read as empty, while a genuinely empty one does.
+   */
+  leading?: React.ReactNode;
 }) {
   const [items, setItems] = useState<MediaView[]>([]);
   const [originOffset, setOriginOffset] = useState(0);
@@ -408,7 +417,7 @@ export default function MediaGrid({
         onClearSelection={() => setSelectedIds(new Set())}
       />
 
-      {items.length === 0 && originOffset === 0 && !loading && !seeking && !error && (
+      {items.length === 0 && originOffset === 0 && !loading && !seeking && !error && !leading && (
         <div className="mx-auto my-16 max-w-md rounded-2xl border border-white/[0.08] bg-surface-2/60 p-10 text-center backdrop-blur-xl">
           <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full border border-white/10 bg-surface-3 text-muted">
             <svg
@@ -467,6 +476,8 @@ export default function MediaGrid({
           </button>
         </div>
       )}
+
+      {leading}
 
       {/* Always mounted: its bottom sentinel also drives the first fetch. */}
       <MasonryGallery
