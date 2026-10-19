@@ -9,6 +9,7 @@ import {
   kindForFile,
   uploadPartUrl,
 } from "@/lib/api";
+import { deleteQueuedFile, listQueuedFiles, putQueuedFile } from "@/lib/uploadQueue";
 
 /** S3 needs ≥5MB for all but the tail part. */
 const PART_SIZE = 8 * 1024 * 1024;
@@ -75,7 +76,11 @@ function contentTypeFor(file: File): string {
  * Sequential init → direct-S3 PUT → complete, per-file progress and retry-in-
  * place. Upload order is display order. Each queued file gets a stable
  * `clientKey` the API dedupes on, so retries (even after a complete whose
- * response was lost) never duplicate media.
+ * response was lost) never duplicate media. The same key also drives the
+ * persisted queue ({@link ../lib/uploadQueue | IndexedDB}): a page refresh
+ * mid-batch restores the records (bytes included) and unfinished files resume
+ * under their original key — already-finalized files settle via
+ * `alreadyUploaded` in one cheap round trip per file.
  */
 export function useUploadQueue(
   projectId: number,
@@ -109,9 +114,10 @@ export function useUploadQueue(
         onRejectRef.current(file.name);
         continue;
       }
+      const clientKey = freshClientKey();
       accepted.push({
         id: fileSeq++,
-        clientKey: freshClientKey(),
+        clientKey,
         file,
         preview: file.type.startsWith("image/")
           ? URL.createObjectURL(file)
@@ -119,11 +125,46 @@ export function useUploadQueue(
         progress: 0,
         status: "queued",
       });
+      // Persist the record (bytes included) so a page refresh mid-batch can
+      // restore and resume it under the same key. No-op when IndexedDB is
+      // unavailable — the in-memory queue then uploads exactly as before.
+      void putQueuedFile({ projectId, clientKey, file });
     }
     if (accepted.length > 0) {
       setFiles((prev) => [...prev, ...accepted]);
     }
-  }, []);
+  }, [projectId]);
+
+  /* Restore the persisted queue (lib/uploadQueue) after a page refresh:
+   * every record hydrates as `queued` regardless of how far the batch got,
+   * and the API's idempotent init settles already-finished files in one
+   * cheap round trip. Existing entries win (addFiles may have run first);
+   * the clientKey dedupe also absorbs StrictMode double-invocation.
+   */
+  useEffect(() => {
+    void (async () => {
+      const entries = await listQueuedFiles(projectId);
+      if (entries.length === 0) {
+        return;
+      }
+      setFiles((prev) => {
+        const have = new Set(prev.map((f) => f.clientKey));
+        const restored: FileState[] = entries
+          .filter((entry) => !have.has(entry.clientKey))
+          .map((entry) => ({
+            id: fileSeq++,
+            clientKey: entry.clientKey,
+            file: entry.file,
+            preview: entry.file.type.startsWith("image/")
+              ? URL.createObjectURL(entry.file)
+              : null,
+            progress: 0,
+            status: "queued" as const,
+          }));
+        return restored.length > 0 ? [...prev, ...restored] : prev;
+      });
+    })();
+  }, [projectId]);
 
   const setFile = useCallback((id: number, patch: Partial<FileState>) => {
     setFiles((prev) => prev.map((f) => (f.id === id ? { ...f, ...patch } : f)));
@@ -146,6 +187,9 @@ export function useUploadQueue(
           // Already finalized under this clientKey (a previous attempt's
           // complete landed but its response was lost). Replay as success.
           setFile(entry.id, { status: "done", progress: 1 });
+          // Committed: the record leaves the resume queue — the gallery now
+          // owns the photo.
+          void deleteQueuedFile(projectId, entry.clientKey);
           onUploadedRef.current();
           return;
         }
@@ -173,6 +217,9 @@ export function useUploadQueue(
         }
         await completeUpload(mediaId, etags);
         setFile(entry.id, { status: "done", progress: 1 });
+        // Committed: the record leaves the resume queue — the gallery now
+        // owns the photo.
+        void deleteQueuedFile(projectId, entry.clientKey);
         onUploadedRef.current();
       } catch (e) {
         if (signal.cancelled && mediaId !== null) {
@@ -247,23 +294,32 @@ export function useUploadQueue(
   const removeOne = useCallback((id: number) => {
     setFiles((prev) => {
       const entry = prev.find((f) => f.id === id);
-      if (entry?.preview) {
-        URL.revokeObjectURL(entry.preview);
+      if (entry) {
+        // The user is dropping the bytes too — no resume record should
+        // outlive the tile (delete is idempotent; StrictMode may re-run the
+        // updater).
+        void deleteQueuedFile(projectId, entry.clientKey);
+        if (entry.preview) {
+          URL.revokeObjectURL(entry.preview);
+        }
       }
       return prev.filter((f) => f.id !== id);
     });
-  }, []);
+  }, [projectId]);
 
   const clearDone = useCallback(() => {
     setFiles((prev) => {
       for (const f of prev) {
-        if (f.status === "done" && f.preview) {
-          URL.revokeObjectURL(f.preview);
+        if (f.status === "done") {
+          void deleteQueuedFile(projectId, f.clientKey);
+          if (f.preview) {
+            URL.revokeObjectURL(f.preview);
+          }
         }
       }
       return prev.filter((f) => f.status !== "done");
     });
-  }, []);
+  }, [projectId]);
 
   const queued = files.filter(
     (f) => f.status === "queued" || f.status === "error"

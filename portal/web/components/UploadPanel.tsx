@@ -161,7 +161,8 @@ export default function UploadPanel({ queue }: { queue: UploadQueue }) {
       {files.length > 0 && (
         <p className="mt-3 text-[11px] leading-relaxed text-muted">
           Selected files appear at the top of the gallery. Remove or retry an
-          upload from its tile.
+          upload from its tile. The queue survives a page refresh — unfinished
+          files resume automatically.
         </p>
       )}
     </section>
