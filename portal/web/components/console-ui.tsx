@@ -77,21 +77,36 @@ export function Dialog({
   const titleId = useId();
   const firstField = useRef<HTMLDivElement>(null);
 
+  /* Callers usually pass an inline arrow (new identity every render). Keeping it
+   * in a ref lets the open/close effect depend on `open` alone — otherwise every
+   * keystroke inside the dialog re-ran it and stole focus back to the first
+   * field. */
+  const onCloseRef = useRef(onClose);
+  useEffect(() => {
+    onCloseRef.current = onClose;
+  }, [onClose]);
+
   useEffect(() => {
     if (!open) {
       return;
     }
     function onKey(event: KeyboardEvent) {
       if (event.key === "Escape") {
-        onClose();
+        onCloseRef.current();
       }
     }
     window.addEventListener("keydown", onKey);
     const timer = window.setTimeout(() => {
-      const input = firstField.current?.querySelector<
-        HTMLInputElement | HTMLButtonElement | HTMLSelectElement
-      >("input, button, select, textarea");
-      input?.focus();
+      const root = firstField.current;
+      if (!root) {
+        return;
+      }
+      /* Prefer a real form control; the header's close ✕ button comes first in
+       * DOM order, so only fall back to it when the dialog has no fields. */
+      const field =
+        root.querySelector<HTMLElement>("input, textarea, select") ??
+        root.querySelector<HTMLElement>("button");
+      field?.focus();
     }, 40);
     document.body.style.overflow = "hidden";
     return () => {
@@ -99,7 +114,7 @@ export function Dialog({
       window.clearTimeout(timer);
       document.body.style.overflow = "";
     };
-  }, [open, onClose]);
+  }, [open]);
 
   if (!open) {
     return null;
