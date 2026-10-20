@@ -1,0 +1,95 @@
+# Dokploy Compose service for the Demie Client Portal.
+#
+# Deploy from the repo (branch) with this file; the Env tab of the service in
+# the Dokploy UI supplies the values below (they are interpolated when the
+# compose runs). Secrets use `:?` so the stack fails fast when a value is
+# missing instead of starting half-configured.
+#
+# Schema is created by Flyway at API start-up (application.yml: flyway.enabled)
+# and the `demie-studio` bucket by S3BucketBootstrap — no manual DB/storage
+# steps. See infra/DOKPLOY-DEPLOY.md for the full walkthrough.
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: demie-portal-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${DB_NAME:-demie_portal}
+      POSTGRES_USER: ${DB_USERNAME:-portal}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:?Set DB_PASSWORD in the Dokploy Env tab}
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USERNAME:-portal} -d ${DB_NAME:-demie_portal}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    networks:
+      - internal
+
+  api:
+    build:
+      context: ./api
+      dockerfile: Dockerfile
+    container_name: demie-portal-api
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      # `prod` is not a configured profile; it only keeps application-local.yml
+      # (and its infra/.env import) out of the deployed run. Everything below
+      # arrives via env, which application.yml resolves.
+      SPRING_PROFILES_ACTIVE: prod
+      DB_HOST: postgres
+      DB_PORT: "5432"
+      DB_NAME: ${DB_NAME:-demie_portal}
+      DB_USERNAME: ${DB_USERNAME:-portal}
+      DB_PASSWORD: ${DB_PASSWORD:?Set DB_PASSWORD in the Dokploy Env tab}
+      # Existing Dokploy MinIO. Must be reachable from the browser too
+      # (presigned PUT/GET), so prefer an https:// domain in prod.
+      S3_ENDPOINT: ${S3_ENDPOINT:?Set S3_ENDPOINT in the Dokploy Env tab}
+      S3_ACCESS_KEY: ${S3_ACCESS_KEY:?Set S3_ACCESS_KEY in the Dokploy Env tab}
+      S3_SECRET_KEY: ${S3_SECRET_KEY:?Set S3_SECRET_KEY in the Dokploy Env tab}
+      S3_BUCKET_ORIGINALS: ${S3_BUCKET_ORIGINALS:-demie-studio}
+      S3_BUCKET_PREVIEWS: ${S3_BUCKET_PREVIEWS:-demie-studio}
+      S3_BUCKET_THUMBS: ${S3_BUCKET_THUMBS:-demie-studio}
+      S3_BUCKET_ZIPS: ${S3_BUCKET_ZIPS:-demie-studio}
+      # CORS: must be the public web domain (scheme included).
+      WEB_ORIGIN: ${WEB_ORIGIN:?Set WEB_ORIGIN (https://web-domain) in the Dokploy Env tab}
+      # Photographer bootstrap. AdminBootstrap defaults are dev-only; refuse to
+      # start without a real one.
+      ADMIN_EMAIL: ${ADMIN_EMAIL:?Set ADMIN_EMAIL in the Dokploy Env tab}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD:?Set ADMIN_PASSWORD in the Dokploy Env tab}
+      ADMIN_NAME: ${ADMIN_NAME:-Photographer}
+    networks:
+      - internal
+      - dokploy-network
+
+  web:
+    build:
+      context: ./web
+      dockerfile: Dockerfile
+      args:
+        # Baked into the client bundle at build time; rebuild after changing it.
+        NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:?Set NEXT_PUBLIC_API_URL (https://api-domain) in the Dokploy Env tab}
+    container_name: demie-portal-web
+    restart: unless-stopped
+    depends_on:
+      - api
+    networks:
+      - internal
+      - dokploy-network
+
+# internal: postgres/api/web talk to each other by service name.
+# dokploy-network: Dokploy's Traefik lives here; attach Domains (Domains tab)
+# to `api` (port 8080) and `web` (port 3000). Nothing is published to the host.
+networks:
+  internal:
+  dokploy-network:
+    external: true
+
+volumes:
+  postgres-data:

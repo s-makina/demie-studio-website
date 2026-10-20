@@ -1,0 +1,14 @@
+# Keep the build context small and secret-free; everything needed comes from
+# package.json/lock and tracked sources. NEXT_PUBLIC_* values arrive as build
+# args (Dockerfile), never from local env files.
+node_modules/
+.next/
+out/
+build/
+tsconfig.tsbuildinfo
+.env
+.env.*
+!.env.example
+*.log
+Dockerfile
+.dockerignore

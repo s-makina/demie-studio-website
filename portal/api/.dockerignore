@@ -1,0 +1,6 @@
+# Keep the build context small; Maven layers already cache pom -> src.
+target/
+cp.txt
+*.log
+Dockerfile
+.dockerignore
