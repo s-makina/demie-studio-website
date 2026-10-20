@@ -90,6 +90,16 @@
       <artifactId>thumbnailator</artifactId>
       <version>0.4.20</version>
     </dependency>
+    <!-- TwelveMonkeys ImageIO plugin: registers the CMYK JPEG reader the JDK
+         lacks, so CMYK JPEGs (photographer originals from print workflows)
+         decode and resize instead of quarantining as failures. Picked up
+         automatically via the ImageIO ServiceLoader. -->
+    <dependency>
+      <groupId>com.twelvemonkeys.imageio</groupId>
+      <artifactId>imageio-jpeg</artifactId>
+      <version>3.10.1</version>
+      <scope>runtime</scope>
+    </dependency>
 
     <!-- Testing -->
     <dependency>

@@ -13,6 +13,7 @@ import software.amazon.awssdk.services.s3.S3Configuration;
 import software.amazon.awssdk.services.s3.presigner.S3Presigner;
 
 import java.net.URI;
+import java.time.Duration;
 
 @Configuration
 public class S3Config {
@@ -26,8 +27,37 @@ public class S3Config {
     @Value("${S3_SECRET_KEY:}")
     private String secretKey;
 
+    // TCP connect timeout for S3 requests.
+    @Value("${S3_CONNECT_TIMEOUT_SECONDS:10}")
+    private long connectTimeoutSeconds;
+
+    // Socket read timeout. The derivative worker streams whole original
+    // objects (photographer-size photos) through this client, so leave slack
+    // well above the observed 2s TTFB plus transfer time; the SDK default is
+    // far too tight to survive a slow stretch on the remote MinIO link.
+    @Value("${S3_SOCKET_TIMEOUT_SECONDS:120}")
+    private long socketTimeoutSeconds;
+
+    // Evict pooled connections that have been idle this long. The remote
+    // MinIO front end silently black-holes old idle connections, and a
+    // long-lived worker reusing one of those reads nothing until the socket
+    // timeout fires ("Unable to execute HTTP request: Read timed out") on
+    // every attempt. Evicting early makes each derivative sweep dial a fresh
+    // connection instead of trusting ephemerally-dead pooled ones.
+    @Value("${S3_CONNECTION_MAX_IDLE_SECONDS:60}")
+    private long connectionMaxIdleSeconds;
+
     @Bean
-    public S3Client s3Client() {
+    public S3ClientFactory s3ClientFactory() {
+        return this::buildClient;
+    }
+
+    @Bean
+    public S3Client s3Client(S3ClientFactory factory) {
+        return factory.newClient();
+    }
+
+    private S3Client buildClient() {
         var builder = S3Client.builder()
                 .region(Region.US_EAST_1)
                 .credentialsProvider(credentialsProvider())
@@ -37,7 +67,12 @@ public class S3Config {
                 // and silently drops the object. Stripping the header is the only
                 // supported way to avoid it - see NoExpectContinueHttpClient.
                 .httpClient(new NoExpectContinueHttpClient(
-                        ApacheHttpClient.builder().expectContinueEnabled(false).build()))
+                        ApacheHttpClient.builder()
+                                .expectContinueEnabled(false)
+                                .connectionTimeout(Duration.ofSeconds(connectTimeoutSeconds))
+                                .socketTimeout(Duration.ofSeconds(socketTimeoutSeconds))
+                                .connectionMaxIdleTime(Duration.ofSeconds(connectionMaxIdleSeconds))
+                                .build()))
                 // The same front end also mishandles the SDK's default "aws-chunked"
                 // streaming payload, so sign the body normally instead.
                 .serviceConfiguration(S3Configuration.builder()

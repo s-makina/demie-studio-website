@@ -167,6 +167,111 @@ class DerivativeWorkerTest {
         assertEquals(rows, ready, "backlog drains without leftover pendings");
     }
 
+    // ------------------------------------------------------------- requeue sweep
+
+    /**
+     * Quarantined rows come back with a fresh attempt budget so a transient
+     * S3 outage cannot leave gallery tiles broken forever. Pure DB — no S3.
+     */
+    @Test
+    void requeueQuarantinedPutsFailedRowsBackInQueue() {
+        long mediaId = jdbc.queryForObject(
+                "INSERT INTO media (project_id, s3_key, size_bytes, kind, sort, status, " +
+                        "derivative_status, derivative_attempts, derivative_error) " +
+                        "VALUES (?, ?, 100, 'photo', 1, 'uploaded', 'failed', 3, 'synthetic') " +
+                        "RETURNING id",
+                Long.class, projectId, "originals/" + projectId + "/q1/x.png");
+
+        assertEquals(1, worker.requeueQuarantined(10));
+
+        assertEquals("pending", derivativeStatus(mediaId));
+        Integer attempts = jdbc.queryForObject(
+                "SELECT derivative_attempts FROM media WHERE id = ?", Integer.class, mediaId);
+        assertEquals(0, attempts, "fresh budget");
+        String error = jdbc.queryForObject(
+                "SELECT derivative_error FROM media WHERE id = ?", String.class, mediaId);
+        assertEquals(null, error, "stale error cleared");
+    }
+
+    /**
+     * Crash residue: a worker killed between claim and settle leaves a
+     * {@code pending} row at {@code MAX_ATTEMPTS}, which normal sweeps can
+     * never claim again. The requeue pass re-arms exactly those rows.
+     */
+    @Test
+    void requeueQuarantinedReArmsCrashResidue() {
+        long mediaId = jdbc.queryForObject(
+                "INSERT INTO media (project_id, s3_key, size_bytes, kind, sort, status, " +
+                        "derivative_status, derivative_attempts, derivative_error) " +
+                        "VALUES (?, ?, 100, 'photo', 1, 'uploaded', 'pending', 3, 'waited too long') " +
+                        "RETURNING id",
+                Long.class, projectId, "originals/" + projectId + "/q2/x.png");
+
+        assertEquals(1, worker.requeueQuarantined(10));
+        assertEquals("pending", derivativeStatus(mediaId));
+        Integer attempts = jdbc.queryForObject(
+                "SELECT derivative_attempts FROM media WHERE id = ?", Integer.class, mediaId);
+        assertEquals(0, attempts, "claimable again");
+    }
+
+    /** The pass is bounded and skips rows that are neither failed nor zombies. */
+    @Test
+    void requeueQuarantinedIsBoundedAndSelective() {
+        long failedId = jdbc.queryForObject(
+                "INSERT INTO media (project_id, s3_key, size_bytes, kind, sort, status, " +
+                        "derivative_status, derivative_attempts, derivative_error) " +
+                        "VALUES (?, ?, 100, 'photo', 1, 'uploaded', 'failed', 3, 'x') RETURNING id",
+                Long.class, projectId, "originals/" + projectId + "/q3/a.png");
+        long zombieId = jdbc.queryForObject(
+                "INSERT INTO media (project_id, s3_key, size_bytes, kind, sort, status, " +
+                        "derivative_status, derivative_attempts, derivative_error) " +
+                        "VALUES (?, ?, 100, 'photo', 2, 'uploaded', 'pending', 3, null) RETURNING id",
+                Long.class, projectId, "originals/" + projectId + "/q3/b.png");
+        jdbc.queryForObject(
+                "INSERT INTO media (project_id, s3_key, size_bytes, kind, sort, status, " +
+                        "derivative_status, derivative_attempts) " +
+                        "VALUES (?, ?, 100, 'photo', 3, 'uploaded', 'pending', 0) RETURNING id",
+                Long.class, projectId, "originals/" + projectId + "/q3/c.png");
+
+        assertEquals(1, worker.requeueQuarantined(1), "bounded to batchSize");
+
+        // Both released rows (failed row or crash-zombie) get exactly one
+        // budget reset per pass; with batchSize=1 only the oldest settles.
+        String first = derivativeStatus(failedId);
+        if ("pending".equals(first)) {
+            assertEquals(0, (int) jdbc.queryForObject(
+                    "SELECT derivative_attempts FROM media WHERE id = ?",
+                    Integer.class, failedId));
+            assertEquals(3, (int) jdbc.queryForObject(
+                    "SELECT derivative_attempts FROM media WHERE id = ?",
+                    Integer.class, zombieId), "zombie untouched within the bound");
+        } else {
+            assertEquals("pending", derivativeStatus(zombieId), "oldest row first");
+            assertEquals(0, (int) jdbc.queryForObject(
+                    "SELECT derivative_attempts FROM media WHERE id = ?",
+                    Integer.class, zombieId));
+            assertEquals(3, (int) jdbc.queryForObject(
+                    "SELECT derivative_attempts FROM media WHERE id = ?",
+                    Integer.class, failedId));
+        }
+    }
+
+    /** The healthy row (pending, 0 attempts) is never touched. */
+    @Test
+    void requeueQuarantinedLeavesHealthyRowsAlone() {
+        long mediaId = jdbc.queryForObject(
+                "INSERT INTO media (project_id, s3_key, size_bytes, kind, sort, status, " +
+                        "derivative_status, derivative_attempts) " +
+                        "VALUES (?, ?, 100, 'photo', 1, 'uploaded', 'pending', 0) RETURNING id",
+                Long.class, projectId, "originals/" + projectId + "/q4/a.png");
+
+        assertEquals(0, worker.requeueQuarantined(10));
+        assertEquals("pending", derivativeStatus(mediaId));
+        Integer attempts = jdbc.queryForObject(
+                "SELECT derivative_attempts FROM media WHERE id = ?", Integer.class, mediaId);
+        assertEquals(0, attempts);
+    }
+
     // ------------------------------------------------------------- helpers
 
     private long insertUploadedMedia(String key, byte[] bytes, String kind) {

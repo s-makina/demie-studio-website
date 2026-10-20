@@ -16,6 +16,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Comparator;
 import java.util.Iterator;
+import java.util.Random;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -71,7 +72,107 @@ class DerivativeTransformTest {
 
     // ------------------------------------------------------------- fixtures
 
-    /** An 800x600-ish JPEG with a red marker band along the stored top edge. */
+    /**
+     * A JPEG cannot carry alpha, but uploads are accepted with any
+     * {@code image/*} content type — so PNG/WebP originals with transparent
+     * pixels reach {@code resize()} too. Without an explicit flatten those
+     * pixels bleed black through the encode. A thumbnail of an image with a
+     * fully transparent top-left quadrant must therefore come out white there,
+     * and keep its color where the source was opaque.
+     */
+    @Test
+    void alphaPixelsBlendOntoWhite() throws Exception {
+        Path dir = Files.createTempDirectory("deriv-alpha");
+        try {
+            int size = 800;
+            Path source = dir.resolve("original");
+            BufferedImage image = new BufferedImage(size, size, BufferedImage.TYPE_INT_ARGB);
+            for (int y = 0; y < size; y++) {
+                for (int x = 0; x < size; x++) {
+                    if (x < size / 2 && y < size / 2) {
+                        image.setRGB(x, y, 0x00000000); // fully transparent quadrant
+                    } else {
+                        image.setRGB(x, y, 0xFFCC4444); // opaque red elsewhere
+                    }
+                }
+            }
+            ImageIO.write(image, "png", source.toFile());
+
+            Path thumb = dir.resolve("thumb.jpg");
+            DerivativeWorker.resize(source, thumb, DerivativeWorker.THUMB_MAX_PX);
+
+            BufferedImage out = ImageIO.read(thumb.toFile());
+            // Both samples relative to the output itself: (50,50) sits well
+            // inside the transparent quadrant's thumb image, never near the
+            // quadrant boundary where scaling blends edge colors in.
+            int transparent = out.getRGB(50, 50);
+            assertTrue(isWhite(transparent),
+                    "transparent quadrant must flatten to white, not black: "
+                            + Integer.toHexString(transparent));
+            int opaque = out.getRGB(out.getWidth() - 50, out.getHeight() - 50);
+            assertTrue(isRed(opaque),
+                    "opaque region must keep its color, got "
+                            + Integer.toHexString(opaque));
+        } finally {
+            deleteTree(dir);
+        }
+    }
+
+    /**
+     * The JDK cannot decode CMYK JPEGs (a common photographer/print export),
+     * so {@code resize()} would quarantine every one of them. The TwelveMonkeys
+     * plugin must be on the runtime classpath and registered for the JPEG
+     * format — then {@code ImageIO.read} (and Thumbnailator behind it) picks it
+     * up automatically.
+     */
+    @Test
+    void cmykJpegSupportIsRegistered() {
+        Iterator<ImageReader> readers = ImageIO.getImageReadersByFormatName("JPEG");
+        boolean twelveMonkeys = false;
+        while (readers.hasNext()) {
+            if (readers.next().getClass().getName().startsWith("com.twelvemonkeys")) {
+                twelveMonkeys = true;
+            }
+        }
+        assertTrue(twelveMonkeys,
+                "TwelveMonkeys JPEG reader not registered; CMYK JPEGs would fail to decode");
+    }
+
+    /**
+     * {@code outputQuality} must actually reach the encoder: the same noisy
+     * source resized at 0.1 and 0.95 must produce files far enough apart that a
+     * mis-wired or silently-defaulted parameter shows up as an equal-sized
+     * pair (a fine JPEG is never small; a coarse one is always cheap).
+     */
+    @Test
+    void outputQualityControlsJpegSize() throws Exception {
+        Path dir = Files.createTempDirectory("deriv-quality");
+        try {
+            int size = 800;
+            Random random = new Random(42);
+            BufferedImage image = new BufferedImage(size, size, BufferedImage.TYPE_INT_RGB);
+            for (int y = 0; y < size; y++) {
+                for (int x = 0; x < size; x++) {
+                    image.setRGB(x, y, random.nextInt());
+                }
+            }
+            Path source = dir.resolve("noisy.png");
+            ImageIO.write(image, "png", source.toFile());
+
+            Path coarse = dir.resolve("coarse.jpg");
+            Path fine = dir.resolve("fine.jpg");
+            DerivativeWorker.resize(source, coarse, size, 0.1);
+            DerivativeWorker.resize(source, fine, size, 0.95);
+
+            assertTrue(Files.size(fine) > Files.size(coarse),
+                    "quality 0.95 must encode larger than 0.1: " + Files.size(fine)
+                            + " vs " + Files.size(coarse));
+        } finally {
+            deleteTree(dir);
+        }
+    }
+
+    /** 800x600-ish JPEG with a red marker band along the stored top edge. */
     private static byte[] jpegWithOrientation(int width, int height, int orientation)
             throws IOException {
         BufferedImage image = new BufferedImage(width, height, BufferedImage.TYPE_INT_RGB);
@@ -157,6 +258,14 @@ class DerivativeTransformTest {
         int g = (rgb >> 8) & 0xFF;
         int b = rgb & 0xFF;
         return r > 180 && g < 90 && b < 90;
+    }
+
+    /** Near-uniform white or a red blend onto it, never the black of dropped alpha. */
+    private static boolean isWhite(int rgb) {
+        int r = (rgb >> 16) & 0xFF;
+        int g = (rgb >> 8) & 0xFF;
+        int b = rgb & 0xFF;
+        return r > 200 && g > 200 && b > 200;
     }
 
     private static void deleteTree(Path root) {

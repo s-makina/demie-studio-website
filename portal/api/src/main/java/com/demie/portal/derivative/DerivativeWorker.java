@@ -2,14 +2,20 @@ package com.demie.portal.derivative;
 
 import com.demie.portal.media.Media;
 import com.demie.portal.media.MediaService;
+import com.demie.portal.s3.S3ClientFactory;
 import com.demie.portal.s3.S3Service;
 import net.coobird.thumbnailator.Thumbnails;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
+import software.amazon.awssdk.core.sync.RequestBody;
+import software.amazon.awssdk.services.s3.S3Client;
 
 import javax.imageio.ImageIO;
+import java.awt.Color;
+import java.awt.Graphics2D;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.io.InputStream;
@@ -54,16 +60,24 @@ public class DerivativeWorker {
     static final int PREVIEW_MAX_PX = 1600;
     static final int THUMB_MAX_PX = 400;
     static final int POOL_SIZE = 2;
+    /** JPEG quality used by the 3-arg {@link #resize} overload. */
+    static final double DEFAULT_JPEG_QUALITY = 0.85;
 
     private final JdbcTemplate jdbc;
     private final MediaService media;
     private final S3Service s3;
+    private final S3ClientFactory s3Clients;
+    private final double jpegQuality;
     private final ExecutorService pool = Executors.newFixedThreadPool(POOL_SIZE);
 
-    public DerivativeWorker(JdbcTemplate jdbc, MediaService media, S3Service s3) {
+    public DerivativeWorker(JdbcTemplate jdbc, MediaService media, S3Service s3,
+                            S3ClientFactory s3Clients,
+                            @Value("${DERIVATIVE_JPEG_QUALITY:0.85}") double jpegQuality) {
         this.jdbc = jdbc;
         this.media = media;
         this.s3 = s3;
+        this.s3Clients = s3Clients;
+        this.jpegQuality = jpegQuality;
     }
 
     /**
@@ -147,9 +161,14 @@ public class DerivativeWorker {
      */
     private int[] makeDerivatives(Media row) throws Exception {
         Path workdir = Files.createTempDirectory("deriv-" + row.id());
-        try {
+        // Fresh client per job: the Dokploy MinIO front end intermittently
+        // black-holes live connections of pooled clients while accepting new
+        // dials happily (verified by the 2026-10-19 wedge investigation), so
+        // every batch dials its own connections and tears them down after.
+        try (S3Client client = s3Clients.newClient()) {
             Path original = workdir.resolve("original");
-            try (InputStream in = s3.getObject(s3.originalsBucket(), row.s3Key())) {
+            try (InputStream in = client.getObject(r -> r
+                    .bucket(s3.originalsBucket()).key(row.s3Key()))) {
                 Files.copy(in, original);
             }
 
@@ -161,21 +180,51 @@ public class DerivativeWorker {
 
             Path preview = workdir.resolve("preview.jpg");
             Path thumb = workdir.resolve("thumb.jpg");
-            resize(frame, preview, PREVIEW_MAX_PX);
-            resize(frame, thumb, THUMB_MAX_PX);
+            resize(frame, preview, PREVIEW_MAX_PX, jpegQuality);
+            resize(frame, thumb, THUMB_MAX_PX, jpegQuality);
 
-            try (InputStream previewIn = Files.newInputStream(preview)) {
-                s3.putObject(s3.previewsBucket(), previewKeyFor(row), "image/jpeg",
-                        Files.size(preview), previewIn);
-            }
-            try (InputStream thumbIn = Files.newInputStream(thumb)) {
-                s3.putObject(s3.thumbsBucket(), thumbKeyFor(row), "image/jpeg",
-                        Files.size(thumb), thumbIn);
-            }
+            // The Dokploy MinIO front end hangs on streaming request bodies
+            // (RequestBody.fromInputStream) while accepting fully-buffered
+            // bodies, so upload derivative files from byte arrays.
+            client.putObject(r -> r.bucket(s3.previewsBucket())
+                            .key(previewKeyFor(row)).contentType("image/jpeg"),
+                    RequestBody.fromBytes(Files.readAllBytes(preview)));
+            client.putObject(r -> r.bucket(s3.thumbsBucket())
+                            .key(thumbKeyFor(row)).contentType("image/jpeg"),
+                    RequestBody.fromBytes(Files.readAllBytes(thumb)));
             return readSize(thumb);
         } finally {
             deleteTree(workdir);
         }
+    }
+
+    /**
+     * Puts quarantined rows back in the queue for one more
+     * {@code MAX_ATTEMPTS} budget each pass. Bounded per sweep and idempotent.
+     * Also recovers crash residue: a row left {@code pending} at
+     * {@code derivative_attempts >= MAX_ATTEMPTS} (worker died between claim
+     * and settle) would otherwise never be claimed again, because claims gate
+     * on {@code attempts < MAX_ATTEMPTS} — the sweep re-arms it once and the
+     * regular queue takes over. Called on a slow cadence by
+     * {@link DerivativeScheduler#requeueQuarantined()} so transient S3 outages
+     * self-heal; genuinely broken sources are expected to fail again and
+     * return here, which keeps {@code derivative_error} fresh.
+     *
+     * @return the number of rows re-queued.
+     */
+    public int requeueQuarantined(int batchSize) {
+        List<Long> ids = jdbc.queryForList(
+                "SELECT id FROM media WHERE (" +
+                        "derivative_status = 'failed' OR " +
+                        "(derivative_status = 'pending' AND derivative_attempts >= ?)) " +
+                        "AND status = 'uploaded' ORDER BY id LIMIT ?",
+                Long.class, MAX_ATTEMPTS, Math.max(1, batchSize));
+        for (Long id : ids) {
+            jdbc.update("UPDATE media SET derivative_status = 'pending', " +
+                            "derivative_attempts = 0, derivative_error = NULL WHERE id = ?",
+                    id);
+        }
+        return ids.size();
     }
 
     /**
@@ -222,16 +271,70 @@ public class DerivativeWorker {
     }
 
     /**
-     * The one resize call both derivatives go through. Package-private so the
-     * transform can be tested against real inputs without standing up S3.
+     * The one resize call both derivatives go through (default quality), kept
+     * so existing tests can exercise the transform without standing up S3.
      */
     static void resize(Path source, Path dest, int maxPx) throws IOException {
+        resize(source, dest, maxPx, DEFAULT_JPEG_QUALITY);
+    }
+
+    /**
+     * The one resize call both derivatives go through, with explicit quality.
+     *
+     * <p>JPEG output cannot carry alpha, and Thumbnailator 0.4.20 has no
+     * background-color API — so alpha-carrying sources (the upload gate accepts
+     * any {@code image/*}) bleed their transparent pixels through as black
+     * once the encoder flattens them. Those sources are therefore decoded up
+     * front and blended onto an opaque white canvas before resizing. JPEGs
+     * carry no alpha and skip that extra decode; routing them through the file
+     * path is also what preserves Thumbnailator's EXIF orientation handling on
+     * photographer originals.
+     */
+    static void resize(Path source, Path dest, int maxPx, double jpegQuality) throws IOException {
         try (OutputStream out = Files.newOutputStream(dest)) {
-            Thumbnails.of(source.toFile())
+            if (isJpegMagic(source)) {
+                Thumbnails.of(source.toFile())
+                        .size(maxPx, maxPx)
+                        .outputQuality(jpegQuality)
+                        .outputFormat("JPEG")
+                        .toOutputStream(out);
+                return;
+            }
+            BufferedImage decoded = ImageIO.read(source.toFile());
+            if (decoded == null) {
+                throw new IOException("no ImageIO reader for " + source.getFileName());
+            }
+            if (decoded.getColorModel().hasAlpha()) {
+                decoded = flattenOntoWhite(decoded);
+            }
+            Thumbnails.of(decoded)
                     .size(maxPx, maxPx)
+                    .outputQuality(jpegQuality)
                     .outputFormat("JPEG")
                     .toOutputStream(out);
         }
+    }
+
+    /** True when the file opens with the JPEG magic — no alpha, EXIF-capable. */
+    private static boolean isJpegMagic(Path source) throws IOException {
+        try (InputStream in = Files.newInputStream(source)) {
+            return in.read() == 0xFF && in.read() == 0xD8 && in.read() == 0xFF;
+        }
+    }
+
+    /** Draws {@code src} over an opaque white canvas: alpha leaves the pipeline. */
+    private static BufferedImage flattenOntoWhite(BufferedImage src) {
+        BufferedImage flat = new BufferedImage(
+                src.getWidth(), src.getHeight(), BufferedImage.TYPE_INT_RGB);
+        Graphics2D g = flat.createGraphics();
+        try {
+            g.setColor(Color.WHITE);
+            g.fillRect(0, 0, flat.getWidth(), flat.getHeight());
+            g.drawImage(src, 0, 0, null);
+        } finally {
+            g.dispose();
+        }
+        return flat;
     }
 
     private static void extractPosterFrame(Path video, Path dest) throws Exception {
