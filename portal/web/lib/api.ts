@@ -114,9 +114,41 @@ export function logout(): Promise<void> {
   return request("/auth/logout", { method: "POST" });
 }
 
-/** Projects visible to the signed-in account. */
-export function fetchProjects(signal?: AbortSignal): Promise<Project[]> {
-  return request("/projects", { signal });
+/**
+ * One cursor-keyset page of the projects visible to the signed-in account.
+ * {@code counts} powers the admin filter tabs; for clients it always reads
+ * their (active-only) memberships.
+ */
+export interface ProjectCounts {
+  active: number;
+  archived: number;
+}
+
+export interface ProjectPage {
+  items: Project[];
+  /** Next keyset cursor; empty string when the page ran out. */
+  nextCursor: string;
+  /** Total visible projects matching the requested status. */
+  total: number;
+  counts: ProjectCounts;
+}
+
+/** Filter for the projects listing; the API applies it server-side. */
+export type ProjectStatusFilter = "active" | "archived" | "all";
+
+/**
+ * Cursor page of projects, newest first. Pass the previous `nextCursor`
+ * (or empty, to start). Bare-array callers need migration to the page shape.
+ */
+export function fetchProjects(
+  status: ProjectStatusFilter,
+  options: { cursor?: string; limit?: number; signal?: AbortSignal } = {}
+): Promise<ProjectPage> {
+  const params = new URLSearchParams({ status, limit: String(options.limit ?? 24) });
+  if (options.cursor) {
+    params.set("cursor", options.cursor);
+  }
+  return request(`/projects?${params}`, { signal: options.signal });
 }
 
 export function fetchProject(id: number, signal?: AbortSignal): Promise<Project> {

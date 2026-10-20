@@ -122,11 +122,11 @@ class ProjectAccessTest {
         // Admin still sees it (with archived status); client no longer does.
         mvc.perform(get("/projects").session(admin))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$[?(@.id == " + id + " && @.status == 'archived')]").isArray());
+                .andExpect(jsonPath("$.items[?(@.id == " + id + " && @.status == 'archived')]").isArray());
         String clientList = mvc.perform(get("/projects").session(client))
                 .andExpect(status().isOk())
                 .andReturn().getResponse().getContentAsString();
-        assertTrue(json.readTree(clientList).isEmpty(),
+        assertTrue(json.readTree(clientList).get("items").isEmpty(),
                 "archived project must disappear from the client list");
     }
 
@@ -152,7 +152,7 @@ class ProjectAccessTest {
 
         mvc.perform(get("/projects").session(client))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$[?(@.id == " + id + ")].name").value("Thandi Wedding"));
+                .andExpect(jsonPath("$.items[?(@.id == " + id + ")].name").value("Thandi Wedding"));
 
         mvc.perform(get("/projects/" + id).session(client))
                 .andExpect(status().isOk())
@@ -169,7 +169,7 @@ class ProjectAccessTest {
         String list = mvc.perform(get("/projects").session(stranger))
                 .andExpect(status().isOk())
                 .andReturn().getResponse().getContentAsString();
-        assertTrue(json.readTree(list).isEmpty(), "stranger list must be empty");
+        assertTrue(json.readTree(list).get("items").isEmpty(), "stranger list must be empty");
 
         mvc.perform(get("/projects/" + id).session(stranger))
                 .andExpect(status().isForbidden());

@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import SiteHeader from "@/components/SiteHeader";
@@ -20,6 +20,7 @@ import {
   logout,
   type Me,
   type Project,
+  type ProjectStatusFilter,
 } from "@/lib/api";
 
 function ProjectThumb({ project }: { project: Project }) {
@@ -49,7 +50,12 @@ export default function ProjectsPage() {
   const { toasts, push, dismiss } = useToasts();
   const [me, setMe] = useState<Me | null>(null);
   const [projects, setProjects] = useState<Project[] | null>(null);
-  const [filter, setFilter] = useState<"active" | "archived" | "all">("active");
+  const [filter, setFilter] = useState<ProjectStatusFilter>("active");
+  const [nextCursor, setNextCursor] = useState("");
+  const [loadingMore, setLoadingMore] = useState(false);
+  // Aborting kills in-flight pages on a filter switch: the incoming rows
+  // would belong to the previous filter's list.
+  const loadMoreRef = useRef<AbortController | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [name, setName] = useState("");
   const [clientName, setClientName] = useState("");
@@ -70,15 +76,62 @@ export default function ProjectsPage() {
         return;
       }
       try {
-        setProjects(await fetchProjects(controller.signal));
+        // Page 1 of the current filter; tab switches re-run this through
+        // `filter` and replace whatever pages are loaded.
+        const page = await fetchProjects(filter, { signal: controller.signal });
+        setProjects(page.items);
+        setNextCursor(page.nextCursor);
       } catch (e: unknown) {
         if (!isAbort(e)) {
           push(e instanceof Error ? e.message : "Could not load projects.");
         }
       }
     })();
-    return () => controller.abort();
-  }, [router, push]);
+    return () => {
+      controller.abort();
+      loadMoreRef.current?.abort();
+      loadMoreRef.current = null;
+    };
+  }, [router, push, filter]);
+
+  const onFilterChange = useCallback(
+    (value: ProjectStatusFilter) => {
+      if (value === filter) {
+        return;
+      }
+      setFilter(value);
+      setProjects(null);
+      setNextCursor("");
+      setLoadingMore(false);
+      loadMoreRef.current?.abort();
+      loadMoreRef.current = null;
+    },
+    [filter]
+  );
+
+  const onLoadMore = useCallback(async () => {
+    if (loadingMore || nextCursor === "") {
+      return;
+    }
+    setLoadingMore(true);
+    const controller = new AbortController();
+    loadMoreRef.current = controller;
+    try {
+      const page = await fetchProjects(filter, {
+        cursor: nextCursor,
+        signal: controller.signal,
+      });
+      setProjects((prev) => (prev ? [...prev, ...page.items] : page.items));
+      setNextCursor(page.nextCursor);
+    } catch (e: unknown) {
+      if (!isAbort(e)) {
+        push(e instanceof Error ? e.message : "Could not load more projects.");
+      }
+    } finally {
+      setLoadingMore(false);
+      loadMoreRef.current = null;
+    }
+  }, [filter, nextCursor, loadingMore, push]);
 
   const onSignOut = useCallback(async () => {
     try {
@@ -113,16 +166,8 @@ export default function ProjectsPage() {
     }
   }, [name, clientName, router]);
 
-  const visible = (projects ?? []).filter((p) => {
-    if (!isAdmin) {
-      return true; // Clients only ever receive active memberships.
-    }
-    if (filter === "all") {
-      return true;
-    }
-    return p.status === filter;
-  });
-
+  // The API applies the filter server-side and pages newest-first, so the
+  // loaded array renders as-is (clients receive memberships only).
   return (
     <div className="flex min-h-screen flex-col bg-background text-foreground">
       <SiteHeader signedIn onSignOut={onSignOut} />
@@ -155,7 +200,7 @@ export default function ProjectsPage() {
                   <button
                     key={value}
                     type="button"
-                    onClick={() => setFilter(value)}
+                    onClick={() => onFilterChange(value)}
                     aria-pressed={filter === value}
                     className={`rounded-full px-3.5 py-1.5 capitalize transition duration-200 ${
                       filter === value
@@ -195,7 +240,7 @@ export default function ProjectsPage() {
 
         {projects === null && <SkeletonCards count={6} />}
 
-        {projects !== null && visible.length === 0 && (
+        {projects !== null && projects.length === 0 && (
           <div className="rounded-2xl border border-white/[0.08] bg-surface-2/60 p-10 sm:p-16 text-center backdrop-blur-sm">
             {isAdmin && filter === "active" ? (
               <>
@@ -273,9 +318,9 @@ export default function ProjectsPage() {
           </div>
         )}
 
-        {visible.length > 0 && (
+        {projects !== null && projects.length > 0 && (
           <ul className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-            {visible.map((project) => (
+            {projects.map((project) => (
               <li key={project.id}>
                 <Link
                   href={`/projects/${project.id}`}
@@ -310,6 +355,25 @@ export default function ProjectsPage() {
               </li>
             ))}
           </ul>
+        )}
+
+        {projects !== null && nextCursor !== "" && (
+          <div className="mt-10 flex justify-center">
+            <button
+              type="button"
+              onClick={() => void onLoadMore()}
+              disabled={loadingMore}
+              className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-surface px-6 py-2.5 text-xs font-medium text-foreground transition duration-200 hover:border-accent/40 hover:text-accent disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              {loadingMore && (
+                <span
+                  className="h-3 w-3 animate-spin rounded-full border border-accent border-t-transparent"
+                  aria-hidden="true"
+                />
+              )}
+              <span>Load more</span>
+            </button>
+          </div>
         )}
       </main>
 

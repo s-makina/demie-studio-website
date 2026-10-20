@@ -7,8 +7,10 @@ import org.springframework.jdbc.core.RowMapper;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.nio.charset.StandardCharsets;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.Base64;
 import java.util.List;
 import java.util.Optional;
 
@@ -16,12 +18,17 @@ import java.util.Optional;
  * Photographer-owned projects with invite-based membership. Mutations are
  * admin-only (enforced in {@code SecurityConfig}); reads are filtered here:
  * admins see everything, clients see only active projects they belong to.
+ * Listing is keyset-paginated on {@code id} descending (one row per shoot,
+ * forever — no full scans), filtered server-side by {@code status}.
  */
 @Service
 public class ProjectService {
 
     private static final String COLUMNS =
             "id, account_id, name, client_name, status, cover_s3_key, created_at, updated_at";
+
+    private static final int DEFAULT_LIMIT = 24;
+    private static final int MAX_LIMIT = 200;
 
     private final JdbcTemplate jdbc;
     private final AccountService accounts;
@@ -99,16 +106,105 @@ public class ProjectService {
         return rows.stream().findFirst();
     }
 
-    /** Admins see all projects; clients see active projects they belong to. */
-    public List<Project> listFor(Account account) {
-        if (account.isAdmin()) {
-            return jdbc.query("SELECT " + COLUMNS + " FROM project ORDER BY id", MAPPER);
+    /**
+     * Cursor page of projects visible to {@code account}, newest first.
+     * {@code statusFilter} is {@code active}, {@code archived}, or {@code all}
+     * (null/blank = all). The cursor is an opaque {@code base64url(id)};
+     * blank starts at the newest row, malformed throws
+     * {@link IllegalArgumentException} (mapped to 400). {@code nextCursor}
+     * is null on the last page.
+     *
+     * <p>Clients keep the exact visibility of the old array path: active
+     * memberships only, regardless of the requested filter — a client-listed
+     * page is just a short slice of their memberships.
+     */
+    public ProjectPage listFor(Account account, String statusFilter, String cursor, int limit) {
+        String status = statusFilter == null || statusFilter.isBlank() ? "all" : statusFilter;
+        if (!status.equals("active") && !status.equals("archived") && !status.equals("all")) {
+            throw new IllegalArgumentException("status must be active, archived, or all");
         }
-        return jdbc.query(
-                "SELECT p." + COLUMNS.replace(", ", ", p.") +
-                        " FROM project p JOIN project_member m ON m.project_id = p.id " +
-                        "WHERE m.account_id = ? AND p.status = 'active' ORDER BY p.id",
-                MAPPER, account.id());
+        int pageSize = limit < 1 ? DEFAULT_LIMIT : Math.min(limit, MAX_LIMIT);
+        long afterId = decodeCursor(cursor);
+        boolean admin = account.isAdmin();
+
+        String statusClause = switch (status) {
+            case "active" -> " AND status = 'active'";
+            case "archived" -> " AND status = 'archived'";
+            case "all" -> "";
+            default -> ""; // unreachable — validated above
+        };
+
+        List<Project> rows;
+        if (admin) {
+            rows = jdbc.query(
+                    "SELECT " + COLUMNS + " FROM project WHERE id < ?" + statusClause +
+                            " ORDER BY id DESC LIMIT ?",
+                    MAPPER, afterId, pageSize + 1);
+        } else {
+            rows = jdbc.query(
+                    "SELECT p." + COLUMNS.replace(", ", ", p.") +
+                            " FROM project p JOIN project_member m ON m.project_id = p.id " +
+                            "WHERE m.account_id = ? AND p.status = 'active' AND p.id < ? " +
+                            "ORDER BY p.id DESC LIMIT ?",
+                    MAPPER, account.id(), afterId, pageSize + 1);
+        }
+
+        boolean hasNext = rows.size() > pageSize;
+        List<Project> items = hasNext ? rows.subList(0, pageSize) : rows;
+        String nextCursor = hasNext
+                ? encodeCursor(items.get(items.size() - 1).id())
+                : null;
+
+        long activeCount = countVisible(account, true);
+        long archivedCount = admin ? countVisible(account, false) : 0;
+        long total = switch (status) {
+            case "active" -> activeCount;
+            case "archived" -> archivedCount;
+            case "all" -> activeCount + archivedCount;
+            default -> 0; // unreachable — validated above
+        };
+        return new ProjectPage(items, nextCursor, total, activeCount, archivedCount);
+    }
+
+    /**
+     * COUNT over one caller-visible slice of the table, active or archived.
+     * Clients only ever see active memberships, so the archived half is
+     * reported as 0 without touching the database.
+     */
+    private long countVisible(Account account, boolean active) {
+        if (account.isAdmin()) {
+            Long count = jdbc.queryForObject(
+                    "SELECT COUNT(*) FROM project WHERE status = ?",
+                    Long.class, active ? "active" : "archived");
+            return count == null ? 0 : count;
+        }
+        if (!active) {
+            return 0;
+        }
+        Long count = jdbc.queryForObject(
+                "SELECT COUNT(*) FROM project p JOIN project_member m ON m.project_id = p.id " +
+                        "WHERE m.account_id = ? AND p.status = 'active'",
+                Long.class, account.id());
+        return count == null ? 0 : count;
+    }
+
+    /** Opaque keyset cursor ({@code base64url(id)}). */
+    static String encodeCursor(long id) {
+        return Base64.getUrlEncoder().withoutPadding()
+                .encodeToString(Long.toString(id).getBytes(StandardCharsets.UTF_8));
+    }
+
+    /** Id strictly below which the next page starts; blank starts at the top. */
+    static long decodeCursor(String cursor) {
+        if (cursor == null || cursor.isBlank()) {
+            return Long.MAX_VALUE;
+        }
+        try {
+            return Long.parseLong(new String(Base64.getUrlDecoder().decode(cursor),
+                    StandardCharsets.UTF_8));
+        } catch (Exception e) {
+            throw new IllegalArgumentException("invalid cursor");
+        }
     }
 
     /**
@@ -161,5 +257,15 @@ public class ProjectService {
         public AccessDeniedException() {
             super("not a project member");
         }
+    }
+
+    /**
+     * One listing page of raw {@link Project} rows plus the aggregates that
+     * sized it: {@code total} matches the requested status filter, and
+     * {@code counts} carries the caller-visible active/archived split for the
+     * web filter tabs. The controller maps rows to its response shape.
+     */
+    public record ProjectPage(List<Project> items, String nextCursor, long total,
+                              long activeCount, long archivedCount) {
     }
 }

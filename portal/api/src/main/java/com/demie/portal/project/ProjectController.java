@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -50,11 +51,27 @@ public class ProjectController {
         return ProjectResponse.from(project);
     }
 
-    /** Scoped project list: all for admins, member projects for clients. */
+    /**
+     * Cursor-keyset page of projects visible to the caller, newest first.
+     * {@code status} filters server-side for the web tabs (default {@code all},
+     * preserving bare-call behavior). {@code nextCursor} follows the media
+     * convention: the empty string when the page ran out.
+     */
     @GetMapping
-    public List<ProjectResponse> list(Authentication authentication) {
-        Account caller = currentAccount(authentication);
-        return projects.listFor(caller).stream().map(ProjectResponse::from).toList();
+    public Map<String, Object> list(@RequestParam(defaultValue = "all") String status,
+                                    @RequestParam(required = false) String cursor,
+                                    @RequestParam(defaultValue = "24") int limit,
+                                    Authentication authentication) {
+        ProjectService.ProjectPage page = projects.listFor(
+                currentAccount(authentication), status, cursor, limit);
+        Map<String, Object> body = new java.util.LinkedHashMap<>();
+        body.put("items", page.items().stream().map(ProjectResponse::from).toList());
+        body.put("nextCursor", page.nextCursor() == null ? "" : page.nextCursor());
+        body.put("total", page.total());
+        body.put("counts", Map.of(
+                "active", page.activeCount(),
+                "archived", page.archivedCount()));
+        return body;
     }
 
     /** Single project with membership check for clients (records a view event). */
