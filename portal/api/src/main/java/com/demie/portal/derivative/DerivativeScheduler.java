@@ -21,13 +21,16 @@ public class DerivativeScheduler {
     private final DerivativeWorker worker;
     private final int batchSize;
     private final int backfillBatchSize;
+    private final int verifyBatchSize;
 
     public DerivativeScheduler(DerivativeWorker worker,
                                @Value("${DERIVATIVE_BATCH_SIZE:10}") int batchSize,
-                               @Value("${DERIVATIVE_BACKFILL_BATCH:200}") int backfillBatchSize) {
+                               @Value("${DERIVATIVE_BACKFILL_BATCH:200}") int backfillBatchSize,
+                               @Value("${DERIVATIVE_VERIFY_BATCH:20}") int verifyBatchSize) {
         this.worker = worker;
         this.batchSize = batchSize;
         this.backfillBatchSize = backfillBatchSize;
+        this.verifyBatchSize = verifyBatchSize;
     }
 
     @Scheduled(fixedDelayString = "${DERIVATIVE_POLL_MILLIS:30000}")
@@ -36,6 +39,13 @@ public class DerivativeScheduler {
         // Legacy rows (derivative-ready before thumb dimensions existed) get
         // their aspect ratio filled in so the client masonry lays out exactly.
         worker.backfillDimensions(backfillBatchSize);
+        // Verify "ready" rows whose thumb never landed (the remote front end
+        // occasionally accepts and drops small uploads): re-queue them for
+        // regeneration so gallery tiles do not stay broken forever.
+        int requeued = worker.verifyReady(verifyBatchSize);
+        if (requeued > 0) {
+            log.info("re-queued {} ready rows with missing thumbs for regeneration", requeued);
+        }
     }
 
     /**

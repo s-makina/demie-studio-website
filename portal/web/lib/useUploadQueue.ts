@@ -69,6 +69,58 @@ function contentTypeFor(file: File): string {
 }
 
 /**
+ * PUTs one part and reports byte-level upload progress via `onProgress`
+ * (0..loaded bytes of `body`).
+ *
+ * The previous implementation used `fetch`, which has no upload progress
+ * events: a part PUT looked instant from the client's view, so the bar only
+ * moved at 8 MB part boundaries — files below one part jumped straight to
+ * 100%. XHR's `upload.onprogress` reports the bytes as the browser actually
+ * sends them, so the bar moves continuously.
+ */
+function putPart(
+  url: string,
+  body: Blob,
+  onProgress: (loaded: number) => void
+): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const xhr = new XMLHttpRequest();
+    xhr.open("PUT", url);
+    xhr.upload.onprogress = (e) => {
+      if (e.lengthComputable) {
+        onProgress(e.loaded);
+      }
+    };
+    xhr.onload = () => {
+      if (xhr.status >= 200 && xhr.status < 300) {
+        const etag = xhr.getResponseHeader("ETag");
+        if (!etag) {
+          reject(new Error("part upload gave no ETag"));
+        } else {
+          resolve(etag);
+        }
+      } else {
+        reject(new Error(`part upload failed (${xhr.status})`));
+      }
+    };
+    xhr.onerror = () => reject(new Error("part upload network error"));
+    // A wedged front end can accept all bytes (progress hits 100%) and then
+    // never respond; without a deadline the tile hangs at 100% forever. The
+    // deadline is generous (an 8 MB part at ~30 KB/s) so real slow links are
+    // not cut off; a tripped deadline marks the file errored and retryable.
+    xhr.timeout = 300_000;
+    xhr.ontimeout = () => reject(new Error("part upload timed out"));
+    xhr.onabort = () => {
+      // Name it so isAbort() classifies it as an abort, not a file error.
+      const aborted = new Error("cancelled");
+      aborted.name = "AbortError";
+      reject(aborted);
+    };
+    xhr.send(body);
+  });
+}
+
+/**
  * The upload queue state machine (Task 20), lifted out of the upload panel so
  * the queue can be rendered in two places at once: the gallery column shows the
  * pending tiles, the sidebar owns the dropzone and the controls.
@@ -196,6 +248,9 @@ export function useUploadQueue(
         const totalParts = Math.max(1, Math.ceil(file.size / PART_SIZE));
         const etags: Array<{ partNumber: number; etag: string }> = [];
         let sent = 0;
+        // Percent-change guard: progress events fire per send chunk, and each
+        // one re-renders every queue tile via the shared files state.
+        let lastPct = -1;
         for (let partNumber = 1; partNumber <= totalParts; partNumber++) {
           if (signal.cancelled) {
             throw new Error("cancelled");
@@ -203,14 +258,15 @@ export function useUploadQueue(
           const start = (partNumber - 1) * PART_SIZE;
           const chunk = file.slice(start, start + PART_SIZE);
           const { url } = await uploadPartUrl(mediaId, partNumber);
-          const put = await fetch(url, { method: "PUT", body: chunk });
-          if (!put.ok) {
-            throw new Error(`part ${partNumber} upload failed (${put.status})`);
-          }
-          const etag = put.headers.get("ETag");
-          if (!etag) {
-            throw new Error(`part ${partNumber} gave no ETag`);
-          }
+          const etag = await putPart(url, chunk, (loaded) => {
+            const pct = Math.floor(((sent + loaded) / (file.size || 1)) * 100);
+            if (pct !== lastPct) {
+              lastPct = pct;
+              setFile(entry.id, {
+                progress: (sent + loaded) / (file.size || 1),
+              });
+            }
+          });
           etags.push({ partNumber, etag });
           sent += chunk.size;
           setFile(entry.id, { progress: file.size ? sent / file.size : 1 });

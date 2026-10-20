@@ -124,6 +124,40 @@ export default function MediaGrid({
     itemsRef.current = items;
   }, [items]);
 
+  // ------------------------------------------------------- derivative polling
+  // Derivatives are rendered asynchronously by the API's worker, so a tile can
+  // be committed before its thumb exists (it renders as "Processing…"). While
+  // any committed tile is still pending, re-fetch just those items every few
+  // seconds and swap them in place, so thumbnails appear live instead of
+  // requiring a manual page refresh. Failed rows stop polling: the tile shows
+  // "Preview failed" until they are re-queued server-side.
+  useEffect(() => {
+    const pending = items.filter(
+      (item) =>
+        item.status === "uploaded" &&
+        item.derivativeStatus !== "ready" &&
+        item.derivativeStatus !== "failed"
+    );
+    if (pending.length === 0) {
+      return;
+    }
+    const timer = setTimeout(() => {
+      void (async () => {
+        for (const item of pending) {
+          try {
+            const fresh = await fetchMediaItem(accessRef.current, item.id);
+            setItems((prev) =>
+              prev.map((current) => (current.id === fresh.id ? fresh : current))
+            );
+          } catch {
+            // Transient failure — leave the tile as-is; the next tick retries.
+          }
+        }
+      })();
+    }, 4000);
+    return () => clearTimeout(timer);
+  }, [items]);
+
   // --------------------------------------------------------------- pagination
 
   const loadForward = useCallback(async () => {

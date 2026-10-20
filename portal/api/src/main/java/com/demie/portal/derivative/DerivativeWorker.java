@@ -60,6 +60,12 @@ public class DerivativeWorker {
     static final int PREVIEW_MAX_PX = 1600;
     static final int THUMB_MAX_PX = 400;
     static final int POOL_SIZE = 2;
+    /**
+     * Upload attempts (with read-back verification) per derivative job.
+     * The remote front end intermittently accepts and drops uploads; extra
+     * tries within one claim usually land the pair without a full re-queue.
+     */
+    private static final int UPLOAD_VERIFY_ATTEMPTS = 3;
     /** JPEG quality used by the 3-arg {@link #resize} overload. */
     static final double DEFAULT_JPEG_QUALITY = 0.85;
 
@@ -161,15 +167,13 @@ public class DerivativeWorker {
      */
     private int[] makeDerivatives(Media row) throws Exception {
         Path workdir = Files.createTempDirectory("deriv-" + row.id());
-        // Fresh client per job: the Dokploy MinIO front end intermittently
-        // black-holes live connections of pooled clients while accepting new
-        // dials happily (verified by the 2026-10-19 wedge investigation), so
-        // every batch dials its own connections and tears them down after.
-        try (S3Client client = s3Clients.newClient()) {
+        try {
             Path original = workdir.resolve("original");
-            try (InputStream in = client.getObject(r -> r
-                    .bucket(s3.originalsBucket()).key(row.s3Key()))) {
-                Files.copy(in, original);
+            try (S3Client client = s3Clients.newClient()) {
+                try (InputStream in = client.getObject(r -> r
+                        .bucket(s3.originalsBucket()).key(row.s3Key()))) {
+                    Files.copy(in, original);
+                }
             }
 
             Path frame = original;
@@ -183,19 +187,103 @@ public class DerivativeWorker {
             resize(frame, preview, PREVIEW_MAX_PX, jpegQuality);
             resize(frame, thumb, THUMB_MAX_PX, jpegQuality);
 
-            // The Dokploy MinIO front end hangs on streaming request bodies
-            // (RequestBody.fromInputStream) while accepting fully-buffered
-            // bodies, so upload derivative files from byte arrays.
-            client.putObject(r -> r.bucket(s3.previewsBucket())
-                            .key(previewKeyFor(row)).contentType("image/jpeg"),
-                    RequestBody.fromBytes(Files.readAllBytes(preview)));
-            client.putObject(r -> r.bucket(s3.thumbsBucket())
-                            .key(thumbKeyFor(row)).contentType("image/jpeg"),
-                    RequestBody.fromBytes(Files.readAllBytes(thumb)));
-            return readSize(thumb);
+            // Idempotent upload: the Dokploy MinIO front end has been observed
+            // both (a) hanging on streaming request bodies, and (b) answering
+            // 200 while silently dropping an upload, so a derivative is only
+            // trusted once it reads back. Each attempt dials a fresh client
+            // (connection-pool wedges never persist across dials), and a put
+            // that does not verify is simply retried — the keys are fixed, so
+            // repeated attempts converge on the same two objects.
+            Exception lastFailure = null;
+            for (int attempt = 1; attempt <= UPLOAD_VERIFY_ATTEMPTS; attempt++) {
+                try (S3Client client = s3Clients.newClient()) {
+                    client.putObject(r -> r.bucket(s3.previewsBucket())
+                                    .key(previewKeyFor(row)).contentType("image/jpeg"),
+                            RequestBody.fromBytes(Files.readAllBytes(preview)));
+                    client.putObject(r -> r.bucket(s3.thumbsBucket())
+                                    .key(thumbKeyFor(row)).contentType("image/jpeg"),
+                            RequestBody.fromBytes(Files.readAllBytes(thumb)));
+
+                    // Read-back verification: the thumb must decode and the
+                    // preview must have bytes. Failing this treats the upload
+                    // as failed for the attempt, so settle() records an error
+                    // and the row retries instead of being stamped ready over
+                    // an object that does not exist.
+                    int[] dims;
+                    try (InputStream in = client.getObject(r -> r
+                            .bucket(s3.thumbsBucket()).key(thumbKeyFor(row)))) {
+                        dims = readSize(in);
+                    }
+                    long previewSize = client.headObject(h -> h
+                            .bucket(s3.previewsBucket()).key(previewKeyFor(row)))
+                            .contentLength();
+                    if (dims[0] == 0 && dims[1] == 0) {
+                        throw new IOException(
+                                "uploaded thumb did not read back as a decodable JPEG");
+                    }
+                    if (previewSize <= 0) {
+                        throw new IOException("uploaded preview did not verify");
+                    }
+                    return dims;
+                } catch (Exception e) {
+                    lastFailure = e;
+                    if (attempt < UPLOAD_VERIFY_ATTEMPTS) {
+                        log.info("derivative upload attempt {} for media {} failed: {}",
+                                attempt, row.id(),
+                                e.getMessage() == null ? e.getClass().getSimpleName()
+                                                       : e.getMessage());
+                    }
+                }
+            }
+            throw (lastFailure != null) ? lastFailure
+                    : new IOException("derivative upload did not verify");
         } finally {
             deleteTree(workdir);
         }
+    }
+
+    /**
+     * Idempotency pass over "ready" rows whose thumb object is not actually
+     * there. The Dokploy MinIO front end has been observed answering 200 for a
+     * small upload while silently dropping the body (2026-10-20: several rows
+     * settled ready with no thumb on storage, only caught later by the
+     * dimensions scan), so "ready" is verified against storage instead of
+     * trusted: a ready row whose thumb is missing or empty is re-queued with a
+     * fresh attempt budget and regenerated (regeneration overwrites the same
+     * keys, so the pass is safe to repeat). A row whose thumb does exist —
+     * even one whose dimensions scanned as 0/0 — is left alone, which keeps
+     * the pass bounded and churn-free.
+     *
+     * <p>Bounded per sweep, driven by
+     * {@link DerivativeScheduler#sweep()}.
+     *
+     * @return the number of rows re-queued for regeneration.
+     */
+    public int verifyReady(int batchSize) {
+        List<Long> ids = jdbc.queryForList(
+                "SELECT id FROM media WHERE derivative_status = 'ready' " +
+                        "AND status = 'uploaded' " +
+                        "AND (thumb_width IS NULL OR thumb_width = 0) " +
+                        "ORDER BY id LIMIT ?",
+                Long.class, Math.max(1, batchSize));
+        int requeued = 0;
+        for (Long id : ids) {
+            Media row = media.findById(id).orElse(null);
+            if (row == null) {
+                continue;
+            }
+            if (s3.objectSize(s3.thumbsBucket(), thumbKeyFor(row)).orElse(0L) > 0) {
+                continue; // thumb exists; 0/0 dims are just a fallback aspect
+            }
+            jdbc.update("UPDATE media SET derivative_status = 'pending', " +
+                            "derivative_attempts = 0, derivative_error = NULL, " +
+                            "thumb_width = NULL, thumb_height = NULL " +
+                            "WHERE id = ? AND derivative_status = 'ready'",
+                    id);
+            requeued++;
+            log.info("re-queued media {} for derivative regeneration (thumb missing)", id);
+        }
+        return requeued;
     }
 
     /**
