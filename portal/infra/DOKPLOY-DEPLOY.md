@@ -1,9 +1,10 @@
 # Dokploy deployment (portal)
 
-The portal deploys as one Dokploy **Compose** service from this repo: Postgres
-16 + API + web. MinIO is reused from the existing Dokploy install (see
-`buckets.md`). `docker-compose.yml` at the repo's `portal/` directory is the
-source of truth; this file is the click-order for the Dokploy UI.
+The portal deploys as one Dokploy **Compose** service from this repo: API +
+web, with Postgres reused from an existing Dokploy **Database** service and
+MinIO from the existing Dokploy install (see `buckets.md`). `docker-compose.yml`
+at the repo's `portal/` directory is the source of truth; this file is the
+click-order for the Dokploy UI.
 
 ## 0. One-time: serve MinIO S3 API over https
 
@@ -32,12 +33,22 @@ Dokploy → **Create Service** → **Compose**:
 
 ## 3. Environment (Env tab)
 
-Paste and fill; no quotes needed (the API parses values as plain strings):
+Paste and fill; no quotes needed (the API parses values as plain strings).
+The `DB_*` values must come out of the existing Postgres service's page in
+Dokploy:
 
 ```
-DB_NAME=demie_portal
-DB_USERNAME=portal
-DB_PASSWORD=<generate>
+# From the Postgres service in Dokploy: its internal DNS name (the
+# xxx-yyyy host shown as internal hostname; external sslip.io aliases also
+# resolve if they were created) and the database/user/password it was created
+# with. The API runs migrations on start, so use credentials with CREATE
+# rights (the Dokploy template's default user qualifies).
+DB_HOST=<postgres-service-internal-hostname>
+DB_PORT=5432
+DB_NAME=<database name>
+DB_USERNAME=<database user>
+DB_PASSWORD=<database password>
+
 S3_ENDPOINT=https://minio-api-...sslip.io
 S3_ACCESS_KEY=<from infra/.env>
 S3_SECRET_KEY=<from infra/.env>
@@ -47,7 +58,9 @@ ADMIN_EMAIL=<photographer email>
 ADMIN_PASSWORD=<generate>
 ```
 
-The compose file defaults the rest (`S3_BUCKET_*` → `demie-studio`).
+The compose file defaults the rest (`S3_BUCKET_*` → `demie-studio`). Prefer
+the Postgres service's **internal** hostname for `DB_HOST` — it never leaves
+`dokploy-network` and keeps the connection off the public interface.
 
 ## 4. Deploy, then add Domains
 
@@ -78,10 +91,10 @@ Changing it without rebuilding does nothing.
 
 ## 6. Ongoing updates
 
-Push a commit → **Redeploy** in Dokploy. Images rebuild, Postgres data and
-MinIO objects persist (named volume + outside bucket), and migrations apply
-automatically. Keep API replicas at 1 — the scheduled derivative/ZIP workers
-and reapers run in-process and double up if scaled.
+Push a commit → **Redeploy** in Dokploy. Images rebuild, the Dokploy Postgres
+service and MinIO objects persist (Dokploy manages the DB volume itself), and
+migrations apply automatically. Keep API replicas at 1 — the scheduled
+derivative/ZIP workers and reapers run in-process and double up if scaled.
 
 ## Notes
 

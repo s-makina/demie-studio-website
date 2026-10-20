@@ -5,48 +5,31 @@
 # compose runs). Secrets use `:?` so the stack fails fast when a value is
 # missing instead of starting half-configured.
 #
-# Schema is created by Flyway at API start-up (application.yml: flyway.enabled)
-# and the `demie-studio` bucket by S3BucketBootstrap — no manual DB/storage
-# steps. See infra/DOKPLOY-DEPLOY.md for the full walkthrough.
+# Postgres is an existing Dokploy Database service, not created here. Schema is
+# applied by Flyway at API start-up (application.yml: flyway.enabled) and the
+# `demie-studio` bucket by S3BucketBootstrap — no manual DB/storage steps. See
+# infra/DOKPLOY-DEPLOY.md for the full walkthrough.
 
 services:
-  postgres:
-    image: postgres:16-alpine
-    container_name: demie-portal-postgres
-    restart: unless-stopped
-    environment:
-      POSTGRES_DB: ${DB_NAME:-demie_portal}
-      POSTGRES_USER: ${DB_USERNAME:-portal}
-      POSTGRES_PASSWORD: ${DB_PASSWORD:?Set DB_PASSWORD in the Dokploy Env tab}
-    volumes:
-      - postgres-data:/var/lib/postgresql/data
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${DB_USERNAME:-portal} -d ${DB_NAME:-demie_portal}"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-      start_period: 10s
-    networks:
-      - internal
-
   api:
     build:
       context: ./api
       dockerfile: Dockerfile
     container_name: demie-portal-api
     restart: unless-stopped
-    depends_on:
-      postgres:
-        condition: service_healthy
+    # Postgres is an existing Dokploy Database service (its internal DNS name,
+    # DB/user/password go in the Env tab). Flyway creates the schema on API
+    # start-up, so the credentials need CREATE rights on the target database
+    # (Dokploy templates create superusers, which is fine).
     environment:
       # `prod` is not a configured profile; it only keeps application-local.yml
       # (and its infra/.env import) out of the deployed run. Everything below
       # arrives via env, which application.yml resolves.
       SPRING_PROFILES_ACTIVE: prod
-      DB_HOST: postgres
-      DB_PORT: "5432"
-      DB_NAME: ${DB_NAME:-demie_portal}
-      DB_USERNAME: ${DB_USERNAME:-portal}
+      DB_HOST: ${DB_HOST:?Set DB_HOST to the Dokploy Postgres internal hostname in the Env tab}
+      DB_PORT: ${DB_PORT:-5432}
+      DB_NAME: ${DB_NAME:?Set DB_NAME in the Dokploy Env tab}
+      DB_USERNAME: ${DB_USERNAME:?Set DB_USERNAME in the Dokploy Env tab}
       DB_PASSWORD: ${DB_PASSWORD:?Set DB_PASSWORD in the Dokploy Env tab}
       # Existing Dokploy MinIO. Must be reachable from the browser too
       # (presigned PUT/GET), so prefer an https:// domain in prod.
@@ -83,13 +66,12 @@ services:
       - internal
       - dokploy-network
 
-# internal: postgres/api/web talk to each other by service name.
+# internal: api/web talk to each other on the stack's own network.
 # dokploy-network: Dokploy's Traefik lives here; attach Domains (Domains tab)
-# to `api` (port 8080) and `web` (port 3000). Nothing is published to the host.
+# to `api` (port 8080) and `web` (port 3000). It also carries the API's
+# connection to the existing Dokploy Postgres service. Nothing is exposed on
+# the host.
 networks:
   internal:
   dokploy-network:
     external: true
-
-volumes:
-  postgres-data:
