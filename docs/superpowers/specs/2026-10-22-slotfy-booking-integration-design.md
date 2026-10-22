@@ -26,8 +26,23 @@ Out of scope:
 
 - Per-service deep links (`data-service-id`).
 - Two-way synchronisation of WordPress services with Slotfy services.
-- Payment gateway or webhook configuration on the Slotfy side.
+- Payment gateway configuration on the Slotfy side.
 - Shortcode/block for embedding the widget in arbitrary content.
+
+## Slotfy fixes required by this integration
+
+Verification against the local Slotfy build exposed two defects that prevent the
+widget from rendering at all. Both are fixed as part of this work:
+
+1. `GET /api/settings/booking` was not `@Public()`. The embed calls it without
+   a token; the 401 triggered the global client interceptor, which redirected
+   the iframe to `/login`.
+2. The embed's provider step, service-details fetch, and availability calls
+   passed an empty tenant slug, so the backend received no tenant context and
+   returned 500/empty results. They now pass the `tenantSlug` from the route.
+
+Files: `slotfy/backend/src/settings/settings.controller.ts` and
+`slotfy/frontend/src/app/embed/[tenantSlug]/booking/page.tsx`.
 
 ## Prerequisites (Slotfy side)
 
@@ -104,7 +119,6 @@ height changes are not visible against the page.
 
 - `header.php`: desktop and mobile "Book Your Date" → booking page.
 - `template-parts/hero.php`: "Start Your Booking" → booking page.
-- `front-page.php`: "Book us Now" → booking page.
 - `functions.php`: Booking added to the fallback and mobile-fallback menus.
 - `inc/seed.php`: Booking page created with the template and appended to the
   primary menu if missing.
@@ -134,7 +148,6 @@ navigates the top window.
 | `website/demie-v2/inc/seed.php` | Booking page, menu item, FAQ copy |
 | `website/demie-v2/header.php` | CTA target |
 | `website/demie-v2/template-parts/hero.php` | CTA target |
-| `website/demie-v2/front-page.php` | CTA target |
 | `website/demie-v2/template-parts/booking.php` | Online booking button |
 | `website/deploy_theme.py` | Correct dev theme path |
 
