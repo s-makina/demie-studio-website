@@ -23,6 +23,9 @@ function demie_settings_defaults() {
         'linkedin'  => '',
         'youtube'   => '',
         'behance'   => '',
+        'slotfy_enabled'  => '1',
+        'slotfy_tenant'   => 'demie-photography',
+        'slotfy_base_url' => 'https://slotfy.app',
     ];
 }
 
@@ -127,6 +130,12 @@ function demie_sanitize_settings($input) {
         $out[$network] = $url;
     }
 
+    // Booking (Slotfy). An empty tenant or base URL disables the widget; the
+    // enable toggle is the owner-facing switch for normal use.
+    $out['slotfy_enabled'] = empty($input['slotfy_enabled']) ? '0' : '1';
+    $out['slotfy_tenant']  = sanitize_title(isset($input['slotfy_tenant']) ? $input['slotfy_tenant'] : '');
+    $out['slotfy_base_url'] = demie_slotfy_normalize_url(isset($input['slotfy_base_url']) ? $input['slotfy_base_url'] : '');
+
     return $out;
 }
 
@@ -180,6 +189,35 @@ function demie_render_settings_page() {
                         </td>
                     </tr>
                 <?php endforeach; ?>
+            </table>
+
+            <h2 class="title"><?php esc_html_e('Booking (Slotfy)', 'demie-v2'); ?></h2>
+            <p class="description"><?php esc_html_e('Online booking is embedded on the Booking page from the Slotfy tenant below.', 'demie-v2'); ?></p>
+            <table class="form-table" role="presentation">
+                <tr>
+                    <th scope="row"><?php esc_html_e('Online booking', 'demie-v2'); ?></th>
+                    <td>
+                        <input type="hidden" name="demie_settings[slotfy_enabled]" value="0">
+                        <label for="demie-slotfy-enabled">
+                            <input type="checkbox" id="demie-slotfy-enabled" name="demie_settings[slotfy_enabled]" value="1" <?php checked($opts['slotfy_enabled'], '1'); ?>>
+                            <?php esc_html_e('Show the Slotfy booking widget on the Booking page', 'demie-v2'); ?>
+                        </label>
+                    </td>
+                </tr>
+                <tr>
+                    <th scope="row"><label for="demie-slotfy-tenant"><?php esc_html_e('Tenant slug', 'demie-v2'); ?></label></th>
+                    <td>
+                        <input type="text" id="demie-slotfy-tenant" name="demie_settings[slotfy_tenant]" value="<?php echo esc_attr($opts['slotfy_tenant']); ?>" class="regular-text code">
+                        <p class="description"><?php esc_html_e('The slug used in /embed/{slug}/booking. Current tenant: demie-photography.', 'demie-v2'); ?></p>
+                    </td>
+                </tr>
+                <tr>
+                    <th scope="row"><label for="demie-slotfy-base-url"><?php esc_html_e('Slotfy base URL', 'demie-v2'); ?></label></th>
+                    <td>
+                        <input type="url" id="demie-slotfy-base-url" name="demie_settings[slotfy_base_url]" value="<?php echo esc_attr($opts['slotfy_base_url']); ?>" class="regular-text code" placeholder="https://slotfy.app">
+                        <p class="description"><?php esc_html_e('Use https://slotfy.app in production, or http://localhost:3000 when testing against the local Slotfy dev server.', 'demie-v2'); ?></p>
+                    </td>
+                </tr>
             </table>
 
             <?php submit_button(); ?>

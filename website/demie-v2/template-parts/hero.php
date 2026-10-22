@@ -33,7 +33,7 @@ $video  = demie_v2_get('demie_v2_hero_video', DEMIE_URI . '/assets/video/hero.mp
       <?php echo esc_html(demie_v2_get('demie_v2_hero_sub', 'Capturing intimate celebrations, quiet romance, and timeless grandeur worldwide with an elevated editorial eye and pure emotional honesty.')); ?>
     </p>
     <div class="flex flex-col sm:flex-row items-center justify-center gap-4 sm:gap-6 w-full max-w-md mb-12">
-      <a class="btn-luxury w-full sm:w-auto px-8 py-4 bg-brand-champagne text-brand-charcoal hover:bg-white text-xs uppercase tracking-luxury font-medium transition-all shadow-lg text-center" href="<?php echo esc_url(demie_page_url('contact')); ?>">
+      <a class="btn-luxury w-full sm:w-auto px-8 py-4 bg-brand-champagne text-brand-charcoal hover:bg-white text-xs uppercase tracking-luxury font-medium transition-all shadow-lg text-center" href="<?php echo esc_url(demie_page_url('booking')); ?>">
         <?php esc_html_e('Start Your Booking', 'demie-v2'); ?>
       </a>
       <a class="w-full sm:w-auto px-8 py-4 bg-transparent border border-white/50 text-white hover:bg-white/10 hover:border-white text-xs uppercase tracking-luxury font-medium transition-all text-center" href="#gallery">

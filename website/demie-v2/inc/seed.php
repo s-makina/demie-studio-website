@@ -226,6 +226,7 @@ function demie_seed_pages() {
     $gallery  = demie_seed_page('gallery', __('Gallery', 'demie-photography'), 'page-gallery.php');
     $blog     = demie_seed_page('blog', __('Blog', 'demie-photography'), 'page-blog.php');
     $contact  = demie_seed_page('contact', __('Contact', 'demie-photography'), 'page-contact.php');
+    $booking  = demie_seed_page('booking', __('Booking', 'demie-v2'), 'page-booking.php');
     $portfolio = demie_seed_page('portfolio', __('Portfolio', 'demie-photography'), 'page-portfolio.php');
 
     if ($front_id) {
@@ -238,29 +239,34 @@ function demie_seed_pages() {
 }
 
 /**
- * Primary menu matching local: Home, Services, Portfolio assigned to primary.
- * Idempotent: if primary location already has a menu, do nothing. If
- * Primary Menu exists but is empty, fill missing items only.
+ * Primary menu matching local: Home, Services, Portfolio, Booking.
+ * Idempotent: reuses the menu assigned to the primary location (or creates
+ * Primary Menu), then fills only the missing page items.
  */
 function demie_seed_menus() {
     $locations = get_theme_mod('nav_menu_locations');
     if (!is_array($locations)) {
         $locations = [];
     }
+
+    $menu_id = 0;
     if (!empty($locations['primary'])) {
         $assigned = wp_get_nav_menu_object($locations['primary']);
         if ($assigned) {
-            return;
+            $menu_id = (int) $assigned->term_id;
         }
     }
 
-    $menu = wp_get_nav_menu_object('Primary Menu');
-    if ($menu) {
-        $menu_id = (int) $menu->term_id;
-    } else {
-        $menu_id = wp_create_nav_menu('Primary Menu');
-        if (is_wp_error($menu_id) || !$menu_id) {
-            return;
+    if (!$menu_id) {
+        $menu = wp_get_nav_menu_object('Primary Menu');
+        if ($menu) {
+            $menu_id = (int) $menu->term_id;
+        } else {
+            $menu_id = wp_create_nav_menu('Primary Menu');
+            if (is_wp_error($menu_id) || !$menu_id) {
+                return;
+            }
+            $menu_id = (int) $menu_id;
         }
     }
 
@@ -268,9 +274,11 @@ function demie_seed_menus() {
         'home'      => demie_seed_page_id('home'),
         'services'  => demie_seed_page_id('services'),
         'portfolio' => demie_seed_page_id('portfolio'),
+        'booking'   => demie_seed_page_id('booking'),
     ];
 
     $existing_ids = [];
+    $order = 0;
     $items = wp_get_nav_menu_items($menu_id);
     if (is_array($items)) {
         foreach ($items as $item) {
@@ -278,13 +286,13 @@ function demie_seed_menus() {
             if ($obj_id) {
                 $existing_ids[$obj_id] = true;
             }
+            $order = max($order, (int) $item->menu_order);
         }
     }
 
-    $order = 1;
+    $order++;
     foreach ($wanted as $slug => $page_id) {
         if (!$page_id || isset($existing_ids[$page_id])) {
-            $order++;
             continue;
         }
         wp_update_nav_menu_item($menu_id, 0, [
@@ -380,7 +388,7 @@ function demie_seed_faqs() {
         ['what-areas-do-you-serve', 'What areas do you serve?',
             'We are based in Chilomoni, Blantyre, and cover sessions across Malawi, including Lilongwe and surrounding areas.'],
         ['how-do-i-book-a-session', 'How do I book a session?',
-            'Call or WhatsApp us on +265 884 44 48 02, or send a message through the contact form. We will confirm your date and package.'],
+            'Use our online booking page to see available dates and confirm your session, or call or WhatsApp us on +265 884 44 48 02. We will confirm your date and package.'],
         ['how-long-does-a-session-take', 'How long does a session take?',
             'Portrait sessions usually take 1–2 hours. Weddings and events are quoted for a full or half day depending on your schedule.'],
         ['when-will-we-receive-our-photos', 'When will we receive our photos?',
@@ -389,6 +397,25 @@ function demie_seed_faqs() {
 
     foreach ($faqs as $i => $f) {
         demie_seed_post('demie_faq', $f[0], $f[1], $f[2], [], $i);
+    }
+
+    // Keep the booking FAQ accurate on sites seeded before online booking.
+    // Only replace the exact legacy copy so owner edits are never overwritten.
+    $legacy_faq = get_posts([
+        'post_type'      => 'demie_faq',
+        'name'           => 'how-do-i-book-a-session',
+        'post_status'    => 'any',
+        'posts_per_page' => 1,
+    ]);
+    if ($legacy_faq) {
+        $old_copy = 'Call or WhatsApp us on +265 884 44 48 02, or send a message through the contact form. We will confirm your date and package.';
+        $new_copy = 'Use our online booking page to see available dates and confirm your session, or call or WhatsApp us on +265 884 44 48 02. We will confirm your date and package.';
+        if (trim($legacy_faq[0]->post_content) === $old_copy) {
+            wp_update_post([
+                'ID'           => $legacy_faq[0]->ID,
+                'post_content' => $new_copy,
+            ]);
+        }
     }
 }
 

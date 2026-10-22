@@ -16,6 +16,15 @@
       <?php echo esc_html(demie_v2_get('demie_v2_booking_text', 'Whether you’re planning a celebration, exploring packages, or simply want to reach out — send us a note and we’ll get back to you.')); ?>
     </p>
 
+    <?php if (function_exists('demie_slotfy_enabled') && demie_slotfy_enabled()) : ?>
+      <div class="mb-12">
+        <a class="btn-luxury inline-flex items-center justify-center px-9 py-4 bg-brand-champagne text-brand-charcoal hover:bg-white text-xs uppercase tracking-luxury font-medium transition-all shadow-xl" href="<?php echo esc_url(demie_page_url('booking')); ?>">
+          <?php esc_html_e('Check Availability & Book Online', 'demie-v2'); ?>
+        </a>
+        <p class="text-[10px] uppercase tracking-widest text-white/40 mt-4"><?php esc_html_e('or send us a message below', 'demie-v2'); ?></p>
+      </div>
+    <?php endif; ?>
+
     <form class="demie-contact-form max-w-2xl mx-auto text-left grid grid-cols-1 sm:grid-cols-2 gap-4 mb-10" method="post">
       <input type="text" name="name" required placeholder="<?php esc_attr_e('Your Name *', 'demie-v2'); ?>" class="demie-v2-input">
       <input type="email" name="email" required placeholder="<?php esc_attr_e('Email *', 'demie-v2'); ?>" class="demie-v2-input">

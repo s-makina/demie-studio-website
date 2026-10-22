@@ -28,6 +28,10 @@ _Avoid_: treating Phone/Email/Location as hard-coded constants
 **Service**:
 An offering card shown on the homepage (first four, short blurb) and the Services page (all, full description). One entry, two description fields — not two lists.
 
+**Booking Page**:
+The dedicated page at `booking/` where visitors reserve a session through the Slotfy booking widget. Slotfy owns availability, checkout and confirmation; the site only embeds the widget and routes "Book" calls to action here. Tenant slug and Slotfy origin are editable in Demie Settings → Booking.
+_Avoid_: using the Booking Page as a contact form, or treating WordPress services as the booking catalogue (Slotfy's public services are the source of truth).
+
 **Portfolio Item**:
 A photograph or project entry with a featured image, shown in the homepage portfolio section. Formerly fed the Gallery page; that role now belongs to the Gallery (plugin).
 _Avoid_: "gallery post", fake blog posts for gallery content

@@ -40,7 +40,7 @@ from pathlib import Path
 # Configuration — adjust here if the project moves
 # --------------------------------------------------------------------------
 PROJECT_ROOT = Path(r"C:\xampp\htdocs\other\demie-studio-website")
-DEV_THEME    = PROJECT_ROOT / "demie-v2"
+DEV_THEME    = PROJECT_ROOT / "website" / "demie-v2"
 LIVE_THEME   = Path(r"C:\xampp\htdocs\other\demie-studio-wp\wp-content\themes"
                     r"\demie-v2")
 SITE_URL     = "http://localhost/other/demie-studio-wp"

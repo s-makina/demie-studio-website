@@ -17,7 +17,7 @@
     <?php demie_render_primary_menu(); ?>
   </nav>
   <div class="flex items-center justify-end space-x-5">
-    <a class="btn-luxury hidden sm:inline-flex items-center justify-center px-6 py-2.5 text-[11px] uppercase tracking-widest font-medium border border-white/80 text-white hover:bg-white hover:text-brand-charcoal hover:border-white transition-all duration-300" href="<?php echo esc_url(demie_page_url('contact')); ?>">
+    <a class="btn-luxury hidden sm:inline-flex items-center justify-center px-6 py-2.5 text-[11px] uppercase tracking-widest font-medium border border-white/80 text-white hover:bg-white hover:text-brand-charcoal hover:border-white transition-all duration-300" href="<?php echo esc_url(demie_page_url('booking')); ?>">
       <?php esc_html_e('Book Your Date', 'demie-v2'); ?>
     </a>
     <button aria-label="<?php esc_attr_e('Toggle navigation menu', 'demie-v2'); ?>" class="md:hidden text-white hover:text-brand-champagne p-2 focus:outline-none" id="mobileMenuBtn">
@@ -32,7 +32,7 @@
     <?php demie_v2_mobile_menu(); ?>
   </div>
   <div class="mt-10 pt-8 border-t border-white/10 w-full max-w-xs flex flex-col items-center">
-    <a class="mobile-nav-link w-full text-center px-8 py-3 bg-brand-champagne text-brand-charcoal text-xs uppercase tracking-widest font-semibold hover:bg-white transition-colors" href="<?php echo esc_url(demie_page_url('contact')); ?>">
+    <a class="mobile-nav-link w-full text-center px-8 py-3 bg-brand-champagne text-brand-charcoal text-xs uppercase tracking-widest font-semibold hover:bg-white transition-colors" href="<?php echo esc_url(demie_page_url('booking')); ?>">
       <?php esc_html_e('Book Your Date', 'demie-v2'); ?>
     </a>
     <p class="text-[10px] tracking-widest uppercase text-white/50 mt-4"><?php esc_html_e('Blantyre · Lilongwe · Worldwide', 'demie-v2'); ?></p>

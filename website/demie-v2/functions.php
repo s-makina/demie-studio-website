@@ -1,12 +1,13 @@
 <?php
 if (!defined('ABSPATH')) exit;
 
-define('DEMIE_VERSION', '0.1.132');
+define('DEMIE_VERSION', '0.2.0');
 define('DEMIE_DIR', get_template_directory());
 define('DEMIE_URI', get_template_directory_uri());
 
 require_once DEMIE_DIR . '/inc/contact.php';
 require_once DEMIE_DIR . '/inc/settings.php';
+require_once DEMIE_DIR . '/inc/booking.php';
 require_once DEMIE_DIR . '/inc/cpts.php';
 require_once DEMIE_DIR . '/inc/metaboxes.php';
 require_once DEMIE_DIR . '/inc/template-tags.php';
@@ -150,6 +151,7 @@ function demie_v2_fallback_menu() {
         [__('Weddings', 'demie-v2'), demie_page_url('gallery')],
         [__('Portfolio', 'demie-v2'), demie_page_url('gallery')],
         [__('Films & Stills', 'demie-v2'), demie_page_url('services')],
+        [__('Booking', 'demie-v2'), demie_page_url('booking')],
         [__('Contact', 'demie-v2'), demie_page_url('contact')],
     ];
     foreach ($items as [$label, $url]) {
@@ -188,7 +190,8 @@ function demie_v2_mobile_menu() {
         [__('Experience', 'demie-v2'), '#experience'],
         [__('Photography & Film', 'demie-v2'), '#services'],
         [__('Kind Words', 'demie-v2'), '#testimonials'],
-        [__('Contact', 'demie-v2'), '#booking'],
+        [__('Booking', 'demie-v2'), demie_page_url('booking')],
+        [__('Contact', 'demie-v2'), demie_page_url('contact')],
     ];
     foreach ($fallbacks as [$label, $url]) {
         echo '<div><a class="mobile-nav-link hover:text-brand-champagne transition-colors" href="' . esc_url($url) . '">' . esc_html($label) . '</a></div>';
