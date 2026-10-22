@@ -1,7 +1,7 @@
 <?php
 if (!defined('ABSPATH')) exit;
 
-define('DEMIE_VERSION', '0.2.0');
+define('DEMIE_VERSION', '0.2.1');
 define('DEMIE_DIR', get_template_directory());
 define('DEMIE_URI', get_template_directory_uri());
 
@@ -274,5 +274,5 @@ function demie_logo_wordmark($class = '') {
             return;
         }
     }
-    echo '<span class="font-serif text-2xl md:text-3xl tracking-luxury uppercase font-normal">Demie Photography</span>';
+    echo '<span class="font-serif text-2xl xl:text-3xl tracking-luxury uppercase font-normal">Demie Photography</span>';
 }

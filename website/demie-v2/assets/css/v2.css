@@ -32,8 +32,10 @@ body {
   opacity: 1;
 }
 
-/* nav: remove list bullets, keep underline */
-nav[aria-label="Primary"] { display: flex; gap: 2.5rem; }
+/* nav: remove list bullets, keep underline.
+   Display and item spacing come from the Tailwind classes on the <nav>
+   (see header.php) — do not force display/gap here, it overrides the
+   responsive hidden/lg:flex utilities. */
 nav[aria-label="Primary"] > li { list-style: none; }
 .reveal-on-scroll {
   opacity: 0;
