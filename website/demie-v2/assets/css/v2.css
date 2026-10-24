@@ -12,10 +12,21 @@ body {
 }
 
 /* Kimono style2 inset frame: rectangular border line + circle ring.
-   Starts at navbar bottom edge (48px = py-6), so it visually connects. */
+   Starts at navbar bottom edge, so it visually connects. The frame and the
+   content share one set of spacing tokens: on phones the frame pulls closer
+   to the viewport while the content keeps a generous interior gutter. */
+#home {
+  --hero-frame-top: 92px;
+  --hero-frame-x: 14px;
+  --hero-frame-bottom: 14px;
+  --hero-content-x: 2rem;
+}
 .hero-frame {
   position: absolute;
-  left: 20px; top: 92px; right: 20px; bottom: 20px;
+  left: calc(var(--hero-frame-x) + env(safe-area-inset-left));
+  top: var(--hero-frame-top);
+  right: calc(var(--hero-frame-x) + env(safe-area-inset-right));
+  bottom: calc(var(--hero-frame-bottom) + env(safe-area-inset-bottom));
   border: 1px solid rgba(255, 255, 255, 0.2);
   display: flex;
   align-items: center;
@@ -24,7 +35,19 @@ body {
   pointer-events: none;
 }
 @media (min-width: 768px) {
-  .hero-frame { left: 100px; top: 95px; right: 100px; bottom: 30px; }
+  #home {
+    --hero-frame-top: 95px;
+    --hero-frame-x: clamp(48px, 8vw, 100px);
+    --hero-frame-bottom: 30px;
+    --hero-content-x: 1.5rem;
+  }
+}
+#home .hero-content {
+  padding-left: calc(var(--hero-content-x) + env(safe-area-inset-left));
+  padding-right: calc(var(--hero-content-x) + env(safe-area-inset-right));
+}
+#home .hero-scroll-cue {
+  bottom: calc(2rem + env(safe-area-inset-bottom));
 }
 .hero-frame .hero-ring {
   width: 100%;
@@ -401,11 +424,20 @@ img { max-width: 100%; }
   .header-tagline { display: none; }
 }
 
+/* Hero headline: keep the mobile line shape while the content column narrows
+   inside the frame. Reverts to Tailwind's text-4xl above 400px and text-6xl
+   from the sm breakpoint. */
+@media (max-width: 639.98px) {
+  #home h1 { font-size: clamp(2rem, 9vw, 2.25rem); }
+}
+
 /* Hero: h-screen + min-h-[640px] overflows on short landscape phones.
-   Let it grow and drop the scroll cue that would sit on the CTAs. */
+   Let it grow, trim the vertical rhythm and drop the scroll cue that would
+   sit on the CTAs. */
 @media (max-height: 700px) and (max-width: 767.98px) {
-  #home { height: auto; min-height: 100svh; padding: 6rem 0 5rem; }
-  #home .absolute.bottom-8 { display: none; }
+  #home { height: auto; min-height: 100svh; padding: 5.5rem 0 2.5rem; }
+  #home .hero-content { margin-top: 1.5rem; }
+  #home .hero-scroll-cue { display: none; }
 }
 
 /* Gallery carousel: 60px overlay arrows cover the card on phones.
