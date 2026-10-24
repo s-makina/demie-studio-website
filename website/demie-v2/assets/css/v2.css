@@ -15,7 +15,7 @@ body {
    Starts at navbar bottom edge (48px = py-6), so it visually connects. */
 .hero-frame {
   position: absolute;
-  left: 20px; top: 48px; right: 20px; bottom: 20px;
+  left: 20px; top: 92px; right: 20px; bottom: 20px;
   border: 1px solid rgba(255, 255, 255, 0.2);
   display: flex;
   align-items: center;
@@ -378,15 +378,27 @@ nav[aria-label="Primary"] > li { list-style: none; }
 html, body { overflow-x: clip; }
 img { max-width: 100%; }
 
-/* Header: 3-col grid squeezes the wordmark on phones */
+/* Header: keep the wordmark on one line and the menu button tappable on phones */
 @media (max-width: 767.98px) {
-  #mainNav { padding-left: 1rem; padding-right: 1rem; gap: 0.5rem; }
-  #mainNav .font-serif { font-size: 1.1rem; letter-spacing: 0.12em; }
+  #mainNav {
+    padding-left: max(1rem, env(safe-area-inset-left));
+    padding-right: max(1rem, env(safe-area-inset-right));
+    gap: 0.5rem;
+  }
+  #mainNav .font-serif {
+    font-size: clamp(1rem, 4.4vw, 1.1rem);
+    letter-spacing: 0.1em;
+    white-space: nowrap;
+  }
+  #mobileMenuBtn:focus-visible,
+  #mainNav a.group:focus-visible {
+    outline: 2px solid #D9C8B4;
+    outline-offset: 3px;
+  }
 }
-@media (max-width: 399.98px) {
-  /* Keep "Demie Photography", drop the tagline on tiniest screens */
-  #mainNav a.group span:last-child { display: none; }
-  #mobileMenuBtn { padding: 0.5rem 0.25rem; }
+@media (max-width: 359.98px) {
+  /* Keep only the wordmark on the very smallest screens */
+  .header-tagline { display: none; }
 }
 
 /* Hero: h-screen + min-h-[640px] overflows on short landscape phones.
@@ -423,4 +435,183 @@ img { max-width: 100%; }
   }
   #experience .lg\:col-span-5,
   #experience .lg\:col-span-3 { padding-top: 3.5rem; padding-bottom: 3.5rem; }
+}
+
+/* ------------------------------------------------------------------
+   Header / footer mobile pass
+   ------------------------------------------------------------------ */
+
+/* Body scroll lock while the mobile menu is open */
+body.menu-open { overflow: hidden; }
+
+/* Mobile navigation overlay: solid, scrollable, keyboard friendly */
+@media (max-width: 1023.98px) {
+  #mobileMenuBtn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 44px;
+    min-height: 44px;
+    padding: 0;
+  }
+  #mobileMenu {
+    background-color: #121212;
+    justify-content: flex-start;
+    justify-content: safe center;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
+    padding: calc(6rem + env(safe-area-inset-top)) 2rem
+             calc(2.5rem + env(safe-area-inset-bottom));
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+    transition: opacity 0.3s ease, visibility 0.3s ease;
+  }
+  #mobileMenu.is-open {
+    opacity: 1;
+    visibility: visible;
+    pointer-events: auto;
+  }
+  #mobileMenu .mobile-menu-links { width: 100%; }
+  #mobileMenu .mobile-nav-link {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    min-height: 48px;
+    padding: 0.25rem 0.75rem;
+  }
+  #mobileMenu .mobile-nav-link:focus-visible {
+    outline: 2px solid #D9C8B4;
+    outline-offset: 3px;
+  }
+  #mobileMenu .mobile-menu-cta {
+    width: 100%;
+    max-width: 20rem;
+  }
+  /* With room to spare, centre the menu; when it overflows, safe centring
+     falls back to the start so no link is clipped. */
+  @media (max-height: 640px) {
+    #mobileMenu .mobile-menu-links { font-size: 1.55rem; }
+    #mobileMenu .mobile-menu-links > * + * { margin-top: 0.85rem; }
+    #mobileMenu .mobile-menu-cta { margin-top: 1.5rem; padding-top: 1.25rem; }
+  }
+}
+@media (min-width: 1024px) {
+  #mobileMenu { display: none; }
+}
+
+/* Footer wordmark: fluid and never wrapped */
+.footer .logo .font-serif {
+  display: block;
+  font-size: clamp(1.25rem, 2.2vw, 1.875rem);
+  letter-spacing: 0.14em;
+  white-space: nowrap;
+}
+.footer .logo img {
+  display: block;
+  max-width: 100%;
+  height: auto;
+  margin-inline: auto;
+}
+
+/* Tablet: give the centre column room instead of three cramped thirds */
+@media (min-width: 768px) and (max-width: 1023.98px) {
+  .footer-col--left,
+  .footer-col--right {
+    flex: 0 0 25%;
+    max-width: 25%;
+  }
+  .footer-col--center {
+    flex: 0 0 50%;
+    max-width: 50%;
+    padding: 0 1rem;
+  }
+}
+@media (min-width: 1024px) {
+  /* Desktop: drop the 3rem side padding so the wordmark fits the column */
+  .footer-col--center { padding: 0; }
+}
+
+/* Newsletter: stack the button below the field whenever the column is narrow */
+@media (max-width: 1199.98px) {
+  .newsletter-form .form-control {
+    height: 48px;
+    padding-right: 1.25rem;
+    font-size: 16px; /* prevent iOS zoom on focus */
+  }
+  .newsletter-form button.btn {
+    position: static;
+    display: block;
+    width: 100%;
+    height: 46px;
+    margin-top: -1px;
+    padding: 0 1.25rem;
+    border: 1px solid #3C3C3C;
+    border-top: 0;
+    background-color: rgba(255, 255, 255, 0.03);
+  }
+  .newsletter-form button.btn .btn-wrap { justify-content: center; }
+}
+
+/* Touch targets in the footer on phones and tablets */
+@media (max-width: 1023.98px) {
+  .footer .footer-nav li + li { margin-top: 4px; }
+  .footer .footer-nav li a { padding: 0.5rem 0; }
+  .footer .social-box.style-oval ul li a {
+    width: 54px;
+    height: 44px;
+    font-size: 14px;
+  }
+}
+
+/* Phones: single centred column, brand and newsletter first */
+@media (max-width: 767.98px) {
+  .footer .footer--inner {
+    padding-top: 80px;
+    padding-bottom: 64px;
+  }
+  .footer.style1::before { height: 56px; }
+
+  .footer-col {
+    text-align: center;
+    margin-bottom: 2rem;
+  }
+  .footer-col--center {
+    order: -1;
+    margin-bottom: 2.5rem;
+  }
+  .footer-col--right { margin-bottom: 0; }
+
+  .footer .footer-widget:has(.footer-nav) { margin-top: 0; }
+  .footer .mr-bottom-55 { margin-bottom: 28px; }
+  .footer .logo .font-serif {
+    font-size: clamp(1.25rem, 5.4vw, 1.5rem);
+    letter-spacing: 0.13em;
+  }
+  .footer .widget-title {
+    font-size: 16px;
+    line-height: 1.6;
+    letter-spacing: 1.5px;
+    padding-top: 0;
+    margin-bottom: 20px;
+  }
+
+  .footer .footer-bottom { padding: 24px 0 80px; }
+  .footer .footer-bottom-inner {
+    flex-direction: column;
+    justify-content: center;
+    gap: 0.875rem;
+    text-align: center;
+  }
+  .footer .copyright p {
+    font-size: 0.875rem;
+    line-height: 1.7;
+    text-wrap: balance;
+  }
+  .footer .social-box ul {
+    justify-content: center;
+    gap: 12px;
+  }
 }

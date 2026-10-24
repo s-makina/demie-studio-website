@@ -103,7 +103,7 @@
 </footer>
 
 <?php if (function_exists('demie_whatsapp_url')) : ?>
-<a class="fixed bottom-6 right-6 z-40 w-12 h-12 rounded-full bg-brand-champagne text-brand-charcoal flex items-center justify-center shadow-xl hover:bg-white transition-colors" href="<?php echo esc_url(demie_whatsapp_url()); ?>" target="_blank" rel="noopener" aria-label="<?php esc_attr_e('Chat on WhatsApp', 'demie-v2'); ?>">✆</a>
+<a class="fixed bottom-6 right-6 z-30 w-12 h-12 rounded-full bg-brand-champagne text-brand-charcoal flex items-center justify-center shadow-xl hover:bg-white transition-colors" href="<?php echo esc_url(demie_whatsapp_url()); ?>" target="_blank" rel="noopener" aria-label="<?php esc_attr_e('Chat on WhatsApp', 'demie-v2'); ?>">✆</a>
 <?php endif; ?>
 
 <?php wp_footer(); ?>
