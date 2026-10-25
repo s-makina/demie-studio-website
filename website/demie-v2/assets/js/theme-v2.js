@@ -108,4 +108,33 @@ document.addEventListener('DOMContentLoaded', () => {
       p.catch(() => { /* poster remains */ });
     }
   }
+
+  // 6. Services: collapse past the initial limit, reveal on demand
+  document.querySelectorAll('[data-services-collapsible]').forEach((list) => {
+    if (!list.id) return;
+    const toggle = document.querySelector('[data-services-toggle][aria-controls="' + list.id + '"]');
+    if (!toggle) return;
+
+    const limit = parseInt(list.getAttribute('data-limit'), 10) || 0;
+    const cards = Array.prototype.slice.call(list.querySelectorAll('.service-card'));
+    if (!limit || cards.length <= limit) return;
+
+    const extra = cards.slice(limit);
+    const wrap = toggle.closest('[data-services-toggle-wrap]');
+
+    const setExpanded = (expanded) => {
+      extra.forEach((card) => { card.hidden = !expanded; });
+      list.classList.toggle('is-collapsed', !expanded);
+      toggle.setAttribute('aria-expanded', expanded ? 'true' : 'false');
+      toggle.textContent = expanded
+        ? toggle.getAttribute('data-label-less')
+        : toggle.getAttribute('data-label-more');
+      if (wrap) wrap.hidden = false;
+    };
+
+    setExpanded(false);
+    toggle.addEventListener('click', () => {
+      setExpanded(toggle.getAttribute('aria-expanded') !== 'true');
+    });
+  });
 });

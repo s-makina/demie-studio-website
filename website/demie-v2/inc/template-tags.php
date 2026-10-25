@@ -129,6 +129,46 @@ function demie_service_short($post) {
     return ($short !== '') ? $short : wp_strip_all_tags(get_the_excerpt($post));
 }
 
+/**
+ * How many services a list shows before the "show all" toggle collapses it.
+ */
+function demie_v2_services_initial_limit() {
+    return max(1, (int) apply_filters('demie_v2_services_initial_limit', 10));
+}
+
+/**
+ * Toggle for a collapsible services grid.
+ *
+ * Printed hidden: theme-v2.js reveals it only when the grid actually overflows
+ * the initial limit, so with JavaScript off every card stays visible and no
+ * dead button is shown.
+ *
+ * @param string $target_id Id of the grid the button controls.
+ * @param int    $total     Number of services rendered in that grid.
+ */
+function demie_v2_services_toggle($target_id, $total) {
+    $limit = demie_v2_services_initial_limit();
+    if ($total <= $limit) {
+        return;
+    }
+
+    $more = sprintf(
+        /* translators: %s: total number of services */
+        __('Show all %s services', 'demie-v2'),
+        number_format_i18n($total)
+    );
+    $less = __('Show fewer services', 'demie-v2');
+    ?>
+    <div class="text-center mt-12" data-services-toggle-wrap hidden>
+        <button type="button" class="services-toggle" data-services-toggle
+                data-label-more="<?php echo esc_attr($more); ?>"
+                data-label-less="<?php echo esc_attr($less); ?>"
+                aria-controls="<?php echo esc_attr($target_id); ?>"
+                aria-expanded="false"><?php echo esc_html($more); ?></button>
+    </div>
+    <?php
+}
+
 /* ---------- Portfolio ---------- */
 
 /**

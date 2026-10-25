@@ -50,16 +50,17 @@
       </div>
     </div>
 
-    <?php $services = function_exists('demie_get_services') ? array_slice(demie_get_services(), 0, 4) : []; ?>
+    <?php $services = function_exists('demie_get_services') ? demie_get_services() : []; ?>
     <?php if ($services) : ?>
-    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mt-12">
+    <div id="home-services-list" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mt-12" data-services-collapsible data-limit="<?php echo esc_attr(demie_v2_services_initial_limit()); ?>">
       <?php foreach ($services as $svc) : ?>
-      <a href="<?php echo esc_url(demie_page_url('services')); ?>" class="reveal-on-scroll block p-7 bg-brand-charcoal border border-white/10 hover:border-brand-gold transition-colors group">
+      <a href="<?php echo esc_url(demie_page_url('services')); ?>" class="service-card reveal-on-scroll block p-7 bg-brand-charcoal border border-white/10 hover:border-brand-gold transition-colors group">
         <h4 class="font-serif text-xl text-brand-cream group-hover:text-brand-gold transition-colors mb-2"><?php echo esc_html(get_the_title($svc)); ?></h4>
         <p class="text-white/60 text-xs font-light leading-relaxed"><?php echo esc_html(function_exists('demie_service_short') ? demie_service_short($svc) : ''); ?></p>
       </a>
       <?php endforeach; ?>
     </div>
+    <?php demie_v2_services_toggle('home-services-list', count($services)); ?>
     <?php endif; ?>
   </div>
 </section>

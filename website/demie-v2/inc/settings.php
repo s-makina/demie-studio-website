@@ -208,7 +208,19 @@ function demie_render_settings_page() {
                     <th scope="row"><label for="demie-slotfy-tenant"><?php esc_html_e('Tenant slug', 'demie-v2'); ?></label></th>
                     <td>
                         <input type="text" id="demie-slotfy-tenant" name="demie_settings[slotfy_tenant]" value="<?php echo esc_attr($opts['slotfy_tenant']); ?>" class="regular-text code">
-                        <p class="description"><?php esc_html_e('The slug used in /embed/{slug}/booking. Current tenant: demie-photography.', 'demie-v2'); ?></p>
+                        <p class="description">
+                            <?php
+                            if ('' !== $opts['slotfy_tenant']) {
+                                printf(
+                                    /* translators: %s: configured Slotfy tenant slug, wrapped in <code> */
+                                    esc_html__('Services and availability come from the tenant at /embed/%s/booking.', 'demie-v2'),
+                                    '<code>' . esc_html($opts['slotfy_tenant']) . '</code>'
+                                );
+                            } else {
+                                esc_html_e('The slug used in /embed/{slug}/booking. Leave empty to disable the widget.', 'demie-v2');
+                            }
+                            ?>
+                        </p>
                     </td>
                 </tr>
                 <tr>

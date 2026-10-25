@@ -392,6 +392,26 @@ nav[aria-label="Primary"] > li { list-style: none; }
 .demie-v2-prose p { margin-bottom: 1.25rem; line-height: 1.8; color: #4a4640; font-weight: 300; }
 .demie-v2-prose h2, .demie-v2-prose h3 { font-family: 'Cormorant Garamond', serif; margin: 2rem 0 1rem; }
 
+/* Services lists — theme-v2.js hides cards past the initial limit and reveals
+   the wrapper that holds this toggle. */
+.services-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.95rem 2.25rem;
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  color: #FDFBF7;
+  font-size: 0.7rem;
+  font-weight: 500;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: background-color 0.3s ease, border-color 0.3s ease, color 0.3s ease;
+}
+.services-toggle:hover { background-color: rgba(255, 255, 255, 0.08); border-color: #FFFFFF; color: #FFFFFF; }
+.services-toggle:focus-visible { outline: 2px solid #D9C8B4; outline-offset: 3px; }
+
 @media (prefers-reduced-motion: reduce) {
   .reveal-on-scroll { opacity: 1 !important; transform: none !important; transition: none !important; }
   .editorial-zoom { transition: none !important; }
