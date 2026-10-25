@@ -1,0 +1,406 @@
+    {"serviceCategories":[
+        {
+            "id": "019eb113-ee35-7227-84d4-229b9ddb18ac",
+            "name": "Graduation Photography",
+            "description": "Professional graduation portraits that celebrate your achievements and preserve one of life's most memorable milestones.",
+            "services": [
+                {
+                    "id": "019eb119-8de8-71ae-a6b1-63db8ebafd97",
+                    "name": "Credit Package",
+                    "description": "Studio Session \u2022 22 Photos \u2022 3 Outfit Changes \u2022 2 Backdrops",
+                    "duration": 60,
+                    "price": 200000,
+                    "is_active": true,
+                    "booking_interval": null,
+                    "featured_image_url": "https:\/\/builder.88782bbc20a9dad2bef3806897b7f199.r2.cloudflarestorage.com\/sites\/019eade1-09ad-72af-9115-156df85978a9\/services\/019eb119-8de8-71ae-a6b1-63db8ebafd97\/3YNj94QUW3EZK5Tp5dh9yBKQd6VUMcy7j9XtfRKt.jpg?X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=4e73328b929856d076e463d6e96869b1%2F20261023%2Fauto%2Fs3%2Faws4_request&X-Amz-Date=20261023T213311Z&X-Amz-SignedHeaders=host&X-Amz-Expires=604800&X-Amz-Signature=d8656793943a7f279b3fc67d7e0f82050704b1d5d3f53b5266d162b997ecfdcf",
+                    "options": [
+                    ]
+                },
+                {
+                    "id": "019eb11b-7574-732f-9db7-b32a0ad966b5",
+                    "name": "Distinction \/ Group Package",
+                    "description": "Studio Session \u2022 35 Photos \u2022 Up to 5 graduants \u2022 up to 2 outfits",
+                    "duration": 60,
+                    "price": 300000,
+                    "is_active": true,
+                    "booking_interval": null,
+                    "featured_image_url": "https:\/\/builder.88782bbc20a9dad2bef3806897b7f199.r2.cloudflarestorage.com\/sites\/019eade1-09ad-72af-9115-156df85978a9\/services\/019eb11b-7574-732f-9db7-b32a0ad966b5\/XCktyN5InuT5Koz1xBbxspA3Ta1F9DE6kKOvym0i.jpg?X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=4e73328b929856d076e463d6e96869b1%2F20261023%2Fauto%2Fs3%2Faws4_request&X-Amz-Date=20261023T213311Z&X-Amz-SignedHeaders=host&X-Amz-Expires=604800&X-Amz-Signature=66022ef70b1031a8cb005a90a53232c58648fdc61a407f4bd7903a8bed9712c3",
+                    "options": [
+                    ]
+                },
+                {
+                    "id": "019eb11c-0e7e-733b-8cdb-37b4811e7ee1",
+                    "name": "Merit Package",
+                    "description": "Studio Session \u2022 16 Photos \u2022 2 Outfit Changes \u2022 1 Backdrop",
+                    "duration": 45,
+                    "price": 150000,
+                    "is_active": true,
+                    "booking_interval": null,
+                    "featured_image_url": "https:\/\/builder.88782bbc20a9dad2bef3806897b7f199.r2.cloudflarestorage.com\/sites\/019eade1-09ad-72af-9115-156df85978a9\/services\/019eb11c-0e7e-733b-8cdb-37b4811e7ee1\/BIdd0KQGvdfMS3qo1sSVYxG28Vb44UlhpChM6jmH.jpg?X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=4e73328b929856d076e463d6e96869b1%2F20261023%2Fauto%2Fs3%2Faws4_request&X-Amz-Date=20261023T213311Z&X-Amz-SignedHeaders=host&X-Amz-Expires=604800&X-Amz-Signature=90f97cf2f3bbd095e4e8ed0d8a2729aa48d7372b37bddfcfa3ff4f52499d3988",
+                    "options": [
+                    ]
+                },
+                {
+                    "id": "019eb11c-588e-7089-9200-051d8834ba83",
+                    "name": "Pass Package",
+                    "description": "30-Minute Session \u2022 10 Photos \u2022 1 Backdrop \u2022 2 Outfit \u2022 Basic Posing Guidance",
+                    "duration": 30,
+                    "price": 100000,
+                    "is_active": true,
+                    "booking_interval": null,
+                    "featured_image_url": "https:\/\/builder.88782bbc20a9dad2bef3806897b7f199.r2.cloudflarestorage.com\/sites\/019eade1-09ad-72af-9115-156df85978a9\/services\/019eb11c-588e-7089-9200-051d8834ba83\/JRb33jOu7OL9ENvilcERWopctA8qs5miB6VPA9IA.jpg?X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=4e73328b929856d076e463d6e96869b1%2F20261023%2Fauto%2Fs3%2Faws4_request&X-Amz-Date=20261023T213311Z&X-Amz-SignedHeaders=host&X-Amz-Expires=604800&X-Amz-Signature=1723df8a419cec5ce036e192d427f37d6707bf28b3645ba5a72cc547ab01f7e8",
+                    "options": [
+                    ]
+                },
+                {
+                    "id": "019f22ee-5a60-731c-bf54-c06d79dd4694",
+                    "name": "INDIVIDUAL ON CAMPUS PRESHOOT PACKAGE",
+                    "description": ".10 photos . 2 outfits. delivered 48 hours after shoot.",
+                    "duration": 30,
+                    "price": 150000,
+                    "is_active": false,
+                    "booking_interval": null,
+                    "featured_image_url": "https:\/\/builder.88782bbc20a9dad2bef3806897b7f199.r2.cloudflarestorage.com\/sites\/019eade1-09ad-72af-9115-156df85978a9\/services\/019f22ee-5a60-731c-bf54-c06d79dd4694\/aq9jbZmNjlryOD2B0XtPsSSEX6WBKVHGDgzkKHQS.jpg?X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=4e73328b929856d076e463d6e96869b1%2F20261023%2Fauto%2Fs3%2Faws4_request&X-Amz-Date=20261023T213311Z&X-Amz-SignedHeaders=host&X-Amz-Expires=604800&X-Amz-Signature=7ef5e7a46bd134cdfb3909acf6d682babc3a6e6183394c2d1b32776405c4375a",
+                    "options": [
+                    ]
+                },
+                {
+                    "id": "019f22f4-415c-7063-8e02-651c11edcd27",
+                    "name": "GROUP ON CAMPUS PRE-SHOOT PACKAGE",
+                    "description": ". 30 photos . up to 5 graduants. delivered 48 hours after shoot",
+                    "duration": 60,
+                    "price": 300000,
+                    "is_active": false,
+                    "booking_interval": null,
+                    "featured_image_url": "https:\/\/builder.88782bbc20a9dad2bef3806897b7f199.r2.cloudflarestorage.com\/sites\/019eade1-09ad-72af-9115-156df85978a9\/services\/019f22f4-415c-7063-8e02-651c11edcd27\/OoQSi2dikBMGR17mztgWRJzlff9oRRXI9XKbCd4O.jpg?X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=4e73328b929856d076e463d6e96869b1%2F20261023%2Fauto%2Fs3%2Faws4_request&X-Amz-Date=20261023T213311Z&X-Amz-SignedHeaders=host&X-Amz-Expires=604800&X-Amz-Signature=237ee8b9a02fb46bceea180b047a0f0e46f5aadad51a15ed93af427906eee2d3",
+                    "options": [
+                    ]
+                },
+                {
+                    "id": "019f22f9-596c-71bb-87bb-39ec203078eb",
+                    "name": "First Graduation day photoshoot package",
+                    "description": ". 10 photos . delivered 48 hours after shoot",
+                    "duration": 15,
+                    "price": 100000,
+                    "is_active": false,
+                    "booking_interval": null,
+                    "featured_image_url": "https:\/\/builder.88782bbc20a9dad2bef3806897b7f199.r2.cloudflarestorage.com\/sites\/019eade1-09ad-72af-9115-156df85978a9\/services\/019f22f9-596c-71bb-87bb-39ec203078eb\/qG2bmmqV4vjaKcnkt9HLzJ66KnI1EWMn3E49uSGC.jpg?X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=4e73328b929856d076e463d6e96869b1%2F20261023%2Fauto%2Fs3%2Faws4_request&X-Amz-Date=20261023T213311Z&X-Amz-SignedHeaders=host&X-Amz-Expires=604800&X-Amz-Signature=851a035acc6eafdc67fade3ee89e2d6242b357263b93da9aa6df7194db2f48dd",
+                    "options": [
+                    ]
+                },
+                {
+                    "id": "019f22fc-82e0-70c7-b834-a6f5301baaa2",
+                    "name": "Second Graduation day Photoshoot package",
+                    "description": ". 25 photos . delivered 48 hours after shoot",
+                    "duration": 30,
+                    "price": 200000,
+                    "is_active": false,
+                    "booking_interval": null,
+                    "featured_image_url": "https:\/\/builder.88782bbc20a9dad2bef3806897b7f199.r2.cloudflarestorage.com\/sites\/019eade1-09ad-72af-9115-156df85978a9\/services\/019f22fc-82e0-70c7-b834-a6f5301baaa2\/Py1dyjgTHJNDaGeB7lvuD3hTOn1fCP3SIYY0a4Fx.jpg?X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=4e73328b929856d076e463d6e96869b1%2F20261023%2Fauto%2Fs3%2Faws4_request&X-Amz-Date=20261023T213311Z&X-Amz-SignedHeaders=host&X-Amz-Expires=604800&X-Amz-Signature=12a782cd00e2eeb911d33335d6a6f2dd1068ecb957b2683deca1c9ff4cb7d467",
+                    "options": [
+                    ]
+                }
+            ]
+        },
+        {
+            "id": "019eb114-264b-711a-acb1-4903ac4d3025",
+            "name": "Outdoor Photography",
+            "description": "Natural and relaxed photography sessions in beautiful outdoor locations, perfect for couples, families, and individuals.",
+            "services": [
+                {
+                    "id": "019eb11c-a539-715b-a253-8f5c185d107d",
+                    "name": "First Couple Session",
+                    "description": "30-Minute Session \u2022 Edited Photos \u2022 2 Outfit Changes \u2022 1 Outdoor Location \u2022 2-Day Delivery",
+                    "duration": 30,
+                    "price": 200000,
+                    "is_active": true,
+                    "booking_interval": null,
+                    "featured_image_url": "https:\/\/builder.88782bbc20a9dad2bef3806897b7f199.r2.cloudflarestorage.com\/sites\/019eade1-09ad-72af-9115-156df85978a9\/services\/019eb11c-a539-715b-a253-8f5c185d107d\/qm4uwyziC4QVNWfbZwHKbftYlAihstxtXGzujZYP.jpg?X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=4e73328b929856d076e463d6e96869b1%2F20261023%2Fauto%2Fs3%2Faws4_request&X-Amz-Date=20261023T213311Z&X-Amz-SignedHeaders=host&X-Amz-Expires=604800&X-Amz-Signature=668a98c672065aeb0f500912df7f6c33960c79607ee19395c17602f2b63647ba",
+                    "options": [
+                    ]
+                },
+                {
+                    "id": "019eb11c-e205-70eb-97f2-1a6fde23b959",
+                    "name": "First Family Session",
+                    "description": "30-Minute Session \u2022 10 Edited Photos \u2022 2 Outfit Changes \u2022 1 Outdoor Location \u2022 Posing Guidance \u2022 2-Day Delivery",
+                    "duration": 30,
+                    "price": 300000,
+                    "is_active": true,
+                    "booking_interval": null,
+                    "featured_image_url": null,
+                    "options": [
+                    ]
+                },
+                {
+                    "id": "019eb11d-29a4-7323-bb70-d2a3dfb1860f",
+                    "name": "First Individual Package",
+                    "description": "30-Minute Session \u2022 10 Edited Photos \u2022 2 Outfit Changes \u2022 1 Location \u2022 Posing Guidance \u2022 2-Day Delivery",
+                    "duration": 30,
+                    "price": 150000,
+                    "is_active": true,
+                    "booking_interval": null,
+                    "featured_image_url": "https:\/\/builder.88782bbc20a9dad2bef3806897b7f199.r2.cloudflarestorage.com\/sites\/019eade1-09ad-72af-9115-156df85978a9\/services\/019eb11d-29a4-7323-bb70-d2a3dfb1860f\/u8p7IrX8YGmlLykQ8RKL5gCDUqL9xXiE96gtBI5G.jpg?X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=4e73328b929856d076e463d6e96869b1%2F20261023%2Fauto%2Fs3%2Faws4_request&X-Amz-Date=20261023T213311Z&X-Amz-SignedHeaders=host&X-Amz-Expires=604800&X-Amz-Signature=3be35286b49d87ac93b19c573b697dc7454b104e1385aff665c3413a04e41107",
+                    "options": [
+                    ]
+                },
+                {
+                    "id": "019eb11d-67b5-735c-977f-463f5a1463c2",
+                    "name": "Second Couple Session",
+                    "description": "1-Hour Session \u2022 20 Edited Photos \u2022 3 Outfit Changes \u2022 1 Location \u2022 Posing Guidance \u2022 2-Day Delivery",
+                    "duration": 60,
+                    "price": 300000,
+                    "is_active": true,
+                    "booking_interval": null,
+                    "featured_image_url": null,
+                    "options": [
+                    ]
+                },
+                {
+                    "id": "019eb11d-b108-7377-9a58-43e7868aa556",
+                    "name": "Second Family Session",
+                    "description": "1-Hour Session \u2022 20 Edited Photos \u2022 3 Outfit Changes \u2022 1 Location \u2022 Posing Guidance \u2022 2-Day Delivery",
+                    "duration": 60,
+                    "price": 400000,
+                    "is_active": true,
+                    "booking_interval": null,
+                    "featured_image_url": null,
+                    "options": [
+                    ]
+                },
+                {
+                    "id": "019eb11d-f6ce-7103-b964-9af73ba5e6b2",
+                    "name": "Second Individual Package",
+                    "description": "1-Hour Session \u2022 20 Edited Photos \u2022 2 Outfit Changes \u2022 1 Location \u2022 Posing Guidance \u2022 2-Day Delivery",
+                    "duration": 60,
+                    "price": 250000,
+                    "is_active": true,
+                    "booking_interval": null,
+                    "featured_image_url": "https:\/\/builder.88782bbc20a9dad2bef3806897b7f199.r2.cloudflarestorage.com\/sites\/019eade1-09ad-72af-9115-156df85978a9\/services\/019eb11d-f6ce-7103-b964-9af73ba5e6b2\/E7rZI63JPDaM64t5sriq9MyjIgOknVBu4ZPAOtUz.jpg?X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=4e73328b929856d076e463d6e96869b1%2F20261023%2Fauto%2Fs3%2Faws4_request&X-Amz-Date=20261023T213311Z&X-Amz-SignedHeaders=host&X-Amz-Expires=604800&X-Amz-Signature=455f70e3140e553b5c2714ae062e8c06ee62b530a0a119f5255c5a1ad34616a9",
+                    "options": [
+                    ]
+                }
+            ]
+        },
+        {
+            "id": "019eb114-5642-706c-8482-d6c106a8f48c",
+            "name": "Studio Photography",
+            "description": "High-quality studio portraits with professional lighting, creating timeless and polished images for any occasion.",
+            "services": [
+                {
+                    "id": "019eb11e-8829-715d-b0fe-c9922c5b9735",
+                    "name": "Classic Package",
+                    "description": "15-Minute Studio Session \u2022 5 Edited Photos \u2022 1 Backdrop \u2022 1 Outfit \u2022 Basic Posing Guidance",
+                    "duration": 15,
+                    "price": 50000,
+                    "is_active": true,
+                    "booking_interval": null,
+                    "featured_image_url": "https:\/\/builder.88782bbc20a9dad2bef3806897b7f199.r2.cloudflarestorage.com\/sites\/019eade1-09ad-72af-9115-156df85978a9\/services\/019eb11e-8829-715d-b0fe-c9922c5b9735\/HsX5MwciHoJyShvQGRgPhXGD2uTGwmrXDxw2lyYT.jpg?X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=4e73328b929856d076e463d6e96869b1%2F20261023%2Fauto%2Fs3%2Faws4_request&X-Amz-Date=20261023T213311Z&X-Amz-SignedHeaders=host&X-Amz-Expires=604800&X-Amz-Signature=523b7d822c6b88af6defb541053a8855f20211d21c52e6713432fed303c6e799",
+                    "options": [
+                    ]
+                },
+                {
+                    "id": "019eb11e-c5f7-7206-8bd2-74f5c766f9c7",
+                    "name": "Signature Package",
+                    "description": "30-Minute Session \u2022 10 Edited Photos \u2022 2 Outfit Changes \u2022 1 Backdrop \u2022 Advanced Posing Guidance \u2022 K10,000 per Additional Photo",
+                    "duration": 30,
+                    "price": 80000,
+                    "is_active": true,
+                    "booking_interval": null,
+                    "featured_image_url": "https:\/\/builder.88782bbc20a9dad2bef3806897b7f199.r2.cloudflarestorage.com\/sites\/019eade1-09ad-72af-9115-156df85978a9\/services\/019eb11e-c5f7-7206-8bd2-74f5c766f9c7\/YpCozkDlltZq0KNBlTXaZVuTYE1OAgYsyJzzLh7L.jpg?X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=4e73328b929856d076e463d6e96869b1%2F20261023%2Fauto%2Fs3%2Faws4_request&X-Amz-Date=20261023T213311Z&X-Amz-SignedHeaders=host&X-Amz-Expires=604800&X-Amz-Signature=4c3888e2f563cea9c4a3c741e013b7a3524a1719896622b226fade807b11f98e",
+                    "options": [
+                    ]
+                },
+                {
+                    "id": "019eb11f-0595-704b-b560-cb82786855cb",
+                    "name": "Prestige Package",
+                    "description": "45-Minute Session \u2022 15 Edited Photos \u2022 2 Outfit Changes \u2022 2 Backdrops \u2022 Full Creative Direction \u2022 K10,000 per Additional Photo",
+                    "duration": 45,
+                    "price": 130000,
+                    "is_active": true,
+                    "booking_interval": null,
+                    "featured_image_url": "https:\/\/builder.88782bbc20a9dad2bef3806897b7f199.r2.cloudflarestorage.com\/sites\/019eade1-09ad-72af-9115-156df85978a9\/services\/019eb11f-0595-704b-b560-cb82786855cb\/YyijVsthgmEojTlyvhg5Vc4wKZTINot4WST4L6Xt.jpg?X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=4e73328b929856d076e463d6e96869b1%2F20261023%2Fauto%2Fs3%2Faws4_request&X-Amz-Date=20261023T213311Z&X-Amz-SignedHeaders=host&X-Amz-Expires=604800&X-Amz-Signature=f62f040e4ad832ab9ed5e03a02fad1758d7f49bb201663fc2efd1089b1a6232d",
+                    "options": [
+                    ]
+                },
+                {
+                    "id": "019eb11f-4295-73c4-a175-8119a6942915",
+                    "name": "Royal Experience",
+                    "description": "1 -Hour Session \u2022 20 Edited Photos \u2022 3 Outfit Changes \u2022 Up to 3 Backdrops \u2022 Full Creative Direction \u2022 K10,000 per Additional Photo",
+                    "duration": 60,
+                    "price": 150000,
+                    "is_active": true,
+                    "booking_interval": null,
+                    "featured_image_url": "https:\/\/builder.88782bbc20a9dad2bef3806897b7f199.r2.cloudflarestorage.com\/sites\/019eade1-09ad-72af-9115-156df85978a9\/services\/019eb11f-4295-73c4-a175-8119a6942915\/oRBDdTyuq2ltKsxdqBPGQ5kliPzHbjwVn4Id8GSX.jpg?X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=4e73328b929856d076e463d6e96869b1%2F20261023%2Fauto%2Fs3%2Faws4_request&X-Amz-Date=20261023T213311Z&X-Amz-SignedHeaders=host&X-Amz-Expires=604800&X-Amz-Signature=658999cb7b638c6ea154b2b459c4da47250233aeb3f3882512daebf698073f3d",
+                    "options": [
+                    ]
+                }
+            ]
+        },
+        {
+            "id": "019eb122-7b3e-73fd-a3de-9d644c492aec",
+            "name": "Wedding Photography",
+            "description": "Complete wedding day coverage, capturing every important moment from preparation to celebration.",
+            "services": [
+                {
+                    "id": "019eb122-bc64-73a7-8019-e88277131551",
+                    "name": "Silver Collection",
+                    "description": "Full-Day Wedding Coverage \u2022 2 Photographers \u2022 Save-the-Date Session \u2022 10 Studio Save-the-Date Photos \u2022 600\u2013800 Edited Photos \u2022 35 Highlight Photos (48-Hour Delivery) \u2022 Full Gallery Delivery Within 1\u20132 Weeks \u2022 Custom USB + Google Drive Delivery \u2022 Blantyre Transport Included \u2022 Outside Blantyre One-Way Transport Included \u2022 1-Day Event Coverage",
+                    "duration": null,
+                    "price": 1000000,
+                    "is_active": true,
+                    "booking_interval": null,
+                    "featured_image_url": "https:\/\/builder.88782bbc20a9dad2bef3806897b7f199.r2.cloudflarestorage.com\/sites\/019eade1-09ad-72af-9115-156df85978a9\/services\/019eb122-bc64-73a7-8019-e88277131551\/2JH0ySUb82i1GM532rlCow9miAvrDhysIioTqhU2.jpg?X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=4e73328b929856d076e463d6e96869b1%2F20261023%2Fauto%2Fs3%2Faws4_request&X-Amz-Date=20261023T213311Z&X-Amz-SignedHeaders=host&X-Amz-Expires=604800&X-Amz-Signature=ac6a534437a5df5b2491642717f4ebd23590ad85720d580dcbf030a2ff44c549",
+                    "options": [
+                    ]
+                },
+                {
+                    "id": "019eb122-db60-7074-a0b3-1e7dc59d4c17",
+                    "name": "Gold Collection",
+                    "description": "Full-Day Coverage (Prep\u2013Reception) \u2022 2 Photographers \u2022 Save-the-Date Session \u2022 10 Studio Save-the-Date Photos \u2022 600\u2013800 Edited Photos \u2022 35 Highlight Photos \u2022 48-Hour Highlight Delivery \u2022 Full Gallery Within 1\u20132 Weeks \u2022 Custom USB + Google Drive Delivery \u2022 Blantyre Transport Included \u2022 Outside Blantyre One-Way Transport Included \u2022 1-Day Event Coverage",
+                    "duration": null,
+                    "price": 1500000,
+                    "is_active": true,
+                    "booking_interval": null,
+                    "featured_image_url": "https:\/\/builder.88782bbc20a9dad2bef3806897b7f199.r2.cloudflarestorage.com\/sites\/019eade1-09ad-72af-9115-156df85978a9\/services\/019eb122-db60-7074-a0b3-1e7dc59d4c17\/3285fTR36OSqjZi0MIcown5vRzAXiSUC6JulpPY1.jpg?X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=4e73328b929856d076e463d6e96869b1%2F20261023%2Fauto%2Fs3%2Faws4_request&X-Amz-Date=20261023T213311Z&X-Amz-SignedHeaders=host&X-Amz-Expires=604800&X-Amz-Signature=ababf799b18425b4ea1be9f7f56af9c3e3a1ba5b8b18d1abe6e65d8e4e790f3f",
+                    "options": [
+                    ]
+                },
+                {
+                    "id": "019eb122-f9b4-715c-b31e-a17c67934bc2",
+                    "name": "Platinum Collection",
+                    "description": "\u2022 Full-Day Coverage (Prep\u2013Reception) \u2022 Up to 4 Photographers \u2022 Save-the-Date Shoot \u2022 Pre-Wedding Shoot \u2022 20 Pre-Wedding Photos \u2022 800\u20131,000 Edited Photos \u2022 50 Highlights \u2022 24-Hour Highlights \u2022 Timeline Support \u2022 A1 Framed Portrait \u2022 Social Media Reel \u2022 USB + Google Drive Delivery \u2022 Gallery Within 1 Week \u2022 Blantyre Transport Included \u2022 Outside Blantyre One-Way Transport \u2022 1-Day Event",
+                    "duration": null,
+                    "price": 2000000,
+                    "is_active": true,
+                    "booking_interval": null,
+                    "featured_image_url": "https:\/\/builder.88782bbc20a9dad2bef3806897b7f199.r2.cloudflarestorage.com\/sites\/019eade1-09ad-72af-9115-156df85978a9\/services\/019eb122-f9b4-715c-b31e-a17c67934bc2\/5tniGPNmFInTfhWRPBXn9xkIFlnxNk8pr1EbBymv.jpg?X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=4e73328b929856d076e463d6e96869b1%2F20261023%2Fauto%2Fs3%2Faws4_request&X-Amz-Date=20261023T213311Z&X-Amz-SignedHeaders=host&X-Amz-Expires=604800&X-Amz-Signature=da926c91bdb9b13e03127dec292edf781d50c750782f1fc998db1c5b3438f1b0",
+                    "options": [
+                    ]
+                }]
+            },
+            {
+                "id": "019eb124-75cd-73fd-81bd-8d5746f1f317",
+                "name": "Wedding Videography",
+                "description": "Cinematic wedding films that beautifully capture the emotions, memories, and highlights of your special day.",
+                "services": [
+                    {
+                        "id": "019eb124-a35b-73e0-acab-e0a041c5829e",
+                        "name": "Silver Package",
+                        "description": "Full-Day Coverage \u2022 1 Videographer \u2022 Cinematic Storytelling \u2022 2\u20133 Minute Highlight Film \u2022 45\u201360 Minute Full Wedding Film \u2022 Highlight Film Delivery Within 0\u20135 Days \u2022 Full Wedding Film Delivery Within 2\u20133 Weeks \u2022 Flash Drive Delivery \u2022 Full Transport Included (Blantyre) \u2022 One-Way Transport Included (Outside Blantyre)",
+                        "duration": null,
+                        "price": 1000000,
+                        "is_active": true,
+                        "booking_interval": null,
+                        "featured_image_url": "https:\/\/builder.88782bbc20a9dad2bef3806897b7f199.r2.cloudflarestorage.com\/sites\/019eade1-09ad-72af-9115-156df85978a9\/services\/019eb124-a35b-73e0-acab-e0a041c5829e\/hzFXRb8trRcJ5Lowj9PQtmOhxNooAm1qoaN9O1tB.jpg?X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=4e73328b929856d076e463d6e96869b1%2F20261023%2Fauto%2Fs3%2Faws4_request&X-Amz-Date=20261023T213311Z&X-Amz-SignedHeaders=host&X-Amz-Expires=604800&X-Amz-Signature=6907a6c9c3e428281f998ec9e8155c0e4f767c70241d03980186a09b18360737",
+                        "options": [
+                        ]
+                    },
+                    {
+                        "id": "019eb124-bc91-7014-a5d1-0b7234f6f20c",
+                        "name": "Gold Collection",
+                        "description": "Full-Day Coverage (Prep\u2013Reception) \u2022 2 Videographers \u2022 Cinematic Storytelling \u2022 Drone Coverage \u2022 3\u20135 Minute Highlight Film \u2022 48-Hour Highlight Delivery \u2022 60\u201390 Minute Full Wedding Film \u2022 Full Film Delivery Within 1\u20132 Weeks \u2022 Flash Drive Delivery \u2022 Blantyre Transport Included \u2022 Outside Blantyre One-Way Transport Included \u2022 1-Day Event Coverage",
+                        "duration": null,
+                        "price": 1600000,
+                        "is_active": true,
+                        "booking_interval": null,
+                        "featured_image_url": "https:\/\/builder.88782bbc20a9dad2bef3806897b7f199.r2.cloudflarestorage.com\/sites\/019eade1-09ad-72af-9115-156df85978a9\/services\/019eb124-bc91-7014-a5d1-0b7234f6f20c\/NLzZoDpijfcQsUJPAxOmW1Ghf1w2zZaX93dOS499.jpg?X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=4e73328b929856d076e463d6e96869b1%2F20261023%2Fauto%2Fs3%2Faws4_request&X-Amz-Date=20261023T213311Z&X-Amz-SignedHeaders=host&X-Amz-Expires=604800&X-Amz-Signature=ed96a629e4a46ca9372496145ae7b8580e4f1bd84f3e34e5dc65930e070ac55e",
+                        "options": [
+                        ]
+                    }
+                ]
+            },
+            {
+                "id": "019f0054-4ae3-7285-9204-17591e146cba",
+                "name": "Engagement \/ Bridal Shower Photography Packages",
+                "description": null,
+                "services": [
+                    {
+                        "id": "019f656e-de9b-7384-8dc9-04810a065d84",
+                        "name": "Silver Collection",
+                        "description": "\u2022\tFull event photography coverage\n\t\u2022\tOne professional photographer\n\t\u2022\tNatural guided posing and candid storytelling\n\t\u2022\tCarefully edited full photo gallery (200+ images)\n\t\u2022\t20 highlight images delivered within 3\u20135 days\n\t\u2022\tFull gallery delivered within 1\u20132 weeks\n\t\u2022\tDelivery via Google Drive\n\t\u2022\tTransport included within Blantyre",
+                        "duration": 240,
+                        "price": 800000,
+                        "is_active": true,
+                        "booking_interval": null,
+                        "featured_image_url": null,
+                        "options": [
+                        ]
+                    },
+                    {
+                        "id": "019f6571-9ed1-7018-b875-a03bd3a94c3c",
+                        "name": "Signature Collection [ most booked ]",
+                        "description": "\u2022\tFull event photography coverage\n\t\u2022\tTwo professional photographers\n\t\u2022\tSave-the-Date studio session (10 edited images)\n\t\u2022\tCarefully edited full photo gallery (400+ images)\n\t\u2022\t35 highlight images delivered within 24 hours\n\t\u2022\tFull gallery delivered within 3\u20137 days\n\t\u2022\tFlash Drive + Google Drive delivery\n\u2022  Transport included within Blantyre",
+                        "duration": 240,
+                        "price": 1100000,
+                        "is_active": true,
+                        "booking_interval": null,
+                        "featured_image_url": null,
+                        "options": [
+                        ]
+                    }
+                ]
+            },
+            {
+                "id": "019f657c-d40c-7329-98bf-0699ccf94006",
+                "name": "Engagement \/ Bridal Shower Videography Packages",
+                "description": null,
+                "services": [
+                    {
+                        "id": "019f6580-9561-70e5-85a1-6976f47eccb1",
+                        "name": "Silver Collection",
+                        "description": "- One professional videographer\n- Cinematic storytelling and creative direction\n- One cinematic highlight film (2\u20133 minutes)\n- Professionally edited video\n- Highlight film delivered within 5 days\n- Delivery via Google Drive\n- Transport inclusive within Blantyre",
+                        "duration": 240,
+                        "price": 800000,
+                        "is_active": true,
+                        "booking_interval": null,
+                        "featured_image_url": null,
+                        "options": [
+                        ]
+                    },
+                    {
+                        "id": "019f6584-1c30-737a-93a7-1b19eeca0c1b",
+                        "name": "Signature Collection [ most booked ]",
+                        "description": "- Two professional videographers\n- Creative planning and location guidance\n- Cinematic highlight film (3\u20135 minutes)\n- One vertical social media reel\n- Professionally edited video\n- Highlight film delivered within 72 hours\n- Delivery via Flash Drive + Google Drive\n- Transport inclusive within Blantyre",
+                        "duration": 240,
+                        "price": 1000000,
+                        "is_active": true,
+                        "booking_interval": null,
+                        "featured_image_url": null,
+                        "options": [
+                        ]
+                    }
+                ]
+            },
+            {
+                "id": "019f6586-ca19-72ec-9ea5-a03ef1f89ef6",
+                "name": "Engagement & Bridal Shower Photo + Video Collections",
+                "description": "Beautifully capturing every moment through timeless photography and cinematic storytelling.",
+                "services": [
+                    {
+                        "id": "019f658b-6013-70ce-a6a9-665a4c70dc2f",
+                        "name": "ESSENTIAL STORY COLLECTION",
+                        "description": "Photography\n-One professional photographer\n-Natural guided posing\n-Carefully edited photo gallery (200+ images)\n-20 highlight images delivered within 3\u20135 days\n-Full gallery delivered within 1\u20132 weeks\n\nVideography\n-One professional videographer\n-Cinematic highlight film (2\u20133 minutes)\n-Professionally edited video\nDelivered within 1-2 weeks\n\nAlso Includes\n-Google Drive delivery\n-Travel included within Blantyre",
+                        "duration": 240,
+                        "price": 1550000,
+                        "is_active": true,
+                        "booking_interval": null,
+                        "featured_image_url": null,
+                        "options": [
+                        ]
+                    },
+                    {
+                        "id": "019f658f-2769-718d-aaaf-97f0d330d5e5",
+                        "name": "SIGNATURE STORY COLLECTION [ Most Booked ]",
+                        "description": "Photography\n-Two professional photographers\n-Save-the-Date studio session (10 edited images)\n-Carefully edited gallery (400+ images)\n-35 highlight images delivered within 24 hours\n-Full gallery delivered within 3\u20137 days\n\nVideography\n-Two professional videographers\n-Cinematic highlight film (3\u20135 minutes)\n-One social media reel\n-Highlight film delivered within 72 hours\n\nAlso Includes\n-Flash Drive + Google Drive delivery\n-Transport included within Blantyre",
+                        "duration": 240,
+                        "price": 2000000,
+                        "is_active": true,
+                        "booking_interval": null,
+                        "featured_image_url": null,
+                        "options": [
+                        ]
+                    }
+                ]
+            }
+        ]
+    }
