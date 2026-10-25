@@ -18,7 +18,7 @@ $demie_payment_return = isset($_GET['payment']) && 'return' === sanitize_key(wp_
 $demie_has_content    = '' !== trim(get_the_content());
 ?>
 <section class="bg-[#151515] text-brand-cream px-4 sm:px-6 md:px-14 pt-14 md:pt-20 pb-20 md:pb-28">
-    <div class="max-w-5xl mx-auto">
+    <div class="max-w-8xl mx-auto">
 
         <?php if ($demie_payment_return) : ?>
             <div role="status" class="mb-10 border border-brand-gold/40 bg-brand-gold/10 px-5 py-4 text-sm leading-relaxed text-brand-cream">
@@ -27,7 +27,7 @@ $demie_has_content    = '' !== trim(get_the_content());
             </div>
         <?php endif; ?>
 
-        <div class="demie-v2-prose text-center mb-10 [&_p]:text-white/60 [&_p]:font-light">
+        <div class="demie-v2-prose text-center max-w-2xl mx-auto mb-10 [&_p]:text-white/60 [&_p]:font-light">
             <?php if ($demie_has_content) : ?>
                 <?php the_content(); ?>
             <?php else : ?>
@@ -54,7 +54,7 @@ $demie_has_content    = '' !== trim(get_the_content());
             </noscript>
             <?php demie_render_slotfy_widget(); ?>
         <?php else : ?>
-            <div class="border border-white/10 bg-[#1E1C1A] px-6 py-10 md:px-10 text-center">
+            <div class="border border-white/10 bg-[#1E1C1A] px-6 py-10 md:px-10 text-center max-w-3xl mx-auto">
                 <h2 class="font-serif text-3xl text-brand-cream mb-4"><?php esc_html_e('Online booking is unavailable', 'demie-v2'); ?></h2>
                 <p class="text-white/60 font-light leading-relaxed max-w-xl mx-auto mb-8">
                     <?php esc_html_e('We are updating our booking calendar. Call, WhatsApp, or send us a message and we will find a date together.', 'demie-v2'); ?>

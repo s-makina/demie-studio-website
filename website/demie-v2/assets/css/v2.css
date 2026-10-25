@@ -381,6 +381,13 @@ nav[aria-label="Primary"] > li { list-style: none; }
 .demie-v2-input:focus { outline: none; border-color: #D9C8B4; background: rgba(255,255,255,0.05); }
 .demie-form-feedback { margin-top: 1rem; font-size: 0.8rem; color: #D9C8B4; }
 
+/* Slotfy booking widget — widget.js mounts an iframe inside #slotfy-booking.
+   The container must claim the full booking column and the iframe must never
+   carry an intrinsic width of its own, otherwise the calendar is letterboxed
+   inside the wide section. */
+.slotfy-booking { width: 100%; min-width: 0; }
+.slotfy-booking iframe { display: block; width: 100%; max-width: 100%; border: 0; }
+
 /* generic content areas (page.php / single.php) */
 .demie-v2-prose p { margin-bottom: 1.25rem; line-height: 1.8; color: #4a4640; font-weight: 300; }
 .demie-v2-prose h2, .demie-v2-prose h3 { font-family: 'Cormorant Garamond', serif; margin: 2rem 0 1rem; }
