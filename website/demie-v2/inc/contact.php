@@ -3,7 +3,7 @@
 if (!defined('ABSPATH')) exit;
 
 /**
- * AJAX enquiry form for Demie Photography.
+ * AJAX enquiry form for Demie Weddings.
  * Posts to admin-ajax.php with action "demie_contact", nonce "demie-contact".
  */
 function demie_contact_ajax() {

@@ -4,7 +4,7 @@
  * Plugin URI:  https://demiephotography.example
  * Description: Owner-managed Galleries (ordered photos + videos incl. YouTube/Vimeo links) rendered anywhere via [demie_gallery] with the Kimono portfolio layouts.
  * Version:     0.1.0
- * Author:      Demie Photography
+ * Author:      Demie Weddings
  * Text Domain: demie-gallery
  * Domain Path: /languages
  *

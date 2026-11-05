@@ -1,6 +1,6 @@
 <?php
 /**
- * Theme auto-seed for Demie Photography.
+ * Theme auto-seed for Demie Weddings.
  *
  * Decision: docs/adr/0001-cpts-and-metaboxes-for-editable-content.md
  *
@@ -49,7 +49,59 @@ function demie_seed_run() {
     demie_seed_portfolio();
     demie_seed_home_meta();
     demie_seed_page_meta();
+    demie_seed_rebrand_weddings();
     flush_rewrite_rules();
+}
+
+/**
+ * One-time rename of the stored brand "Demie Photography" to "Demie Weddings"
+ * in the site title, posts, page/CPT meta and Customizer values.
+ */
+function demie_seed_rebrand_weddings() {
+    if (get_option('demie_rebrand_weddings_done')) {
+        return;
+    }
+    global $wpdb;
+    $old = 'Demie Photography';
+    $new = 'Demie Weddings';
+    $like = '%' . $wpdb->esc_like($old) . '%';
+
+    foreach (['blogname', 'blogdescription'] as $option) {
+        $value = get_option($option);
+        if (is_string($value) && strpos($value, $old) !== false) {
+            update_option($option, str_replace($old, $new, $value));
+        }
+    }
+
+    $post_ids = $wpdb->get_col($wpdb->prepare(
+        "SELECT ID FROM {$wpdb->posts} WHERE post_type <> 'revision' AND (post_title LIKE %s OR post_content LIKE %s OR post_excerpt LIKE %s)",
+        $like, $like, $like
+    ));
+    foreach ($post_ids as $post_id) {
+        $wpdb->query($wpdb->prepare(
+            "UPDATE {$wpdb->posts} SET post_title = REPLACE(post_title, %s, %s), post_content = REPLACE(post_content, %s, %s), post_excerpt = REPLACE(post_excerpt, %s, %s) WHERE ID = %d",
+            $old, $new, $old, $new, $old, $new, $post_id
+        ));
+        clean_post_cache((int) $post_id);
+    }
+
+    $meta_rows = $wpdb->get_results($wpdb->prepare(
+        "SELECT post_id, meta_key, meta_value FROM {$wpdb->postmeta} WHERE meta_key LIKE %s AND meta_value LIKE %s",
+        $wpdb->esc_like('_demie_') . '%', $like
+    ));
+    foreach ($meta_rows as $row) {
+        if (!is_serialized($row->meta_value)) {
+            update_post_meta((int) $row->post_id, $row->meta_key, str_replace($old, $new, $row->meta_value), $row->meta_value);
+        }
+    }
+
+    foreach ((array) get_theme_mods() as $key => $value) {
+        if (is_string($value) && strpos($value, $old) !== false) {
+            set_theme_mod($key, str_replace($old, $new, $value));
+        }
+    }
+
+    update_option('demie_rebrand_weddings_done', 1);
 }
 
 /* ---------- Helpers ---------- */
@@ -363,13 +415,13 @@ function demie_seed_testimonials() {
     // [slug, author, quote, location, stars, photo]
     $testimonials = [
         ['rachel-jackson', 'Rachel Jackson',
-            'I had an amazing photography session with team Demie Photography, highly recommended. They have an amazing atmosphere in their studio. I would love to visit again.',
+            'I had an amazing photography session with team Demie Weddings, highly recommended. They have an amazing atmosphere in their studio. I would love to visit again.',
             'Blantyre', 5, '4.jpg'],
         ['helen-jordan', 'Helen Jordan',
             'Demie captured our wedding beautifully. Every special moment of the day is there in the photos — we could not be happier with the results.',
             'Lilongwe', 5, '5.jpg'],
         ['chikondi-banda', 'Chikondi Banda',
-            'Professional, friendly and creative. Our family portraits came out stunning and the whole session was so much fun. Thank you Demie Photography!',
+            'Professional, friendly and creative. Our family portraits came out stunning and the whole session was so much fun. Thank you Demie Weddings!',
             'Chilomoni', 5, '6.jpg'],
     ];
 
@@ -422,9 +474,9 @@ function demie_seed_faqs() {
 function demie_seed_slides() {
     // [slug, title, subtitle, slider image]
     $slides = [
-        ['demie-photography-weddings', 'Demie Photography', 'Weddings', '4.jpg'],
-        ['demie-photography-portraits', 'Demie Photography', 'Portraits', '5.jpg'],
-        ['demie-photography-events', 'Demie Photography', 'Events', '6.jpg'],
+        ['demie-photography-weddings', 'Demie Weddings', 'Weddings', '4.jpg'],
+        ['demie-photography-portraits', 'Demie Weddings', 'Portraits', '5.jpg'],
+        ['demie-photography-events', 'Demie Weddings', 'Events', '6.jpg'],
     ];
 
     foreach ($slides as $i => $s) {
@@ -459,9 +511,9 @@ function demie_seed_home_meta() {
     }
 
     $meta = [
-        '_demie_about_heading'    => 'About Demie Photography',
-        '_demie_about_p1'         => 'Demie Photography is a photography studio based in Chilomoni, Blantyre, serving couples, families and brands across Malawi.',
-        '_demie_about_p2'         => 'From weddings and portraits to events and drone cinematography, our team captures the moments that matter with care, creativity and a personal touch. Hire Demie Photography for your next event.',
+        '_demie_about_heading'    => 'About Demie Weddings',
+        '_demie_about_p1'         => 'Demie Weddings is a photography studio based in Chilomoni, Blantyre, serving couples, families and brands across Malawi.',
+        '_demie_about_p2'         => 'From weddings and portraits to events and drone cinematography, our team captures the moments that matter with care, creativity and a personal touch. Hire Demie Weddings for your next event.',
         '_demie_exp_l1'           => 'From First Hello',
         '_demie_exp_l2'           => 'to Final Gallery',
         '_demie_exp_text'         => 'No confusing packages or endless back-and-forth. Tell us about your wedding, portrait session or event, and we handle the rest — planning, shooting and editing — so all you have to do is show up and enjoy your moment.',
@@ -473,10 +525,10 @@ function demie_seed_home_meta() {
         '_demie_step2_text'       => 'We plan the venue, timing and style with you, then capture every moment on the day.',
         '_demie_step3_title'      => 'Download Your Gallery',
         '_demie_step3_text'       => 'Your edited photos and videos are delivered right here on the site, ready to download and share.',
-        '_demie_h_about_l1'       => 'Demie Photography captures',
+        '_demie_h_about_l1'       => 'Demie Weddings captures',
         '_demie_h_about_l2'       => 'All of Your',
         '_demie_h_about_l3'       => 'beautiful memories',
-        '_demie_h_portfolio_l1'   => 'Demie Photography captures',
+        '_demie_h_portfolio_l1'   => 'Demie Weddings captures',
         '_demie_h_portfolio_l2'   => 'All of Your',
         '_demie_h_portfolio_l3'   => 'beautiful memories',
         '_demie_h_blog_l1'        => 'Our Photography',
@@ -555,18 +607,18 @@ function demie_seed_page_meta() {
         'about-us' => [
             '_demie_h_sub' => 'About Us',
             '_demie_h_l1'  => 'About',
-            '_demie_h_l2'  => 'Demie Photography',
+            '_demie_h_l2'  => 'Demie Weddings',
             '_demie_h_l3'  => '',
         ],
         'services' => [
             '_demie_h_sub' => 'Our Services',
-            '_demie_h_l1'  => 'Demie Photography offers',
+            '_demie_h_l1'  => 'Demie Weddings offers',
             '_demie_h_l2'  => 'All of the',
             '_demie_h_l3'  => 'services you need',
         ],
         'gallery'  => [
             '_demie_h_sub' => 'Our Portfolio',
-            '_demie_h_l1'  => 'Demie Photography captures',
+            '_demie_h_l1'  => 'Demie Weddings captures',
             '_demie_h_l2'  => 'All of Your',
             '_demie_h_l3'  => 'beautiful memories',
         ],

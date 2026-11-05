@@ -1,12 +1,12 @@
-# Demie Photography website
+# Demie Weddings website
 
-Rebrand of the Kimono photography-agency template into the brochure site for Demie Photography, a photographer in Blantyre, Malawi.
+Rebrand of the Kimono photography-agency template into the brochure site for Demie Weddings, a wedding photography and film studio in Blantyre, Malawi.
 
 ## Language
 
-**Demie Photography**:
+**Demie Weddings**:
 The canonical public display name of the business.
-_Avoid_: Demie Studios, Demie Studio, Kimono
+_Avoid_: Demie Photography (former name), Demie Studios, Demie Studio, Kimono
 
 ## Contact
 

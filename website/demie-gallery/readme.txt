@@ -25,7 +25,7 @@ external video links (YouTube/Vimeo) — that you can drop on any page with the
 * Filters (All / Photos / Videos) on the filterable layouts.
 * The Gallery page template renders the latest gallery automatically.
 
-Built for the Demie Photography theme; the lightbox (Fancybox), Isotope and
+Built for the Demie Weddings theme; the lightbox (Fancybox), Isotope and
 Swiper come from the theme. Without them galleries still render, just without
 those behaviours.
 

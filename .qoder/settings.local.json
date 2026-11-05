@@ -1,0 +1,20 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(ls; git status --short | head -30)",
+      "Bash(cd website; cat deploy_theme.py | head -40; echo ----; head -30 CONTEXT.md; echo ----; git log --oneline -5 -- demie-v2 demie-photography-theme)",
+      "Bash(cd /c/xampp/htdocs/demie-studio-website/website; grep -n \"DEV_THEME\\\\|LIVE_THEME\" deploy_theme.py | head; grep -n \"function \\\\|option\\\\|version\\\\|DEMIE_VERSION\" demie-v2/inc/seed.php | head -60; grep -n \"DEMIE_VERSION\\\\|blogname\\\\|Photograph\" demie-v2/functions.php | head)",
+      "Bash(cd /c/xampp/htdocs/demie-studio-website/website; grep -rn \"blogname\\\\|blogdescription\" demie-v2 | head; grep -rni \"photograph\" demie-gallery | grep -v \"^demie-gallery/readme\" ; grep -rn \"Demie\" demie-v2 --include=*.php --include=*.js --include=*.css | grep -vi \"photograph\\\\|demie_\\\\|demie-\\\\|'demie\\\\|DEMIE\" | head -30; ls demie-v2 demie-v2/template-parts)",
+      "Bash(cd /c/xampp/htdocs/demie-studio-website/website; git status --short demie-v2 demie-gallery CONTEXT.md; files=$\\(grep -rl \"Demie Photography\" demie-v2 demie-gallery\\); echo \"$files\"; sed -i 's/Demie Photography/Demie Weddings/g' $files; git diff --stat)",
+      "Bash(cd /c/xampp/htdocs/demie-studio-website/website; sed -i \"s/define\\('DEMIE_VERSION', '0.2.7'\\);/define\\('DEMIE_VERSION', '0.2.8'\\);/\" demie-v2/functions.php; grep -n \"^Version\" demie-v2/style.css; grep -n \"DEMIE_VERSION'\" demie-v2/functions.php; grep -n \"Demie Photography\\\\|Photography\" CONTEXT.md)",
+      "Bash(cd /c/xampp/htdocs/demie-studio-website/website; sed -i '1s/Demie Photography/Demie Weddings/; 3s/for Demie Photography, a photographer/for Demie Weddings, a wedding photography and film studio/; 7s/\\\\*\\\\*Demie Photography\\\\*\\\\*/**Demie Weddings**/' CONTEXT.md; sed -i '9s/_Avoid_: Demie Studios, Demie Studio, Kimono/_Avoid_: Demie Photography \\(former name\\), Demie Studios, Demie Studio, Kimono/' CONTEXT.md; head -10 CONTEXT.md; for f in $\\(git ls-files -m demie-v2 demie-gallery '*.php'\\); do php -l \"$f\" 2>&1 | grep -v \"No syntax errors\"; done; grep -rn \"Demie Photography\" demie-v2 demie-gallery)",
+      "Bash(cd /c/xampp/htdocs/demie-studio-website/website; P=/c/xampp/php/php.exe; for f in demie-v2/inc/seed.php demie-v2/functions.php demie-v2/footer.php demie-v2/template-parts/agency.php demie-v2/inc/contact.php demie-v2/inc/cpts.php demie-v2/inc/metaboxes.php demie-gallery/demie-gallery.php demie-gallery/inc/seed.php; do $P -l \"$f\"; done)",
+      "Bash(cd /c/xampp/htdocs/demie-studio-website/website; python deploy_theme.py --no-bump 2>&1 | tail -25)",
+      "Bash(cd /c/xampp/htdocs/demie-studio-website/website; \\(py -3 deploy_theme.py --no-bump || python3 deploy_theme.py --no-bump\\) 2>&1 | tail -25)",
+      "Bash(cd /c/xampp/htdocs/demie-studio-website/website; sed -n 40,50p deploy_theme.py; ls /c/xampp/htdocs/other/demie-studio-wp/wp-content/themes/ /c/xampp/htdocs/other/demie-studio-wp/wp-content/plugins/ 2>&1 | head -20)",
+      "Bash(ls /c/xampp/htdocs/; ls -d /c/xampp/htdocs/*/wp-content/themes/* 2>/dev/null)",
+      "Bash(cd /c/xampp/htdocs/demie-studio-website/website; git diff --stat 2>/dev/null)",
+      "Bash(cd /c/xampp/htdocs/demie-studio-website; git status --short; git log --oneline -3)"
+    ]
+  }
+}

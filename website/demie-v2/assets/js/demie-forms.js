@@ -1,4 +1,4 @@
-/* Demie Photography — AJAX enquiry form binding. */
+/* Demie Weddings — AJAX enquiry form binding. */
 (function ($) {
     'use strict';
 

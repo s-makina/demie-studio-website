@@ -1,6 +1,6 @@
 <?php
 /**
- * Custom post types for the Demie Photography theme.
+ * Custom post types for the Demie Weddings theme.
  *
  * Decision: docs/adr/0001-cpts-and-metaboxes-for-editable-content.md
  *

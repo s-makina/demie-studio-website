@@ -1,6 +1,6 @@
 <?php
 /**
- * Metaboxes for the Demie Photography theme.
+ * Metaboxes for the Demie Weddings theme.
  *
  * Decision: docs/adr/0001-cpts-and-metaboxes-for-editable-content.md
  *

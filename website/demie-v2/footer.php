@@ -81,7 +81,7 @@
     <div class="container">
       <div class="footer-bottom-inner">
         <div class="copyright">
-          <p><?php printf(esc_html__('Demie Photography, All Rights Reserved &copy; %s', 'demie-v2'), esc_html(date('Y'))); ?></p>
+          <p><?php printf(esc_html__('Demie Weddings, All Rights Reserved &copy; %s', 'demie-v2'), esc_html(date('Y'))); ?></p>
         </div>
         <div class="social-box style-oval">
           <?php

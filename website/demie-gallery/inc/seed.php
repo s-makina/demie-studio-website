@@ -96,7 +96,7 @@ function demie_g_seed_demo_gallery() {
             'post_type'   => 'demie_gallery',
             'post_status' => 'publish',
             'post_name'   => DEMIE_G_SEED_SLUG,
-            'post_title'  => __('Demie Photography Showcase', 'demie-gallery'),
+            'post_title'  => __('Demie Weddings Showcase', 'demie-gallery'),
             'post_author' => get_current_user_id() ?: 1,
         ]);
 

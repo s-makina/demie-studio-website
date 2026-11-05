@@ -11,7 +11,7 @@
         <span class="text-outline"><?php esc_html_e('Storytellers', 'demie-v2'); ?></span>
       </h2>
       <p class="max-w-xl text-base sm:text-lg text-white/80 font-light font-sans leading-relaxed mb-12 reveal-on-scroll">
-        <?php esc_html_e('The talent at Demie Photography runs wide and deep. From weddings and intimate portraits to events and drone work, our team is made of some of the finest image-makers in Malawi — capturing beautiful memories across the country and beyond.', 'demie-v2'); ?>
+        <?php esc_html_e('The talent at Demie Weddings runs wide and deep. From weddings and intimate portraits to events and drone work, our team is made of some of the finest image-makers in Malawi — capturing beautiful memories across the country and beyond.', 'demie-v2'); ?>
       </p>
       <p class="flex items-center gap-4 text-xl md:text-2xl text-white font-sans font-medium reveal-on-scroll">
         <span class="w-[74px] h-[74px] flex items-center justify-center rounded-full bg-brand-gold text-white text-2xl font-serif shrink-0"><?php esc_html_e('15+', 'demie-v2'); ?></span>
@@ -20,7 +20,7 @@
     </div>
 
     <div class="lg:col-span-4 reveal-on-scroll">
-      <img src="<?php echo esc_url(DEMIE_URI . '/assets/img/more/3.png'); ?>" alt="<?php esc_attr_e('Demie Photography', 'demie-v2'); ?>" class="w-full h-full object-cover object-center block">
+      <img src="<?php echo esc_url(DEMIE_URI . '/assets/img/more/3.png'); ?>" alt="<?php esc_attr_e('Demie Weddings', 'demie-v2'); ?>" class="w-full h-full object-cover object-center block">
     </div>
 
     <div class="lg:col-span-3 py-24 md:py-36 px-6 lg:px-0 lg:pl-12 flex flex-col justify-center space-y-10">
