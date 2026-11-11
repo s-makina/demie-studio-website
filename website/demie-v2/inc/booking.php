@@ -105,6 +105,220 @@ function demie_slotfy_return_url() {
 }
 
 /**
+ * Slotfy public API origin (…/api), or '' when the base URL is invalid.
+ */
+function demie_slotfy_api_base() {
+    $base = demie_slotfy_base_url();
+    return '' === $base ? '' : $base . '/api';
+}
+
+/**
+ * Decode a public Slotfy endpoint, unwrapping the { data } envelope.
+ *
+ * Returns null on transport, HTTP or JSON errors so callers can fall back to
+ * an empty catalogue instead of showing an error to visitors.
+ *
+ * @param string $url    Absolute endpoint URL.
+ * @param string $tenant Tenant slug sent as x-tenant-slug.
+ * @return mixed|null Decoded data, or null on failure.
+ */
+function demie_slotfy_api_get($url, $tenant) {
+    $response = wp_remote_get($url, [
+        'timeout'     => 6,
+        'redirection' => 2,
+        'headers'     => [
+            'Accept'        => 'application/json',
+            'x-tenant-slug' => $tenant,
+        ],
+    ]);
+
+    if (is_wp_error($response)) {
+        return null;
+    }
+    if (200 !== (int) wp_remote_retrieve_response_code($response)) {
+        return null;
+    }
+
+    $body = json_decode(wp_remote_retrieve_body($response), true);
+    if (!is_array($body)) {
+        return null;
+    }
+
+    // The API wraps success bodies as { "@@wrapped": true, data: …, meta: … }.
+    return array_key_exists('data', $body) ? $body['data'] : $body;
+}
+
+/**
+ * Normalise one public Slotfy package into what the theme renders.
+ *
+ * @param mixed $raw One row from GET /packages/public.
+ * @return array|null Package, or null when the row is unusable.
+ */
+function demie_slotfy_normalize_package($raw) {
+    if (!is_array($raw) || empty($raw['name'])) {
+        return null;
+    }
+
+    $inclusions = [];
+    $sessions   = 0;
+    if (!empty($raw['packageServices']) && is_array($raw['packageServices'])) {
+        foreach ($raw['packageServices'] as $line) {
+            $name = isset($line['service']['name']) ? trim((string) $line['service']['name']) : '';
+            $quantity = isset($line['quantity']) ? (int) $line['quantity'] : 0;
+            if ('' === $name || $quantity < 1) {
+                continue;
+            }
+            $sessions += $quantity;
+            $inclusions[] = [
+                'name'     => sanitize_text_field($name),
+                'quantity' => $quantity,
+            ];
+        }
+    }
+
+    $validity = '';
+    if (!empty($raw['durationCount']) && !empty($raw['durationType'])) {
+        $count = max(0, (int) $raw['durationCount']);
+        $unit  = strtolower((string) $raw['durationType']);
+        $label = '';
+        if ('day' === $unit) {
+            $label = _n('day', 'days', $count, 'demie-v2');
+        } elseif ('week' === $unit) {
+            $label = _n('week', 'weeks', $count, 'demie-v2');
+        } elseif ('month' === $unit) {
+            $label = _n('month', 'months', $count, 'demie-v2');
+        }
+        if ('' !== $label) {
+            $validity = sprintf(
+                /* translators: 1: number of days/weeks/months, 2: unit label */
+                __('Valid for %1$s %2$s', 'demie-v2'),
+                number_format_i18n($count),
+                $label
+            );
+        }
+    }
+
+    return [
+        'id'          => isset($raw['id']) ? sanitize_text_field((string) $raw['id']) : '',
+        'name'        => sanitize_text_field((string) $raw['name']),
+        'description' => isset($raw['description'])
+            ? html_entity_decode(wp_strip_all_tags((string) $raw['description']), ENT_QUOTES, 'UTF-8')
+            : '',
+        'price'       => isset($raw['price']) ? (float) $raw['price'] : 0.0,
+        'sessions'    => $sessions,
+        'validity'    => $validity,
+        'inclusions'  => $inclusions,
+    ];
+}
+
+/**
+ * Public package catalogue from Slotfy, cached in a transient.
+ *
+ * Returns packages plus the tenant's currency settings so prices render the
+ * same way they do inside the booking widget. A failed request caches an
+ * empty list for a short time, so the site neither hammers Slotfy nor leaves
+ * a broken section on the page.
+ *
+ * @return array{packages: array, currency: string, symbol_position: string, decimal_places: int}
+ */
+function demie_slotfy_package_catalog() {
+    static $catalog = null;
+    if (null !== $catalog) {
+        return $catalog;
+    }
+
+    $tenant = demie_slotfy_tenant();
+    $api    = demie_slotfy_api_base();
+    $empty  = [
+        'packages'        => [],
+        'currency'        => '',
+        'symbol_position' => 'before',
+        'decimal_places'  => 2,
+    ];
+
+    if ('' === $tenant || '' === $api) {
+        return $catalog = $empty;
+    }
+
+    $cache_key = 'demie_slotfy_packages_' . md5($tenant . '|' . $api);
+    $cached    = get_transient($cache_key);
+    if (is_array($cached) && isset($cached['packages'])) {
+        return $catalog = $cached;
+    }
+
+    $general  = demie_slotfy_api_get($api . '/settings/general', $tenant);
+    $raw_list = demie_slotfy_api_get($api . '/packages/public', $tenant);
+
+    $packages = [];
+    foreach (is_array($raw_list) ? $raw_list : [] as $raw) {
+        $package = demie_slotfy_normalize_package($raw);
+        if (null !== $package) {
+            $packages[] = $package;
+        }
+    }
+
+    $catalog = [
+        'packages'        => $packages,
+        'currency'        => is_array($general) && !empty($general['currency'])
+            ? sanitize_text_field((string) $general['currency'])
+            : '',
+        'symbol_position' => is_array($general) && isset($general['symbolPosition']) && 'after' === $general['symbolPosition']
+            ? 'after'
+            : 'before',
+        'decimal_places'  => is_array($general) && isset($general['decimalPlaces'])
+            ? max(0, min(4, (int) $general['decimalPlaces']))
+            : 2,
+    ];
+
+    $ttl       = max(0, (int) apply_filters('demie_slotfy_packages_cache_ttl', 15 * MINUTE_IN_SECONDS));
+    $empty_ttl = max(0, (int) apply_filters('demie_slotfy_packages_empty_cache_ttl', 5 * MINUTE_IN_SECONDS));
+    set_transient($cache_key, $catalog, $packages ? $ttl : $empty_ttl);
+
+    return $catalog;
+}
+
+/**
+ * Format a package price with the tenant's Slotfy currency settings.
+ *
+ * @param float      $amount  Price in major units, as Slotfy stores it.
+ * @param array|null $catalog Catalogue from demie_slotfy_package_catalog().
+ */
+function demie_slotfy_format_price($amount, $catalog = null) {
+    $catalog  = null === $catalog ? demie_slotfy_package_catalog() : $catalog;
+    $decimals = isset($catalog['decimal_places']) ? max(0, min(4, (int) $catalog['decimal_places'])) : 2;
+    $number   = number_format_i18n((float) $amount, $decimals);
+    $currency = isset($catalog['currency']) ? (string) $catalog['currency'] : '';
+
+    if ('' === $currency) {
+        return $number;
+    }
+
+    return 'after' === $catalog['symbol_position']
+        ? $number . ' ' . $currency
+        : $currency . ' ' . $number;
+}
+
+/**
+ * Short "3 sessions · Valid for 2 months" line for a package card.
+ */
+function demie_slotfy_package_meta($package) {
+    $parts = [];
+
+    if (!empty($package['sessions'])) {
+        $count   = (int) $package['sessions'];
+        $parts[] = sprintf(
+            _n('%s session', '%s sessions', $count, 'demie-v2'),
+            number_format_i18n($count)
+        );
+    }
+    if (!empty($package['validity'])) {
+        $parts[] = $package['validity'];
+    }
+
+    return implode(' · ', $parts);
+}
+
+/**
  * Print the widget container and script tag.
  *
  * @param array $args Optional overrides:
