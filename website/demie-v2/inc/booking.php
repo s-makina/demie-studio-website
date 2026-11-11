@@ -322,8 +322,9 @@ function demie_slotfy_package_meta($package) {
  * Print the widget container and script tag.
  *
  * @param array $args Optional overrides:
- *                    'id'     container id (default slotfy-booking)
- *                    'height' initial iframe height (default 650px)
+ *                    'id'      container id (default slotfy-booking)
+ *                    'height'  initial iframe height (default 650px)
+ *                    'package' package id to open straight away (default '')
  * @return bool True when the widget was rendered.
  */
 function demie_render_slotfy_widget($args = []) {
@@ -332,8 +333,9 @@ function demie_render_slotfy_widget($args = []) {
     }
 
     $args = wp_parse_args($args, [
-        'id'     => 'slotfy-booking',
-        'height' => '650px',
+        'id'      => 'slotfy-booking',
+        'height'  => '650px',
+        'package' => '',
     ]);
 
     $tenant   = demie_slotfy_tenant();
@@ -365,6 +367,10 @@ function demie_render_slotfy_widget($args = []) {
         'data-radius'        => '12px',
         'data-font'          => '"Plus Jakarta Sans", sans-serif',
     ];
+
+    if ('' !== $args['package']) {
+        $attributes['data-package-id'] = $args['package'];
+    }
 
     $attr_html = '';
     foreach ($attributes as $name => $value) {

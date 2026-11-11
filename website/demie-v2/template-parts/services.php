@@ -62,5 +62,7 @@
     </div>
     <?php demie_v2_services_toggle('home-services-list', count($services)); ?>
     <?php endif; ?>
+
+    <?php get_template_part('template-parts/packages', null, ['spacing' => 'mt-16 md:mt-20']); ?>
   </div>
 </section>
