@@ -17,8 +17,12 @@ if (!defined('ABSPATH')) exit;
  * Current request URL, used to send non-JS form posts back to this page.
  */
 function demie_current_url() {
+    $host = isset($_SERVER['HTTP_HOST']) ? sanitize_text_field(wp_unslash($_SERVER['HTTP_HOST'])) : '';
+    if ('' === $host) {
+        return home_url('/');
+    }
     $path = isset($_SERVER['REQUEST_URI']) ? wp_unslash($_SERVER['REQUEST_URI']) : '/';
-    return home_url($path);
+    return set_url_scheme('http://' . $host . $path);
 }
 
 /* ---------- Storage ---------- */

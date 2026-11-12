@@ -356,10 +356,13 @@ document.addEventListener('DOMContentLoaded', () => {
               ? (leadStrings.statusUnavailable || 'Date already taken')
               : (leadStrings.statusUnknown || 'We will confirm manually');
         }
-        if (contact) contact.hidden = false;
+        if (contact) {
+          resetLeadScope(contact.querySelector('[data-lead-scope]'));
+          contact.hidden = false;
+        }
         sync();
-        if (leadForm) {
-          const nameField = leadForm.querySelector('[name="name"]');
+        if (contact) {
+          const nameField = contact.querySelector('[name="name"]');
           if (nameField) nameField.focus({ preventScroll: true });
         }
         result.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
