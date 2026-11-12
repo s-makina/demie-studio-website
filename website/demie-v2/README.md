@@ -1,7 +1,7 @@
 # Demie v2 — Luxury Editorial theme
 
 Ported from `v2/code.html` (Tailwind + Cormorant Garamond / Plus Jakarta Sans).
-Folder: `demie-v2/` · Text domain: `demie-v2` · Version 0.2.14
+Folder: `demie-v2/` · Text domain: `demie-v2` · Version 0.2.15
 
 ## What it is
 
@@ -27,6 +27,11 @@ working AJAX contact form.
   on the homepage only.
 - Contact details default to the CONTEXT.md brand facts
   (+265 884 44 48 02 · demiestudios@gmail.com · Chilomoni, Blantyre, Malawi).
+- Lead capture (Services page): the date checker, per-package WhatsApp requests
+  and the planning-guide form share `demie_render_lead_fields()`. Enquiries are
+  stored under **Enquiries** in wp-admin with an email notification and a
+  WhatsApp reply link; nothing is exposed publicly. Nonce, honeypot and a light
+  IP rate limit protect the endpoint.
 
 ## Files
 
@@ -39,14 +44,14 @@ template-parts/hero.php | statement.php | gallery.php | featured-story.php
                services.php | why.php | testimonials.php | booking.php
                page-titlebar.php
 page-gallery.php           Demie Gallery shortcode + portfolio fallback
-page-services.php          all Service CPT entries as editorial cards
+page-services.php          live Slotfy catalogue + date checker, WhatsApp capture and guide
 page-about-us.php          content + FAQs + pillars + testimonials + booking
 page-contact.php           studio detail cards + booking form
 page-blog.php / index.php / single.php / page.php / 404.php
 assets/css/v2.css           extracted v2/code.html <style> + form/prose styles
 assets/js/theme-v2.js       nav, mobile menu, reveal-on-scroll, video fallback
 assets/js/demie-forms.js    AJAX form binding (copy of v1, same markup contract)
-inc/                       contact, settings, cpts, metaboxes, seed, template-tags (from v1)
+inc/                       contact, settings, cpts, metaboxes, seed, template-tags, leads (from v1 + lead capture)
 ```
 
 ## Preview / activate

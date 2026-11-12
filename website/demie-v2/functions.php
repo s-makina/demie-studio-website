@@ -1,13 +1,14 @@
 <?php
 if (!defined('ABSPATH')) exit;
 
-define('DEMIE_VERSION', '0.2.14');
+define('DEMIE_VERSION', '0.2.15');
 define('DEMIE_DIR', get_template_directory());
 define('DEMIE_URI', get_template_directory_uri());
 
 require_once DEMIE_DIR . '/inc/contact.php';
 require_once DEMIE_DIR . '/inc/settings.php';
 require_once DEMIE_DIR . '/inc/booking.php';
+require_once DEMIE_DIR . '/inc/leads.php';
 require_once DEMIE_DIR . '/inc/cpts.php';
 require_once DEMIE_DIR . '/inc/metaboxes.php';
 require_once DEMIE_DIR . '/inc/template-tags.php';
@@ -107,6 +108,24 @@ function demie_enqueue_assets() {
     wp_enqueue_script('demie-swiper', DEMIE_URI . '/assets/vendor/swiper/swiper-bundle.min.js', [], '7.x', true);
 
     wp_enqueue_script('demie-v2-theme', DEMIE_URI . '/assets/js/theme-v2.js', ['demie-swiper'], DEMIE_VERSION, true);
+    wp_localize_script('demie-v2-theme', 'demieLead', [
+        'ajaxUrl'           => admin_url('admin-ajax.php'),
+        'availabilityNonce' => wp_create_nonce('demie_availability'),
+        'strings'           => [
+            'checking'      => __('Checking the live calendar…', 'demie-v2'),
+            'chooseDate'    => __('Choose your wedding date first.', 'demie-v2'),
+            'choosePackage' => __('Choose a package so we can check the right calendar.', 'demie-v2'),
+            'checkFailed'   => __('We could not check the calendar just now. Leave your WhatsApp below and we will confirm your date.', 'demie-v2'),
+            'networkError'  => __('We could not reach the studio. Check your connection and try again.', 'demie-v2'),
+            'sending'       => __('Sending…', 'demie-v2'),
+            'sendFailed'    => __('Something went wrong. Please try again, or message us on WhatsApp.', 'demie-v2'),
+            'nameRequired'  => __('Please add your name and WhatsApp number.', 'demie-v2'),
+            'consentRequired' => __('Please tick the consent box so we know we may contact you.', 'demie-v2'),
+            'statusAvailable'   => __('Date looks open', 'demie-v2'),
+            'statusUnavailable' => __('Date already taken', 'demie-v2'),
+            'statusUnknown'     => __('We will confirm manually', 'demie-v2'),
+        ],
+    ]);
     // Contact form AJAX (reuse v1 handler).
     wp_enqueue_script('demie-v2-forms', DEMIE_URI . '/assets/js/demie-forms.js', ['jquery'], DEMIE_VERSION, true);
     wp_localize_script('demie-v2-forms', 'demieCtx', [

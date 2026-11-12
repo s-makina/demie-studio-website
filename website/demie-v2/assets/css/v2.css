@@ -674,3 +674,102 @@ body.menu-open { overflow: hidden; }
     gap: 12px;
   }
 }
+
+/* ---------- Services lead capture ---------- */
+
+body.demie-dialog-open { overflow: hidden; }
+
+.demie-lead-dialog {
+  width: calc(100% - 2rem);
+  max-width: 460px;
+  margin: auto;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: #FDFBF7;
+}
+
+.demie-lead-dialog::backdrop {
+  background: rgba(6, 6, 6, 0.74);
+  -webkit-backdrop-filter: blur(6px);
+  backdrop-filter: blur(6px);
+}
+
+.demie-lead-dialog__panel {
+  position: relative;
+  max-height: min(86vh, 760px);
+  overflow-y: auto;
+  border: 1px solid rgba(197, 168, 128, 0.28);
+  border-radius: 1rem;
+  background: #151515;
+  padding: 1.5rem;
+  box-shadow: 0 30px 80px rgba(0, 0, 0, 0.6);
+  animation: demie-dialog-in 0.2s ease-out;
+}
+
+@media (min-width: 640px) {
+  .demie-lead-dialog__panel { padding: 1.75rem; }
+}
+
+.demie-lead-dialog__close {
+  position: absolute;
+  top: 0.8rem;
+  right: 0.8rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  border-radius: 9999px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(18, 18, 18, 0.7);
+  color: rgba(253, 251, 247, 0.7);
+  transition: color 0.2s ease, border-color 0.2s ease, background-color 0.2s ease;
+}
+
+.demie-lead-dialog__close:hover,
+.demie-lead-dialog__close:focus-visible {
+  color: #FDFBF7;
+  border-color: rgba(197, 168, 128, 0.5);
+  background: rgba(197, 168, 128, 0.12);
+  outline: none;
+}
+
+@keyframes demie-dialog-in {
+  from { opacity: 0; transform: translateY(10px) scale(0.99); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+/* Availability result states */
+[data-date-card] { transition: border-color 0.2s ease, background-color 0.2s ease; }
+[data-date-card][data-status="available"] {
+  border-color: rgba(52, 211, 153, 0.35);
+  background: rgba(16, 185, 129, 0.07);
+}
+[data-date-card][data-status="unavailable"] {
+  border-color: rgba(245, 158, 11, 0.35);
+  background: rgba(245, 158, 11, 0.06);
+}
+[data-date-card][data-status="unknown"] {
+  border-color: rgba(197, 168, 128, 0.3);
+  background: rgba(197, 168, 128, 0.05);
+}
+
+/* Mobile sticky date prompt */
+.sticky-cta {
+  transform: translateY(130%);
+  opacity: 0;
+  pointer-events: none;
+  transition: transform 0.28s ease, opacity 0.28s ease;
+}
+
+.sticky-cta.is-visible {
+  transform: translateY(0);
+  opacity: 1;
+  pointer-events: auto;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .demie-lead-dialog__panel { animation: none; }
+  .sticky-cta { transition: none; }
+}
