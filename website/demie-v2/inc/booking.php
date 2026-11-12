@@ -468,7 +468,7 @@ function demie_slotfy_normalize_service($raw) {
             : '',
         'price'       => isset($raw['price']) ? (float) $raw['price'] : 0.0,
         'duration'    => isset($raw['duration']) ? max(0, (int) $raw['duration']) : 0,
-        'features'    => array_slice($clean_features, 0, 10),
+        'features'    => array_slice($clean_features, 0, 16),
         'category_id' => isset($raw['categoryId']) ? sanitize_text_field((string) $raw['categoryId']) : '',
     ];
 }

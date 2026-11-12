@@ -137,4 +137,20 @@ document.addEventListener('DOMContentLoaded', () => {
       setExpanded(toggle.getAttribute('aria-expanded') !== 'true');
     });
   });
+
+  // 7. Services page: filter the Slotfy catalogue by category
+  const serviceFilter = document.querySelector('[data-service-filter]');
+  if (serviceFilter) {
+    const sections = Array.prototype.slice.call(document.querySelectorAll('[data-service-section]'));
+    serviceFilter.addEventListener('change', () => {
+      const value = serviceFilter.value;
+      sections.forEach((section) => {
+        const show = !value || section.getAttribute('data-category-id') === value;
+        section.hidden = !show;
+        if (show) {
+          section.querySelectorAll('.reveal-on-scroll').forEach((el) => el.classList.add('is-revealed'));
+        }
+      });
+    });
+  }
 });
