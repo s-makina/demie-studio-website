@@ -136,6 +136,15 @@ add_action('admin_post_demie_detect_slotfy', function () {
 
     $detected = demie_slotfy_detect_api_url(true);
 
+    // Write the detected origin into the setting so it also wins over any
+    // stale value the owner may have typed earlier.
+    if ('' !== $detected) {
+        $opts = get_option('demie_settings', []);
+        $opts = is_array($opts) ? $opts : [];
+        $opts['slotfy_api_url'] = $detected;
+        update_option('demie_settings', $opts);
+    }
+
     wp_safe_redirect(add_query_arg(
         [
             'page'           => 'demie-settings',
@@ -310,6 +319,17 @@ function demie_render_settings_page() {
 
                         <?php if ('' !== $demie_detected) : ?>
                             <p class="description"><?php printf(esc_html__('Auto-detected API origin: %s', 'demie-v2'), '<code>' . esc_html($demie_detected) . '</code>'); ?></p>
+                        <?php endif; ?>
+
+                        <?php
+                        $demie_configured = function_exists('demie_slotfy_normalize_url')
+                            ? demie_slotfy_normalize_url($opts['slotfy_api_url'])
+                            : '';
+                        if ('' !== $demie_detected && '' !== $demie_configured && !$demie_api_live) :
+                            ?>
+                            <p style="color:#b32d2e">
+                                <?php esc_html_e('The URL in the field above is overriding the auto-detected API and is not responding. Use Detect API URL to replace it.', 'demie-v2'); ?>
+                            </p>
                         <?php endif; ?>
 
                         <?php if (is_array($demie_last_call) && !empty($demie_last_call)) : ?>
