@@ -118,6 +118,34 @@ add_action('admin_init', function () {
     ]);
 });
 
+/**
+ * "Detect API URL" button on Demie Settings. Clears the cached detection,
+ * re-runs discovery and redirects back with a status flag.
+ */
+add_action('admin_post_demie_detect_slotfy', function () {
+    if (!current_user_can('manage_options')) {
+        wp_die(esc_html__('You are not allowed to do this.', 'demie-v2'));
+    }
+    check_admin_referer('demie_detect_slotfy');
+
+    delete_option('demie_slotfy_detected_api');
+    $base = demie_slotfy_base_url();
+    if ('' !== $base) {
+        delete_transient('demie_slotfy_detect_failed_' . md5($base));
+    }
+
+    $detected = demie_slotfy_detect_api_url(true);
+
+    wp_safe_redirect(add_query_arg(
+        [
+            'page'           => 'demie-settings',
+            'demie_detected' => '' !== $detected ? '1' : '0',
+        ],
+        admin_url('options-general.php')
+    ));
+    exit;
+});
+
 function demie_sanitize_settings($input) {
     $out = [];
     $input = is_array($input) ? $input : [];
@@ -146,10 +174,33 @@ function demie_render_settings_page() {
         return;
     }
     $opts = wp_parse_args(get_option('demie_settings', []), demie_settings_defaults());
+
+    // Resolving the API base here also runs discovery when the field is blank,
+    // so simply opening this screen can repair a split frontend/API setup.
+    $demie_api_base  = function_exists('demie_slotfy_api_base') ? demie_slotfy_api_base() : '';
+    $demie_detected  = function_exists('demie_slotfy_detected_api_url') ? demie_slotfy_detected_api_url() : '';
+    $demie_api_live  = ('' !== $demie_api_base && function_exists('demie_slotfy_api_is_live'))
+        ? demie_slotfy_api_is_live($demie_api_base, demie_slotfy_tenant())
+        : false;
+    $demie_last_call = isset($GLOBALS['demie_slotfy_last_api']) ? $GLOBALS['demie_slotfy_last_api'] : null;
     ?>
     <div class="wrap">
         <h1><?php esc_html_e('Demie Settings', 'demie-photography'); ?></h1>
         <p><?php esc_html_e('Studio contact details used across the whole site. Leave a social network empty to hide it.', 'demie-photography'); ?></p>
+
+        <?php if (isset($_GET['demie_detected'])) : ?>
+            <div class="notice <?php echo '1' === sanitize_text_field(wp_unslash($_GET['demie_detected'])) ? 'notice-success' : 'notice-warning'; ?> is-dismissible">
+                <p>
+                    <?php
+                    if ('1' === sanitize_text_field(wp_unslash($_GET['demie_detected']))) {
+                        esc_html_e('Slotfy API detected and saved.', 'demie-v2');
+                    } else {
+                        esc_html_e('Could not detect the Slotfy API automatically. Check the Slotfy base URL, or paste the API host above.', 'demie-v2');
+                    }
+                    ?>
+                </p>
+            </div>
+        <?php endif; ?>
 
         <form method="post" action="options.php">
             <?php settings_fields('demie_settings_group'); ?>
@@ -236,7 +287,50 @@ function demie_render_settings_page() {
                     <th scope="row"><label for="demie-slotfy-api-url"><?php esc_html_e('Slotfy API URL', 'demie-v2'); ?></label></th>
                     <td>
                         <input type="url" id="demie-slotfy-api-url" name="demie_settings[slotfy_api_url]" value="<?php echo esc_attr($opts['slotfy_api_url']); ?>" class="regular-text code" placeholder="https://api.slotfy.app">
-                        <p class="description"><?php esc_html_e('Backend API origin used to load the live services and packages. Leave blank when the frontend proxies /api. For split frontend/API hosts (like staging), enter the API host — e.g. https://api.example.com.', 'demie-v2'); ?></p>
+                        <p class="description"><?php esc_html_e('Backend API origin used to load the live services and packages. Leave blank when the frontend proxies /api, or when the theme can auto-detect it.', 'demie-v2'); ?></p>
+                    </td>
+                </tr>
+                <tr>
+                    <th scope="row"><?php esc_html_e('Catalogue connection', 'demie-v2'); ?></th>
+                    <td>
+                        <?php if ($demie_api_live) : ?>
+                            <p style="color:#007017;margin-top:0">
+                                <strong><?php esc_html_e('Connected', 'demie-v2'); ?></strong>
+                                &mdash; <code><?php echo esc_html($demie_api_base); ?></code>
+                            </p>
+                        <?php else : ?>
+                            <p style="color:#b32d2e;margin-top:0">
+                                <strong><?php esc_html_e('Not reachable', 'demie-v2'); ?></strong>
+                                <?php if ('' !== $demie_api_base) : ?>
+                                    &mdash; <code><?php echo esc_html($demie_api_base); ?></code>
+                                <?php endif; ?>
+                            </p>
+                            <p class="description"><?php esc_html_e('The theme could not load the service catalogue. Check the frontend and API URLs, then use Detect API URL.', 'demie-v2'); ?></p>
+                        <?php endif; ?>
+
+                        <?php if ('' !== $demie_detected) : ?>
+                            <p class="description"><?php printf(esc_html__('Auto-detected API origin: %s', 'demie-v2'), '<code>' . esc_html($demie_detected) . '</code>'); ?></p>
+                        <?php endif; ?>
+
+                        <?php if (is_array($demie_last_call) && !empty($demie_last_call)) : ?>
+                            <p class="description">
+                                <?php esc_html_e('Last API request:', 'demie-v2'); ?>
+                                <code><?php echo esc_html($demie_last_call['url'] ?? ''); ?></code>
+                                <?php if (isset($demie_last_call['code'])) : ?>
+                                    &rarr; HTTP <?php echo esc_html((string) $demie_last_call['code']); ?>
+                                    (<?php echo esc_html((string) ($demie_last_call['bytes'] ?? 0)); ?> <?php esc_html_e('bytes', 'demie-v2'); ?>)
+                                <?php elseif (!empty($demie_last_call['error'])) : ?>
+                                    &rarr; <?php echo esc_html($demie_last_call['error']); ?>
+                                <?php endif; ?>
+                            </p>
+                        <?php endif; ?>
+
+                        <p>
+                            <a class="button" href="<?php echo esc_url(wp_nonce_url(admin_url('admin-post.php?action=demie_detect_slotfy'), 'demie_detect_slotfy')); ?>">
+                                <?php esc_html_e('Detect API URL', 'demie-v2'); ?>
+                            </a>
+                        </p>
+                        <p class="description"><?php esc_html_e('Reads the Slotfy frontend bundle to find its backend API host. The detected URL is used automatically while the field above is blank.', 'demie-v2'); ?></p>
                     </td>
                 </tr>
             </table>

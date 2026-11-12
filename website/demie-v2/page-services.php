@@ -76,6 +76,39 @@ $booking    = function_exists('demie_slotfy_booking_url') ? demie_slotfy_booking
       <a class="inline-flex items-center justify-center px-8 py-4 bg-brand-champagne text-brand-charcoal hover:bg-white text-xs uppercase tracking-luxury font-medium transition-colors" href="<?php echo esc_url($booking); ?>">
         <?php esc_html_e('Go to booking', 'demie-v2'); ?>
       </a>
+
+      <?php if (current_user_can('manage_options')) : ?>
+        <?php
+        $diag           = isset($GLOBALS['demie_slotfy_last_api']) ? $GLOBALS['demie_slotfy_last_api'] : null;
+        $diag_base      = function_exists('demie_slotfy_api_base') ? demie_slotfy_api_base() : '';
+        $diag_detected  = function_exists('demie_slotfy_detected_api_url') ? demie_slotfy_detected_api_url() : '';
+        ?>
+        <div class="mt-10 p-5 border border-brand-gold/40 bg-black/30 text-left text-xs font-light text-white/70">
+          <p class="text-brand-gold uppercase tracking-widest text-[10px] mb-3"><?php esc_html_e('Admin diagnostics', 'demie-v2'); ?></p>
+          <p class="mb-1"><?php esc_html_e('Resolved API base:', 'demie-v2'); ?> <code><?php echo esc_html('' !== $diag_base ? $diag_base : __('(empty)', 'demie-v2')); ?></code></p>
+          <?php if ('' !== $diag_detected) : ?>
+            <p class="mb-1"><?php esc_html_e('Auto-detected API:', 'demie-v2'); ?> <code><?php echo esc_html($diag_detected); ?></code></p>
+          <?php endif; ?>
+          <?php if (is_array($diag) && !empty($diag)) : ?>
+            <p class="mb-1"><?php esc_html_e('Last request:', 'demie-v2'); ?> <code><?php echo esc_html($diag['url'] ?? ''); ?></code></p>
+            <p class="mb-1">
+              <?php if (isset($diag['code'])) : ?>
+                <?php esc_html_e('HTTP status:', 'demie-v2'); ?> <?php echo esc_html((string) $diag['code']); ?>
+                (<?php echo esc_html((string) ($diag['bytes'] ?? 0)); ?> <?php esc_html_e('bytes', 'demie-v2'); ?>)
+              <?php elseif (!empty($diag['error'])) : ?>
+                <?php esc_html_e('Transport error:', 'demie-v2'); ?> <?php echo esc_html($diag['error']); ?>
+              <?php endif; ?>
+            </p>
+          <?php else : ?>
+            <p class="mb-1"><?php esc_html_e('No API request was made. Set a Slotfy base URL and API URL in Demie Settings.', 'demie-v2'); ?></p>
+          <?php endif; ?>
+          <p class="mt-3">
+            <a class="underline text-brand-gold" href="<?php echo esc_url(admin_url('options-general.php?page=demie-settings')); ?>">
+              <?php esc_html_e('Open Demie Settings → Booking', 'demie-v2'); ?>
+            </a>
+          </p>
+        </div>
+      <?php endif; ?>
     </div>
   <?php endif; ?>
 

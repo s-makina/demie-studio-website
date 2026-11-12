@@ -106,7 +106,183 @@ function demie_slotfy_return_url() {
 }
 
 /**
+ * Whether an API base (…/api) answers like the Slotfy backend.
+ *
+ * The frontend also serves /api/health, but it returns { status, uptime }
+ * without the backend's { data: { service, db } } envelope. Requiring that
+ * envelope stops detection from latching onto the frontend by mistake.
+ *
+ * @param string $api_base Absolute API origin, with or without /api.
+ * @param string $tenant   Tenant slug sent as x-tenant-slug.
+ * @return bool
+ */
+function demie_slotfy_api_is_live($api_base, $tenant) {
+    $api_base = untrailingslashit((string) $api_base);
+    if ('' === $api_base || '' === $tenant) {
+        return false;
+    }
+
+    $response = wp_remote_get($api_base . '/health', [
+        'timeout' => 4,
+        'headers' => [
+            'Accept'        => 'application/json',
+            'x-tenant-slug' => $tenant,
+        ],
+    ]);
+
+    if (is_wp_error($response) || 200 !== (int) wp_remote_retrieve_response_code($response)) {
+        return false;
+    }
+
+    $body = json_decode(wp_remote_retrieve_body($response), true);
+    if (!is_array($body) || empty($body['data']) || !is_array($body['data'])) {
+        return false;
+    }
+
+    $data = $body['data'];
+    if (isset($data['service']) && false !== stripos((string) $data['service'], 'slotfy')) {
+        return true;
+    }
+
+    return isset($data['db']);
+}
+
+/**
+ * Auto-detected API origin, cached against the frontend base URL.
+ *
+ * @return string e.g. http://api.example.com/api, or '' when unknown.
+ */
+function demie_slotfy_detected_api_url() {
+    $cached = get_option('demie_slotfy_detected_api', []);
+    if (!is_array($cached) || empty($cached['url'])) {
+        return '';
+    }
+    if ((string) ($cached['base'] ?? '') !== demie_slotfy_base_url()) {
+        return '';
+    }
+
+    return demie_slotfy_normalize_url($cached['url']);
+}
+
+/**
+ * Discover the backend API origin for split deployments.
+ *
+ * 1. Try {frontend}/api (same-origin or reverse-proxied installs).
+ * 2. Otherwise read the embed page, walk the JS chunks it loads, and find
+ *    the API origin baked into the build (NEXT_PUBLIC_API_URL), validating
+ *    every candidate against /api/health before accepting it.
+ *
+ * Success is cached in an option, failure in a 30-minute transient, so this
+ * runs at most once until the deployment or frontend URL changes.
+ *
+ * @param bool $force Bypass the cached result (used by the settings button).
+ * @return string Detected API origin in the form …/api, or ''.
+ */
+function demie_slotfy_detect_api_url($force = false) {
+    $base   = demie_slotfy_base_url();
+    $tenant = demie_slotfy_tenant();
+
+    if ('' === $base || '' === $tenant) {
+        return '';
+    }
+
+    if (!$force) {
+        $cached = demie_slotfy_detected_api_url();
+        if ('' !== $cached) {
+            return $cached;
+        }
+        if (get_transient('demie_slotfy_detect_failed_' . md5($base))) {
+            return '';
+        }
+        if (get_transient('demie_slotfy_detect_lock')) {
+            return '';
+        }
+    }
+
+    set_transient('demie_slotfy_detect_lock', 1, 2 * MINUTE_IN_SECONDS);
+    $deadline = microtime(true) + 12;
+    $found    = '';
+
+    // 1. The frontend may proxy /api to the backend.
+    if (demie_slotfy_api_is_live($base . '/api', $tenant)) {
+        $found = $base . '/api';
+    }
+
+    // 2. Read the embed page and inspect the JS chunks it loads.
+    if ('' === $found) {
+        $page = wp_remote_get($base . '/embed/' . rawurlencode($tenant) . '/booking', [
+            'timeout' => 6,
+            'headers' => ['Accept' => 'text/html'],
+        ]);
+
+        if (!is_wp_error($page) && 200 === (int) wp_remote_retrieve_response_code($page)) {
+            $html = (string) wp_remote_retrieve_body($page);
+            preg_match_all('#(?:src|href)="([^"]*/_next/static/[^"]+\.js)"#i', $html, $matches);
+
+            $checked = [];
+            foreach (array_unique($matches[1]) as $chunk) {
+                if (microtime(true) > $deadline) {
+                    break;
+                }
+
+                $chunk_url = preg_match('#^https?://#i', $chunk) ? $chunk : $base . $chunk;
+                $js        = wp_remote_get($chunk_url, [
+                    'timeout' => 3,
+                    // The build-time env is near the top of the chunk; a ranged
+                    // read keeps detection cheap without missing it.
+                    'headers' => [
+                        'Accept' => 'application/javascript',
+                        'Range'  => 'bytes=0-65535',
+                    ],
+                ]);
+
+                $status = is_wp_error($js) ? 0 : (int) wp_remote_retrieve_response_code($js);
+                if (!in_array($status, [200, 206], true)) {
+                    continue;
+                }
+
+                preg_match_all('#https?://[a-zA-Z0-9._-]+(?::\d+)?#', (string) wp_remote_retrieve_body($js), $urls);
+
+                foreach (array_unique($urls[0]) as $candidate) {
+                    $candidate = demie_slotfy_normalize_url($candidate);
+                    if ('' === $candidate || $candidate === $base || isset($checked[$candidate])) {
+                        continue;
+                    }
+                    if (preg_match('#(?:w3\.org|react\.dev|nextjs\.org|googleapis\.com|gstatic\.com|fonts\.)#i', $candidate)) {
+                        continue;
+                    }
+
+                    $checked[$candidate] = true;
+                    if (demie_slotfy_api_is_live($candidate . '/api', $tenant)) {
+                        $found = $candidate . '/api';
+                        break 2;
+                    }
+                }
+            }
+        }
+    }
+
+    delete_transient('demie_slotfy_detect_lock');
+
+    if ('' === $found) {
+        set_transient('demie_slotfy_detect_failed_' . md5($base), 1, 30 * MINUTE_IN_SECONDS);
+        return '';
+    }
+
+    update_option('demie_slotfy_detected_api', [
+        'url'  => $found,
+        'base' => $base,
+        'time' => time(),
+    ]);
+    delete_transient('demie_slotfy_detect_failed_' . md5($base));
+
+    return $found;
+}
+
+/**
  * Slotfy public API origin (…/api), or '' when the base URL is invalid.
+ *
+ * Priority: explicit setting → auto-detected → {frontend}/api.
  */
 function demie_slotfy_api_base() {
     $settings = demie_slotfy_settings();
@@ -116,6 +292,21 @@ function demie_slotfy_api_base() {
     $api = demie_slotfy_normalize_url($settings['slotfy_api_url']);
     if ('' !== $api) {
         return preg_match('#/api$#i', $api) ? $api : $api . '/api';
+    }
+
+    $detected = demie_slotfy_detected_api_url();
+    if ('' !== $detected) {
+        return $detected;
+    }
+
+    // Only the owner pays for discovery; visitors always get a fast request.
+    static $attempted = false;
+    if (!$attempted && (is_admin() || (function_exists('current_user_can') && current_user_can('manage_options')))) {
+        $attempted = true;
+        $detected = demie_slotfy_detect_api_url();
+        if ('' !== $detected) {
+            return $detected;
+        }
     }
 
     $base = demie_slotfy_base_url();
@@ -142,14 +333,23 @@ function demie_slotfy_api_get($url, $tenant) {
         ],
     ]);
 
+    $GLOBALS['demie_slotfy_last_api'] = ['url' => $url];
+
     if (is_wp_error($response)) {
-        return null;
-    }
-    if (200 !== (int) wp_remote_retrieve_response_code($response)) {
+        $GLOBALS['demie_slotfy_last_api']['error'] = $response->get_error_message();
         return null;
     }
 
-    $body = json_decode(wp_remote_retrieve_body($response), true);
+    $code = (int) wp_remote_retrieve_response_code($response);
+    $raw  = (string) wp_remote_retrieve_body($response);
+    $GLOBALS['demie_slotfy_last_api']['code']  = $code;
+    $GLOBALS['demie_slotfy_last_api']['bytes'] = strlen($raw);
+
+    if (200 !== $code) {
+        return null;
+    }
+
+    $body = json_decode($raw, true);
     if (!is_array($body)) {
         return null;
     }
@@ -602,3 +802,16 @@ function demie_render_slotfy_widget($args = []) {
     <?php
     return true;
 }
+
+/**
+ * Detect the API origin once an owner visits wp-admin with a blank setting,
+ * so uploading the theme is enough to fix a split deployment. Failures are
+ * cached by demie_slotfy_detect_api_url(), so this is not a per-request cost.
+ */
+add_action('admin_init', function () {
+    $settings = demie_slotfy_settings();
+    if ('' !== $settings['slotfy_api_url'] || '' !== demie_slotfy_detected_api_url()) {
+        return;
+    }
+    demie_slotfy_detect_api_url();
+});
