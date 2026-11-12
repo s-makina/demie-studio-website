@@ -1,7 +1,7 @@
 # Demie v2 — Luxury Editorial theme
 
 Ported from `v2/code.html` (Tailwind + Cormorant Garamond / Plus Jakarta Sans).
-Folder: `demie-v2/` · Text domain: `demie-v2` · Version 0.2.10
+Folder: `demie-v2/` · Text domain: `demie-v2` · Version 0.2.11
 
 ## What it is
 
