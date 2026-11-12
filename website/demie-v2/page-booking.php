@@ -17,10 +17,18 @@ get_template_part('template-parts/page-titlebar', null, [
 $demie_payment_return = isset($_GET['payment']) && 'return' === sanitize_key(wp_unslash($_GET['payment']));
 $demie_has_content    = '' !== trim(get_the_content());
 
-// Package deep link from a package card: only a UUID reaches the widget.
+// Package / service deep links from the Services page cards: only a UUID
+// reaches the widget, so an arbitrary query value can never be injected.
+$demie_uuid = '/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i';
+
 $demie_package_id = isset($_GET['package']) ? sanitize_text_field(wp_unslash($_GET['package'])) : '';
-if (!preg_match('/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i', $demie_package_id)) {
+if (!preg_match($demie_uuid, $demie_package_id)) {
     $demie_package_id = '';
+}
+
+$demie_service_id = isset($_GET['service']) ? sanitize_text_field(wp_unslash($_GET['service'])) : '';
+if (!preg_match($demie_uuid, $demie_service_id)) {
+    $demie_service_id = '';
 }
 ?>
 <section class="bg-[#151515] text-brand-cream px-4 sm:px-6 md:px-14 pt-14 md:pt-20 pb-20 md:pb-28">
@@ -58,7 +66,7 @@ if (!preg_match('/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$
                     <a class="underline underline-offset-4 hover:text-white" href="<?php echo esc_url(demie_phone_url()); ?>"><?php echo esc_html(demie_phone()); ?></a>
                 </p>
             </noscript>
-            <?php demie_render_slotfy_widget(['package' => $demie_package_id]); ?>
+            <?php demie_render_slotfy_widget(['package' => $demie_package_id, 'service' => $demie_service_id]); ?>
         <?php else : ?>
             <div class="border border-white/10 bg-[#1E1C1A] px-6 py-10 md:px-10 text-center max-w-3xl mx-auto">
                 <h2 class="font-serif text-3xl text-brand-cream mb-4"><?php esc_html_e('Online booking is unavailable', 'demie-v2'); ?></h2>

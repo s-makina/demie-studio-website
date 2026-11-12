@@ -23,6 +23,7 @@ function demie_slotfy_settings() {
         'slotfy_enabled'  => '1',
         'slotfy_tenant'   => 'demie-photography',
         'slotfy_base_url' => 'https://slotfy.app',
+        'slotfy_api_url'  => '',
     ];
 
     $opts = get_option('demie_settings', []);
@@ -108,6 +109,15 @@ function demie_slotfy_return_url() {
  * Slotfy public API origin (…/api), or '' when the base URL is invalid.
  */
 function demie_slotfy_api_base() {
+    $settings = demie_slotfy_settings();
+
+    // Split deployments (frontend and backend on different hosts) set an
+    // explicit API origin. Single-origin installs proxy /api from the frontend.
+    $api = demie_slotfy_normalize_url($settings['slotfy_api_url']);
+    if ('' !== $api) {
+        return preg_match('#/api$#i', $api) ? $api : $api . '/api';
+    }
+
     $base = demie_slotfy_base_url();
     return '' === $base ? '' : $base . '/api';
 }
@@ -146,6 +156,221 @@ function demie_slotfy_api_get($url, $tenant) {
 
     // The API wraps success bodies as { "@@wrapped": true, data: …, meta: … }.
     return array_key_exists('data', $body) ? $body['data'] : $body;
+}
+
+/**
+ * Public Slotfy general settings (currency and formatting), cached briefly.
+ *
+ * @return array Decoded settings, or [] when the API is unreachable.
+ */
+function demie_slotfy_general_settings() {
+    static $general = null;
+    if (null !== $general) {
+        return $general;
+    }
+
+    $tenant = demie_slotfy_tenant();
+    $api    = demie_slotfy_api_base();
+    if ('' === $tenant || '' === $api) {
+        return $general = [];
+    }
+
+    $cache_key = 'demie_slotfy_general_' . md5($tenant . '|' . $api);
+    $cached    = get_transient($cache_key);
+    if (is_array($cached)) {
+        return $general = $cached;
+    }
+
+    $data    = demie_slotfy_api_get($api . '/settings/general', $tenant);
+    $general = is_array($data) ? $data : [];
+    set_transient($cache_key, $general, $general ? 15 * MINUTE_IN_SECONDS : 5 * MINUTE_IN_SECONDS);
+
+    return $general;
+}
+
+/**
+ * Currency settings in the shape demie_slotfy_format_price() expects.
+ *
+ * @return array{currency: string, symbol_position: string, decimal_places: int}
+ */
+function demie_slotfy_currency() {
+    $general = demie_slotfy_general_settings();
+
+    return [
+        'currency'        => !empty($general['currency'])
+            ? sanitize_text_field((string) $general['currency'])
+            : '',
+        'symbol_position' => (isset($general['symbolPosition']) && 'after' === $general['symbolPosition'])
+            ? 'after'
+            : 'before',
+        'decimal_places'  => isset($general['decimalPlaces'])
+            ? max(0, min(4, (int) $general['decimalPlaces']))
+            : 2,
+    ];
+}
+
+/**
+ * Human-readable duration, e.g. 480 -> "8 hrs".
+ */
+function demie_slotfy_format_duration($minutes) {
+    $minutes = max(0, (int) $minutes);
+    if (0 === $minutes) {
+        return '';
+    }
+    if ($minutes < 60) {
+        return sprintf(_n('%s min', '%s mins', $minutes, 'demie-v2'), number_format_i18n($minutes));
+    }
+
+    $hours = (int) floor($minutes / 60);
+    $rest  = $minutes % 60;
+    $label = sprintf(_n('%s hr', '%s hrs', $hours, 'demie-v2'), number_format_i18n($hours));
+    if ($rest > 0) {
+        $label .= ' ' . sprintf(_n('%s min', '%s mins', $rest, 'demie-v2'), number_format_i18n($rest));
+    }
+
+    return $label;
+}
+
+/**
+ * Normalise one public Slotfy service into what the theme renders.
+ *
+ * @param mixed $raw One row from GET /services?isPublic=true.
+ * @return array|null Service, or null when the row is unusable.
+ */
+function demie_slotfy_normalize_service($raw) {
+    if (!is_array($raw) || empty($raw['name'])) {
+        return null;
+    }
+
+    $features = [];
+    if (!empty($raw['features'])) {
+        if (is_string($raw['features'])) {
+            $decoded = json_decode($raw['features'], true);
+            $features = is_array($decoded) ? $decoded : explode(',', $raw['features']);
+        } elseif (is_array($raw['features'])) {
+            $features = $raw['features'];
+        }
+    }
+
+    $clean_features = [];
+    foreach ($features as $feature) {
+        $feature = sanitize_text_field(trim((string) $feature));
+        if ('' !== $feature) {
+            $clean_features[] = $feature;
+        }
+    }
+
+    return [
+        'id'          => isset($raw['id']) ? sanitize_text_field((string) $raw['id']) : '',
+        'name'        => sanitize_text_field((string) $raw['name']),
+        'description' => isset($raw['description'])
+            ? html_entity_decode(wp_strip_all_tags((string) $raw['description']), ENT_QUOTES, 'UTF-8')
+            : '',
+        'price'       => isset($raw['price']) ? (float) $raw['price'] : 0.0,
+        'duration'    => isset($raw['duration']) ? max(0, (int) $raw['duration']) : 0,
+        'features'    => array_slice($clean_features, 0, 10),
+        'category_id' => isset($raw['categoryId']) ? sanitize_text_field((string) $raw['categoryId']) : '',
+    ];
+}
+
+/**
+ * Public service catalogue from Slotfy, grouped by visible category.
+ *
+ * Mirrors the booking widget: services come from /services?isPublic=true,
+ * grouped under the categories returned by /categories/public. Services with
+ * no visible category land under "More services".
+ *
+ * @return array{money: array, categories: array}
+ */
+function demie_slotfy_service_catalog() {
+    static $catalog = null;
+    if (null !== $catalog) {
+        return $catalog;
+    }
+
+    $tenant = demie_slotfy_tenant();
+    $api    = demie_slotfy_api_base();
+    $empty  = ['money' => demie_slotfy_currency(), 'categories' => []];
+
+    if ('' === $tenant || '' === $api) {
+        return $catalog = $empty;
+    }
+
+    $cache_key = 'demie_slotfy_services_' . md5($tenant . '|' . $api);
+    $cached    = get_transient($cache_key);
+    if (is_array($cached) && isset($cached['categories'])) {
+        return $catalog = $cached;
+    }
+
+    $raw_services   = demie_slotfy_api_get($api . '/services?isPublic=true', $tenant);
+    $raw_categories = demie_slotfy_api_get($api . '/categories/public', $tenant);
+
+    $services = [];
+    foreach (is_array($raw_services) ? $raw_services : [] as $raw) {
+        $service = demie_slotfy_normalize_service($raw);
+        if (null !== $service) {
+            $services[] = $service;
+        }
+    }
+
+    $categories = [];
+    foreach (is_array($raw_categories) ? $raw_categories : [] as $raw_category) {
+        if (!is_array($raw_category) || empty($raw_category['id']) || empty($raw_category['name'])) {
+            continue;
+        }
+        $category_id = sanitize_text_field((string) $raw_category['id']);
+        $members     = [];
+        foreach ($services as $service) {
+            if ($service['category_id'] === $category_id) {
+                $members[] = $service;
+            }
+        }
+        if (!$members) {
+            continue;
+        }
+        $categories[] = [
+            'id'          => $category_id,
+            'name'        => sanitize_text_field((string) $raw_category['name']),
+            'description' => !empty($raw_category['description'])
+                ? html_entity_decode(wp_strip_all_tags((string) $raw_category['description']), ENT_QUOTES, 'UTF-8')
+                : '',
+            'services'    => $members,
+        ];
+    }
+
+    // Services outside a visible category, mirroring the booking widget.
+    $loose = [];
+    foreach ($services as $service) {
+        $matched = false;
+        foreach ($categories as $category) {
+            if ($service['category_id'] === $category['id']) {
+                $matched = true;
+                break;
+            }
+        }
+        if (!$matched) {
+            $loose[] = $service;
+        }
+    }
+    if ($loose) {
+        $categories[] = [
+            'id'          => 'more',
+            'name'        => __('More services', 'demie-v2'),
+            'description' => '',
+            'services'    => $loose,
+        ];
+    }
+
+    $catalog = [
+        'money'      => demie_slotfy_currency(),
+        'categories' => $categories,
+    ];
+
+    $ttl       = max(0, (int) apply_filters('demie_slotfy_services_cache_ttl', 15 * MINUTE_IN_SECONDS));
+    $empty_ttl = max(0, (int) apply_filters('demie_slotfy_services_empty_cache_ttl', 5 * MINUTE_IN_SECONDS));
+    set_transient($cache_key, $catalog, $categories ? $ttl : $empty_ttl);
+
+    return $catalog;
 }
 
 /**
@@ -246,7 +471,6 @@ function demie_slotfy_package_catalog() {
         return $catalog = $cached;
     }
 
-    $general  = demie_slotfy_api_get($api . '/settings/general', $tenant);
     $raw_list = demie_slotfy_api_get($api . '/packages/public', $tenant);
 
     $packages = [];
@@ -257,18 +481,7 @@ function demie_slotfy_package_catalog() {
         }
     }
 
-    $catalog = [
-        'packages'        => $packages,
-        'currency'        => is_array($general) && !empty($general['currency'])
-            ? sanitize_text_field((string) $general['currency'])
-            : '',
-        'symbol_position' => is_array($general) && isset($general['symbolPosition']) && 'after' === $general['symbolPosition']
-            ? 'after'
-            : 'before',
-        'decimal_places'  => is_array($general) && isset($general['decimalPlaces'])
-            ? max(0, min(4, (int) $general['decimalPlaces']))
-            : 2,
-    ];
+    $catalog = array_merge(['packages' => $packages], demie_slotfy_currency());
 
     $ttl       = max(0, (int) apply_filters('demie_slotfy_packages_cache_ttl', 15 * MINUTE_IN_SECONDS));
     $empty_ttl = max(0, (int) apply_filters('demie_slotfy_packages_empty_cache_ttl', 5 * MINUTE_IN_SECONDS));
@@ -293,7 +506,9 @@ function demie_slotfy_format_price($amount, $catalog = null) {
         return $number;
     }
 
-    return 'after' === $catalog['symbol_position']
+    $position = isset($catalog['symbol_position']) ? $catalog['symbol_position'] : 'before';
+
+    return 'after' === $position
         ? $number . ' ' . $currency
         : $currency . ' ' . $number;
 }
@@ -336,6 +551,7 @@ function demie_render_slotfy_widget($args = []) {
         'id'      => 'slotfy-booking',
         'height'  => '650px',
         'package' => '',
+        'service' => '',
     ]);
 
     $tenant   = demie_slotfy_tenant();
@@ -367,6 +583,10 @@ function demie_render_slotfy_widget($args = []) {
         'data-radius'        => '12px',
         'data-font'          => '"Plus Jakarta Sans", sans-serif',
     ];
+
+    if ('' !== $args['service']) {
+        $attributes['data-service-id'] = $args['service'];
+    }
 
     if ('' !== $args['package']) {
         $attributes['data-package-id'] = $args['package'];

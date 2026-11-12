@@ -62,6 +62,26 @@ add_action('manage_posts_custom_column', function ($column, $post_id) {
     }
 }, 10, 2);
 
+/**
+ * The public Services page is powered by the live Slotfy catalogue, so the
+ * demie_service CPT is only a legacy seed/backup. Say so on its admin screens
+ * instead of letting editors wonder why their edits never appear on the site.
+ */
+add_action('admin_notices', function () {
+    $screen = function_exists('get_current_screen') ? get_current_screen() : null;
+    if (!$screen || 'demie_service' !== $screen->post_type) {
+        return;
+    }
+    ?>
+    <div class="notice notice-info">
+        <p>
+            <strong><?php esc_html_e('Heads up:', 'demie-photography'); ?></strong>
+            <?php esc_html_e('the public Services page now lists the live Slotfy catalogue, not these posts. Add or edit bookable services in the Slotfy admin (Services), then clear any page cache.', 'demie-photography'); ?>
+        </p>
+    </div>
+    <?php
+});
+
 add_action('init', function () {
     // Service
     register_post_type('demie_service', [

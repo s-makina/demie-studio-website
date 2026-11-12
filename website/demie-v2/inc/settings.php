@@ -26,6 +26,7 @@ function demie_settings_defaults() {
         'slotfy_enabled'  => '1',
         'slotfy_tenant'   => 'demie-photography',
         'slotfy_base_url' => 'https://slotfy.app',
+        'slotfy_api_url'  => '',
     ];
 }
 
@@ -135,6 +136,7 @@ function demie_sanitize_settings($input) {
     $out['slotfy_enabled'] = empty($input['slotfy_enabled']) ? '0' : '1';
     $out['slotfy_tenant']  = sanitize_title(isset($input['slotfy_tenant']) ? $input['slotfy_tenant'] : '');
     $out['slotfy_base_url'] = demie_slotfy_normalize_url(isset($input['slotfy_base_url']) ? $input['slotfy_base_url'] : '');
+    $out['slotfy_api_url']  = demie_slotfy_normalize_url(isset($input['slotfy_api_url']) ? $input['slotfy_api_url'] : '');
 
     return $out;
 }
@@ -227,7 +229,14 @@ function demie_render_settings_page() {
                     <th scope="row"><label for="demie-slotfy-base-url"><?php esc_html_e('Slotfy base URL', 'demie-v2'); ?></label></th>
                     <td>
                         <input type="url" id="demie-slotfy-base-url" name="demie_settings[slotfy_base_url]" value="<?php echo esc_attr($opts['slotfy_base_url']); ?>" class="regular-text code" placeholder="https://slotfy.app">
-                        <p class="description"><?php esc_html_e('Use https://slotfy.app in production, or http://localhost:3000 when testing against the local Slotfy dev server.', 'demie-v2'); ?></p>
+                        <p class="description"><?php esc_html_e('The Slotfy frontend origin used by the booking widget, e.g. https://slotfy.app or http://localhost:3000.', 'demie-v2'); ?></p>
+                    </td>
+                </tr>
+                <tr>
+                    <th scope="row"><label for="demie-slotfy-api-url"><?php esc_html_e('Slotfy API URL', 'demie-v2'); ?></label></th>
+                    <td>
+                        <input type="url" id="demie-slotfy-api-url" name="demie_settings[slotfy_api_url]" value="<?php echo esc_attr($opts['slotfy_api_url']); ?>" class="regular-text code" placeholder="https://api.slotfy.app">
+                        <p class="description"><?php esc_html_e('Backend API origin used to load the live services and packages. Leave blank when the frontend proxies /api. For split frontend/API hosts (like staging), enter the API host — e.g. https://api.example.com.', 'demie-v2'); ?></p>
                     </td>
                 </tr>
             </table>
